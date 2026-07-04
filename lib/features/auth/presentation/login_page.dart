@@ -2,8 +2,14 @@ import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import 'package:guardian_portal/app/constants.dart';
 import 'package:guardian_portal/core/theme/app_colors.dart';
+import 'package:guardian_portal/core/widgets/guardian_logo.dart';
 import 'package:guardian_portal/features/auth/application/auth_controller.dart';
 import 'package:guardian_portal/features/auth/presentation/widgets/auth_scope.dart';
+import 'package:guardian_portal/features/auth/presentation/widgets/login_form_card.dart';
+import 'package:guardian_portal/features/auth/presentation/widgets/login_institutional_panel.dart';
+import 'package:guardian_portal/features/auth/presentation/widgets/login_watermark.dart';
+
+enum _LoginLayout { mobile, tablet, desktop }
 
 class LoginPage extends StatefulWidget {
   const LoginPage({super.key});
@@ -57,114 +63,299 @@ class _LoginPageState extends State<LoginPage> {
         _ => e.message ?? 'Não foi possível entrar.',
       };
 
+  _LoginLayout _layoutFor(double width) {
+    if (width < 720) return _LoginLayout.mobile;
+    if (width < 1000) return _LoginLayout.tablet;
+    return _LoginLayout.desktop;
+  }
+
   @override
   Widget build(BuildContext context) {
     final auth = AuthScope.of(context);
 
     return Scaffold(
-      body: Center(
-        child: SingleChildScrollView(
-          padding: const EdgeInsets.all(24),
-          child: ConstrainedBox(
-            constraints: const BoxConstraints(maxWidth: 420),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.stretch,
-              children: [
-                const _LoginBrand(),
-                const SizedBox(height: 40),
-                Text(
-                  _creating ? 'Criar conta' : 'Entrar no ${AppConstants.portalTitle}',
-                  style: Theme.of(context).textTheme.headlineMedium,
-                ),
-                const SizedBox(height: 8),
-                Text(
-                  'O portal mostra o que o app protege no seu aparelho. '
-                  'A proteção continua 100% offline no celular.',
-                  style: Theme.of(context).textTheme.bodyMedium,
-                ),
-                const SizedBox(height: 28),
-                Form(
-                  key: _formKey,
-                  child: Column(
-                    children: [
-                      TextFormField(
-                        controller: _email,
-                        keyboardType: TextInputType.emailAddress,
-                        autofillHints: const [AutofillHints.email],
-                        decoration: const InputDecoration(labelText: 'E-mail'),
-                        validator: (v) =>
-                            v == null || v.trim().isEmpty ? 'Informe o e-mail' : null,
-                      ),
-                      const SizedBox(height: 16),
-                      TextFormField(
-                        controller: _password,
-                        obscureText: true,
-                        autofillHints: const [AutofillHints.password],
-                        decoration: const InputDecoration(labelText: 'Senha'),
-                        validator: (v) => v == null || v.length < 6
-                            ? 'Mínimo de 6 caracteres'
-                            : null,
-                      ),
-                    ],
-                  ),
-                ),
-                if (_error != null) ...[
-                  const SizedBox(height: 16),
-                  Text(_error!, style: const TextStyle(color: AppColors.riskCritical)),
+      body: Stack(
+        children: [
+          const DecoratedBox(
+            decoration: BoxDecoration(
+              gradient: RadialGradient(
+                center: Alignment(0, -0.15),
+                radius: 0.95,
+                colors: [
+                  AppColors.loginBackgroundCenter,
+                  AppColors.loginBackgroundMid,
+                  AppColors.loginBackgroundEdge,
                 ],
-                const SizedBox(height: 24),
-                FilledButton(
-                  onPressed: _busy ? null : () => _submit(auth),
-                  child: _busy
-                      ? const SizedBox(
-                          width: 20,
-                          height: 20,
-                          child: CircularProgressIndicator(strokeWidth: 2),
-                        )
-                      : Text(_creating ? 'Criar conta' : 'Entrar'),
-                ),
-                const SizedBox(height: 12),
-                TextButton(
-                  onPressed: _busy
-                      ? null
-                      : () => setState(() {
-                            _creating = !_creating;
-                            _error = null;
-                          }),
-                  child: Text(
-                    _creating
-                        ? 'Já tenho conta — entrar'
-                        : 'Primeiro acesso — criar conta',
+                stops: [0.0, 0.55, 1.0],
+              ),
+            ),
+            child: SizedBox.expand(),
+          ),
+          LayoutBuilder(
+            builder: (context, constraints) {
+              return LoginWatermark(size: constraints.maxWidth * 0.55);
+            },
+          ),
+          SafeArea(
+            child: LayoutBuilder(
+              builder: (context, constraints) {
+                final layout = _layoutFor(constraints.maxWidth);
+                final isWide = layout != _LoginLayout.mobile;
+                final horizontalPadding = isWide ? 48.0 : 24.0;
+                final columnGap = layout == _LoginLayout.desktop ? 80.0 : 40.0;
+                final contentMaxWidth =
+                    isWide ? AppConstants.loginMaxWidth : 420.0;
+                final body = isWide
+                    ? _WideLoginBody(
+                        layout: layout,
+                        columnGap: columnGap,
+                        compact: constraints.maxHeight < 820,
+                        formKey: _formKey,
+                        email: _email,
+                        password: _password,
+                        creating: _creating,
+                        busy: _busy,
+                        error: _error,
+                        onSubmit: () => _submit(auth),
+                        onToggleMode: () => setState(() {
+                          _creating = !_creating;
+                          _error = null;
+                        }),
+                      )
+                    : _MobileLoginBody(
+                        formKey: _formKey,
+                        email: _email,
+                        password: _password,
+                        creating: _creating,
+                        busy: _busy,
+                        error: _error,
+                        onSubmit: () => _submit(auth),
+                        onToggleMode: () => setState(() {
+                          _creating = !_creating;
+                          _error = null;
+                        }),
+                      );
+
+                final content = ConstrainedBox(
+                  constraints: BoxConstraints(maxWidth: contentMaxWidth),
+                  child: Padding(
+                    padding: EdgeInsets.symmetric(
+                      horizontal: horizontalPadding,
+                      vertical: isWide ? 40 : 32,
+                    ),
+                    child: body,
                   ),
-                ),
-              ],
+                );
+
+                // minHeight centraliza quando cabe; scroll só quando o conteúdo passa da viewport.
+                // maxWidth evita overflow horizontal do Row dentro do scroll.
+                return Column(
+                  children: [
+                    Expanded(
+                      child: SingleChildScrollView(
+                        child: ConstrainedBox(
+                          constraints: BoxConstraints(
+                            minHeight: constraints.maxHeight,
+                            maxWidth: constraints.maxWidth,
+                          ),
+                          child: Align(
+                            alignment: Alignment.center,
+                            child: content,
+                          ),
+                        ),
+                      ),
+                    ),
+                    const _LoginFooter(),
+                  ],
+                );
+              },
             ),
           ),
-        ),
+        ],
       ),
     );
   }
 }
 
+class _WideLoginBody extends StatelessWidget {
+  const _WideLoginBody({
+    required this.layout,
+    required this.columnGap,
+    required this.compact,
+    required this.formKey,
+    required this.email,
+    required this.password,
+    required this.creating,
+    required this.busy,
+    required this.error,
+    required this.onSubmit,
+    required this.onToggleMode,
+  });
+
+  final _LoginLayout layout;
+  final double columnGap;
+  final bool compact;
+  final GlobalKey<FormState> formKey;
+  final TextEditingController email;
+  final TextEditingController password;
+  final bool creating;
+  final bool busy;
+  final String? error;
+  final VoidCallback onSubmit;
+  final VoidCallback onToggleMode;
+
+  @override
+  Widget build(BuildContext context) {
+    final logoSize = compact ? 72.0 : 88.0;
+    final brandGap = compact ? 32.0 : (layout == _LoginLayout.desktop ? 48.0 : 36.0);
+    final useColumn = layout == _LoginLayout.tablet && compact;
+
+    final institutional = LoginInstitutionalPanel(creating: creating);
+    final form = LoginFormCard(
+      formKey: formKey,
+      email: email,
+      password: password,
+      creating: creating,
+      busy: busy,
+      error: error,
+      onSubmit: onSubmit,
+      onToggleMode: onToggleMode,
+    );
+
+    return Column(
+      mainAxisSize: MainAxisSize.min,
+      crossAxisAlignment: CrossAxisAlignment.stretch,
+      children: [
+        _LoginBrand(logoSize: logoSize, compact: compact),
+        SizedBox(height: brandGap),
+        if (useColumn) ...[
+          institutional,
+          const SizedBox(height: 28),
+          form,
+        ] else
+          Row(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Expanded(flex: 5, child: institutional),
+              SizedBox(width: columnGap),
+              Expanded(flex: 4, child: form),
+            ],
+          ),
+      ],
+    );
+  }
+}
+
+class _MobileLoginBody extends StatelessWidget {
+  const _MobileLoginBody({
+    required this.formKey,
+    required this.email,
+    required this.password,
+    required this.creating,
+    required this.busy,
+    required this.error,
+    required this.onSubmit,
+    required this.onToggleMode,
+  });
+
+  final GlobalKey<FormState> formKey;
+  final TextEditingController email;
+  final TextEditingController password;
+  final bool creating;
+  final bool busy;
+  final String? error;
+  final VoidCallback onSubmit;
+  final VoidCallback onToggleMode;
+
+  @override
+  Widget build(BuildContext context) {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.stretch,
+      children: [
+        const _LoginBrand(logoSize: 80),
+        const SizedBox(height: 32),
+        LoginInstitutionalPanel(creating: creating),
+        const SizedBox(height: 28),
+        LoginFormCard(
+          formKey: formKey,
+          email: email,
+          password: password,
+          creating: creating,
+          busy: busy,
+          error: error,
+          onSubmit: onSubmit,
+          onToggleMode: onToggleMode,
+        ),
+      ],
+    );
+  }
+}
+
 class _LoginBrand extends StatelessWidget {
-  const _LoginBrand();
+  const _LoginBrand({required this.logoSize, this.compact = false});
+
+  final double logoSize;
+  final bool compact;
 
   @override
   Widget build(BuildContext context) {
     return Column(
       children: [
-        Container(
-          width: 64,
-          height: 64,
-          decoration: BoxDecoration(
-            color: AppColors.primary.withValues(alpha: 0.12),
-            borderRadius: BorderRadius.circular(18),
-          ),
-          child: const Center(child: Text('🦪', style: TextStyle(fontSize: 32))),
-        ),
-        const SizedBox(height: 16),
+        GuardianLogo(size: logoSize),
+        SizedBox(height: compact ? 20 : 32),
         Text(AppConstants.appName, style: Theme.of(context).textTheme.headlineLarge),
+        SizedBox(height: compact ? 8 : 12),
+        Text(
+          AppConstants.portalTitle,
+          style: Theme.of(context).textTheme.titleLarge?.copyWith(
+                color: AppColors.textMuted,
+                fontWeight: FontWeight.w500,
+              ),
+        ),
+        const SizedBox(height: 8),
+        Text(
+          AppConstants.footerTagline,
+          textAlign: TextAlign.center,
+          style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                fontSize: 13,
+                height: 1.4,
+                color: AppColors.textMuted.withValues(alpha: 0.65),
+              ),
+        ),
       ],
+    );
+  }
+}
+
+class _LoginFooter extends StatelessWidget {
+  const _LoginFooter();
+
+  @override
+  Widget build(BuildContext context) {
+    final muted = Theme.of(context).textTheme.bodyMedium?.copyWith(
+          fontSize: 12,
+          color: AppColors.textMuted.withValues(alpha: 0.7),
+        );
+
+    final copyright = muted?.copyWith(
+      fontSize: 11,
+      color: AppColors.textMuted.withValues(alpha: 0.5),
+    );
+
+    return Padding(
+      padding: const EdgeInsets.fromLTRB(24, 16, 24, 24),
+      child: Column(
+        children: [
+          Text(AppConstants.appVersion, style: muted),
+          const SizedBox(height: 8),
+          Text(
+            '© ${DateTime.now().year} ${AppConstants.copyrightHolder}. '
+            'Todos os direitos reservados.',
+            style: copyright,
+            textAlign: TextAlign.center,
+          ),
+        ],
+      ),
     );
   }
 }

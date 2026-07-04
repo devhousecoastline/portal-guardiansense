@@ -3,6 +3,9 @@ import 'package:flutter/material.dart';
 /// Tokens de cor — alinhados ao app mobile (dark-first).
 abstract final class AppColors {
   static const background = Color(0xFF0B0F14);
+  static const loginBackgroundCenter = Color(0xFF10151C);
+  static const loginBackgroundMid = Color(0xFF0C1016);
+  static const loginBackgroundEdge = Color(0xFF080B10);
   static const surface = Color(0xFF141A22);
   static const card = Color(0xFF161B22);
   static const primary = Color(0xFF3D8BFF);

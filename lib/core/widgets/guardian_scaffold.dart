@@ -3,6 +3,7 @@ import 'package:go_router/go_router.dart';
 import 'package:guardian_portal/app/constants.dart';
 import 'package:guardian_portal/core/routing/app_routes.dart';
 import 'package:guardian_portal/core/theme/app_colors.dart';
+import 'package:guardian_portal/core/widgets/guardian_logo.dart';
 
 /// Layout base do portal — sidebar em telas largas, drawer em mobile web.
 class GuardianScaffold extends StatelessWidget {
@@ -162,15 +163,7 @@ class _BrandHeader extends StatelessWidget {
       children: [
         Row(
           children: [
-            Container(
-              width: 36,
-              height: 36,
-              decoration: BoxDecoration(
-                color: AppColors.primary.withValues(alpha: 0.15),
-                borderRadius: BorderRadius.circular(10),
-              ),
-              child: const Center(child: Text('🦪', style: TextStyle(fontSize: 18))),
-            ),
+            const GuardianLogo(size: 36),
             const SizedBox(width: 12),
             Text(
               AppConstants.appName,
