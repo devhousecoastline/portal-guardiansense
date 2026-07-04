@@ -1,0 +1,141 @@
+import 'package:guardian_portal/core/widgets/relative_time.dart';
+import 'package:guardian_portal/core/widgets/status_badge.dart';
+import 'package:guardian_portal/features/dashboard/domain/device_status.dart';
+
+enum ChecklistSignal { ok, warn, alert, muted }
+
+class ProtectionChecklistEntry {
+  const ProtectionChecklistEntry({
+    required this.question,
+    required this.answer,
+    required this.signal,
+  });
+
+  final String question;
+  final String answer;
+  final ChecklistSignal signal;
+}
+
+/// Respostas rápidas derivadas do [DeviceStatus] sincronizado pelo app.
+abstract final class ProtectionSnapshot {
+  static String headline(DeviceStatus status) => switch (status.level) {
+        ProtectionLevel.protected => 'Seu celular está protegido.',
+        ProtectionLevel.partial => 'Proteção parcial — revise os itens abaixo.',
+        ProtectionLevel.alert => 'Atenção — proteção comprometida.',
+        ProtectionLevel.offline => 'Dispositivo offline no momento.',
+        ProtectionLevel.unknown => 'Aguardando dados do aparelho.',
+      };
+
+  static StatusTone tone(DeviceStatus status) => switch (status.level) {
+        ProtectionLevel.protected => StatusTone.protected,
+        ProtectionLevel.partial => StatusTone.warning,
+        ProtectionLevel.alert => StatusTone.critical,
+        ProtectionLevel.offline => StatusTone.offline,
+        ProtectionLevel.unknown => StatusTone.neutral,
+      };
+
+  static List<ProtectionChecklistEntry> checklist(DeviceStatus status) {
+    return [
+      ProtectionChecklistEntry(
+        question: 'Meu celular está protegido?',
+        answer: _protectedAnswer(status),
+        signal: _protectedSignal(status),
+      ),
+      ProtectionChecklistEntry(
+        question: 'O Runtime está ativo?',
+        answer: _runtimeAnswer(status),
+        signal: _runtimeSignal(status),
+      ),
+      ProtectionChecklistEntry(
+        question: 'A Ostra está aberta ou fechada?',
+        answer: _oysterAnswer(status),
+        signal: _oysterSignal(status),
+      ),
+      ProtectionChecklistEntry(
+        question: 'Houve tentativa recente de abrir app protegido?',
+        answer: _recentEventAnswer(status),
+        signal: _recentEventSignal(status),
+      ),
+      ProtectionChecklistEntry(
+        question: 'Quando foi a última sincronização?',
+        answer: formatRelativeTime(status.lastSeen),
+        signal: status.isOnline ? ChecklistSignal.ok : ChecklistSignal.alert,
+      ),
+      ProtectionChecklistEntry(
+        question: 'Qual é meu Índice de Proteção?',
+        answer: '${status.protectionIndex}%',
+        signal: status.protectionIndex >= 90
+            ? ChecklistSignal.ok
+            : status.protectionIndex >= 50
+                ? ChecklistSignal.warn
+                : ChecklistSignal.alert,
+      ),
+    ];
+  }
+
+  static String _protectedAnswer(DeviceStatus status) => switch (status.level) {
+        ProtectionLevel.protected => 'Sim — ${status.protectionLabel}',
+        ProtectionLevel.partial => 'Parcialmente',
+        ProtectionLevel.alert => 'Não — verifique o aparelho',
+        ProtectionLevel.offline => 'Offline',
+        ProtectionLevel.unknown => 'Aguardando sync',
+      };
+
+  static ChecklistSignal _protectedSignal(DeviceStatus status) =>
+      switch (status.level) {
+        ProtectionLevel.protected => ChecklistSignal.ok,
+        ProtectionLevel.partial => ChecklistSignal.warn,
+        ProtectionLevel.alert => ChecklistSignal.alert,
+        ProtectionLevel.offline => ChecklistSignal.muted,
+        ProtectionLevel.unknown => ChecklistSignal.muted,
+      };
+
+  static String _runtimeAnswer(DeviceStatus status) => switch (status.runtimeActive) {
+        true => 'Sim — ativo',
+        false => 'Não — inativo',
+        null => 'Aguardando sync',
+      };
+
+  static ChecklistSignal _runtimeSignal(DeviceStatus status) =>
+      switch (status.runtimeActive) {
+        true => ChecklistSignal.ok,
+        false => ChecklistSignal.alert,
+        null => ChecklistSignal.muted,
+      };
+
+  static String _oysterAnswer(DeviceStatus status) => switch (status.oysterClosed) {
+        true => 'Fechada — contenção ativa',
+        false => 'Aberta — uso normal',
+        null => 'Aguardando sync',
+      };
+
+  static ChecklistSignal _oysterSignal(DeviceStatus status) =>
+      switch (status.oysterClosed) {
+        true => ChecklistSignal.warn,
+        false => ChecklistSignal.ok,
+        null => ChecklistSignal.muted,
+      };
+
+  static String _recentEventAnswer(DeviceStatus status) {
+    if (status.lastEventSummary != null && status.lastEventSummary!.isNotEmpty) {
+      final when = formatRelativeTime(status.lastEventAt);
+      return '${status.lastEventSummary!} · $when';
+    }
+    if (status.lastAlertSummary != null && status.lastAlertSummary!.isNotEmpty) {
+      final when = formatRelativeTime(status.lastAlertAt);
+      return '${status.lastAlertSummary!} · $when';
+    }
+    return 'Nenhuma registrada';
+  }
+
+  static ChecklistSignal _recentEventSignal(DeviceStatus status) {
+    final recent = _isRecent(status.lastEventAt) || _isRecent(status.lastAlertAt);
+    if (recent) return ChecklistSignal.warn;
+    return ChecklistSignal.ok;
+  }
+
+  static bool _isRecent(DateTime? at) {
+    if (at == null) return false;
+    return DateTime.now().difference(at) < const Duration(hours: 24);
+  }
+}

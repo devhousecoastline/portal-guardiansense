@@ -2,13 +2,13 @@ import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import 'package:guardian_portal/app/constants.dart';
 import 'package:guardian_portal/core/widgets/guardian_scaffold.dart';
-import 'package:guardian_portal/core/widgets/status_badge.dart';
 import 'package:guardian_portal/features/dashboard/application/dashboard_service.dart';
 import 'package:guardian_portal/features/dashboard/domain/device_status.dart';
+import 'package:guardian_portal/features/dashboard/domain/protection_snapshot.dart';
 import 'package:guardian_portal/features/dashboard/presentation/widgets/empty_devices_card.dart';
-import 'package:guardian_portal/features/dashboard/presentation/widgets/protection_hero_card.dart';
+import 'package:guardian_portal/features/dashboard/presentation/widgets/protection_checklist_card.dart';
+import 'package:guardian_portal/features/dashboard/presentation/widgets/protection_status_hero.dart';
 import 'package:guardian_portal/features/dashboard/presentation/widgets/quick_actions.dart';
-import 'package:guardian_portal/features/dashboard/presentation/widgets/sync_status_row.dart';
 
 class DashboardPage extends StatelessWidget {
   const DashboardPage({super.key});
@@ -45,20 +45,29 @@ class _DashboardBody extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final tone = switch (status.level) {
-      ProtectionLevel.protected => StatusTone.protected,
-      ProtectionLevel.partial => StatusTone.warning,
-      ProtectionLevel.alert => StatusTone.critical,
-      ProtectionLevel.offline => StatusTone.offline,
-      ProtectionLevel.unknown => StatusTone.neutral,
-    };
+    final tone = ProtectionSnapshot.tone(status);
+    final wide = MediaQuery.sizeOf(context).width >= 960;
+
+    final hero = ProtectionStatusHero(status: status, tone: tone);
+    final checklist = ProtectionChecklistCard(status: status);
 
     return Column(
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
-        ProtectionHeroCard(status: status, tone: tone),
-        const SizedBox(height: 20),
-        SyncStatusCard(status: status),
+        if (wide)
+          Row(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Expanded(flex: 5, child: hero),
+              const SizedBox(width: 20),
+              Expanded(flex: 6, child: checklist),
+            ],
+          )
+        else ...[
+          hero,
+          const SizedBox(height: 20),
+          checklist,
+        ],
         const SizedBox(height: 20),
         const DashboardQuickActions(),
         const SizedBox(height: 16),
