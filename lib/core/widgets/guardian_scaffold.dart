@@ -42,7 +42,7 @@ class GuardianScaffold extends StatelessWidget {
                     alignment: Alignment.topCenter,
                     child: ConstrainedBox(
                       constraints: const BoxConstraints(maxWidth: 720),
-                      child: Padding(
+                      child: SingleChildScrollView(
                         padding: const EdgeInsets.fromLTRB(24, 8, 24, 32),
                         child: child,
                       ),

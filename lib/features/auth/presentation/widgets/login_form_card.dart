@@ -14,6 +14,7 @@ class LoginFormCard extends StatelessWidget {
     required this.busy,
     required this.error,
     required this.onSubmit,
+    required this.onGoogleSignIn,
     required this.onToggleMode,
   });
 
@@ -24,6 +25,7 @@ class LoginFormCard extends StatelessWidget {
   final bool busy;
   final String? error;
   final VoidCallback onSubmit;
+  final VoidCallback onGoogleSignIn;
   final VoidCallback onToggleMode;
 
   @override
@@ -87,6 +89,16 @@ class LoginFormCard extends StatelessWidget {
             fullWidth: true,
             busy: busy,
             onPressed: busy ? null : onSubmit,
+          ),
+          const SizedBox(height: 12),
+          GuardianPillButton(
+            label: 'Continuar com Google',
+            icon: Icons.g_mobiledata_rounded,
+            iconLeading: true,
+            neutral: true,
+            fullWidth: true,
+            busy: busy,
+            onPressed: busy ? null : onGoogleSignIn,
           ),
           const SizedBox(height: 12),
           TextButton(

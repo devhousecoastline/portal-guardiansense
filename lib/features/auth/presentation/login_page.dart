@@ -56,12 +56,31 @@ class _LoginPageState extends State<LoginPage> {
 
   String _mapAuthError(FirebaseAuthException e) => switch (e.code) {
         'user-not-found' || 'wrong-password' || 'invalid-credential' =>
-          'E-mail ou senha incorretos.',
-        'email-already-in-use' => 'Este e-mail já está em uso.',
+          'E-mail ou senha incorretos. Se você entrou pelo Google no app, '
+          'use «Continuar com Google».',
+        'email-already-in-use' =>
+          'Este e-mail já está cadastrado. Se você usa o app com Google, '
+          'clique em «Continuar com Google».',
         'weak-password' => 'Senha muito fraca (mínimo 6 caracteres).',
         'invalid-email' => 'E-mail inválido.',
+        'popup-closed-by-user' => 'Login com Google cancelado.',
         _ => e.message ?? 'Não foi possível entrar.',
       };
+
+  Future<void> _signInWithGoogle(AuthController auth) async {
+    setState(() {
+      _busy = true;
+      _error = null;
+    });
+
+    try {
+      await auth.signInWithGoogle();
+    } on FirebaseAuthException catch (e) {
+      setState(() => _error = _mapAuthError(e));
+    } finally {
+      if (mounted) setState(() => _busy = false);
+    }
+  }
 
   _LoginLayout _layoutFor(double width) {
     if (width < 720) return _LoginLayout.mobile;
@@ -117,6 +136,7 @@ class _LoginPageState extends State<LoginPage> {
                         busy: _busy,
                         error: _error,
                         onSubmit: () => _submit(auth),
+                        onGoogleSignIn: () => _signInWithGoogle(auth),
                         onToggleMode: () => setState(() {
                           _creating = !_creating;
                           _error = null;
@@ -130,6 +150,7 @@ class _LoginPageState extends State<LoginPage> {
                         busy: _busy,
                         error: _error,
                         onSubmit: () => _submit(auth),
+                        onGoogleSignIn: () => _signInWithGoogle(auth),
                         onToggleMode: () => setState(() {
                           _creating = !_creating;
                           _error = null;
@@ -189,6 +210,7 @@ class _WideLoginBody extends StatelessWidget {
     required this.busy,
     required this.error,
     required this.onSubmit,
+    required this.onGoogleSignIn,
     required this.onToggleMode,
   });
 
@@ -202,6 +224,7 @@ class _WideLoginBody extends StatelessWidget {
   final bool busy;
   final String? error;
   final VoidCallback onSubmit;
+  final VoidCallback onGoogleSignIn;
   final VoidCallback onToggleMode;
 
   @override
@@ -219,6 +242,7 @@ class _WideLoginBody extends StatelessWidget {
       busy: busy,
       error: error,
       onSubmit: onSubmit,
+      onGoogleSignIn: onGoogleSignIn,
       onToggleMode: onToggleMode,
     );
 
@@ -255,6 +279,7 @@ class _MobileLoginBody extends StatelessWidget {
     required this.busy,
     required this.error,
     required this.onSubmit,
+    required this.onGoogleSignIn,
     required this.onToggleMode,
   });
 
@@ -265,6 +290,7 @@ class _MobileLoginBody extends StatelessWidget {
   final bool busy;
   final String? error;
   final VoidCallback onSubmit;
+  final VoidCallback onGoogleSignIn;
   final VoidCallback onToggleMode;
 
   @override
@@ -284,6 +310,7 @@ class _MobileLoginBody extends StatelessWidget {
           busy: busy,
           error: error,
           onSubmit: onSubmit,
+          onGoogleSignIn: onGoogleSignIn,
           onToggleMode: onToggleMode,
         ),
       ],

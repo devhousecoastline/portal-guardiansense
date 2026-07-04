@@ -28,6 +28,16 @@ class AuthController extends ChangeNotifier {
     );
   }
 
+  /// Login com Google — mesmo provedor do app mobile (Firebase popup no Web).
+  Future<void> signInWithGoogle() async {
+    final provider = GoogleAuthProvider();
+    if (kIsWeb) {
+      await _auth.signInWithPopup(provider);
+      return;
+    }
+    await _auth.signInWithProvider(provider);
+  }
+
   Future<void> sendPasswordReset(String email) async {
     await _auth.sendPasswordResetEmail(email: email.trim());
   }
