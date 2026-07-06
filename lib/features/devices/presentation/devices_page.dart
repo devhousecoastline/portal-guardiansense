@@ -1,6 +1,7 @@
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import 'package:guardian_portal/core/widgets/guardian_scaffold.dart';
+import 'package:guardian_portal/core/widgets/online_refresh.dart';
 import 'package:guardian_portal/core/widgets/section_card.dart';
 import 'package:guardian_portal/features/devices/data/device_repository.dart';
 import 'package:guardian_portal/features/devices/presentation/widgets/device_plan_banner.dart';
@@ -17,9 +18,10 @@ class DevicesPage extends StatelessWidget {
     return GuardianScaffold(
       title: 'Dispositivos',
       subtitle: 'Aparelhos vinculados à sua conta',
-      child: StreamBuilder(
-        stream: DeviceRepository().watchDeviceList(uid),
-        builder: (context, snapshot) {
+      child: OnlineRefresh(
+        builder: (context) => StreamBuilder(
+          stream: DeviceRepository().watchDeviceList(uid),
+          builder: (context, snapshot) {
           if (snapshot.connectionState == ConnectionState.waiting) {
             return const Center(child: CircularProgressIndicator());
           }
@@ -53,6 +55,7 @@ class DevicesPage extends StatelessWidget {
             ],
           );
         },
+        ),
       ),
     );
   }

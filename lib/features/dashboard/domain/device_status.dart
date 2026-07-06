@@ -12,7 +12,7 @@ class DeviceStatus {
     required this.platform,
     required this.appVersion,
     required this.lastSeen,
-    required this.protectionIndex,
+    required this.storedProtectionIndex,
     required this.runtimeActive,
     required this.oysterClosed,
     required this.batteryLevel,
@@ -22,8 +22,6 @@ class DeviceStatus {
     required this.lastEventSummary,
     required this.location,
     required this.fingerprint,
-    required this.isOnline,
-    required this.level,
   });
 
   final String deviceId;
@@ -31,7 +29,7 @@ class DeviceStatus {
   final String platform;
   final String appVersion;
   final DateTime? lastSeen;
-  final int protectionIndex;
+  final int storedProtectionIndex;
   final bool? runtimeActive;
   final bool? oysterClosed;
   final int? batteryLevel;
@@ -41,8 +39,18 @@ class DeviceStatus {
   final String? lastEventSummary;
   final DeviceLocation? location;
   final String? fingerprint;
-  final bool isOnline;
-  final ProtectionLevel level;
+
+  /// Online se houve sync recente (recalculado a cada build/tick).
+  bool get isOnline {
+    final seen = lastSeen;
+    if (seen == null) return false;
+    return DateTime.now().difference(seen) < AppConstants.deviceOnlineThreshold;
+  }
+
+  int get protectionIndex => isOnline ? storedProtectionIndex : 0;
+
+  ProtectionLevel get level =>
+      _level(storedProtectionIndex, isOnline, runtimeActive, oysterClosed);
 
   String get protectionLabel => switch (level) {
         ProtectionLevel.protected => 'Protegido',
@@ -54,13 +62,10 @@ class DeviceStatus {
 
   static DeviceStatus fromFirestore(String id, Map<String, dynamic> data) {
     final lastSeen = _timestamp(data['lastSeen']) ?? _timestamp(data['lastSync']);
-    final now = DateTime.now();
-    final online = lastSeen != null &&
-        now.difference(lastSeen) < AppConstants.deviceOnlineThreshold;
-
     final runtimeActive = data['runtimeActive'] as bool?;
     final oysterClosed = data['oysterClosed'] as bool?;
-    final protectionIndex = _protectionIndex(data, runtimeActive, oysterClosed, online);
+    final protectionIndex =
+        _protectionIndex(data, runtimeActive, oysterClosed);
 
     return DeviceStatus(
       deviceId: id,
@@ -70,7 +75,7 @@ class DeviceStatus {
       platform: data['platform'] as String? ?? '—',
       appVersion: data['appVersion'] as String? ?? '—',
       lastSeen: lastSeen,
-      protectionIndex: protectionIndex,
+      storedProtectionIndex: protectionIndex,
       runtimeActive: runtimeActive,
       oysterClosed: oysterClosed,
       batteryLevel: (data['batteryLevel'] as num?)?.toInt(),
@@ -80,8 +85,6 @@ class DeviceStatus {
       lastEventSummary: data['lastEventSummary'] as String?,
       location: DeviceLocation.fromFirestore(data),
       fingerprint: data['fingerprint'] as String?,
-      isOnline: online,
-      level: _level(protectionIndex, online, runtimeActive, oysterClosed),
     );
   }
 
@@ -89,11 +92,9 @@ class DeviceStatus {
     Map<String, dynamic> data,
     bool? runtimeActive,
     bool? oysterClosed,
-    bool online,
   ) {
     final stored = (data['protectionIndex'] as num?)?.toInt();
     if (stored != null) return stored.clamp(0, 100);
-    if (!online) return 0;
     if (runtimeActive == true && oysterClosed == true) return 100;
     if (runtimeActive == true) return 75;
     if (runtimeActive == false) return 25;

@@ -2,6 +2,7 @@ import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import 'package:guardian_portal/app/constants.dart';
 import 'package:guardian_portal/core/widgets/guardian_scaffold.dart';
+import 'package:guardian_portal/core/widgets/online_refresh.dart';
 import 'package:guardian_portal/features/dashboard/application/dashboard_service.dart';
 import 'package:guardian_portal/features/dashboard/domain/device_status.dart';
 import 'package:guardian_portal/features/dashboard/domain/protection_snapshot.dart';
@@ -21,18 +22,20 @@ class DashboardPage extends StatelessWidget {
     return GuardianScaffold(
       title: AppConstants.portalTitle,
       subtitle: 'Status do seu dispositivo',
-      child: StreamBuilder(
-        stream: DashboardService().watchPrimaryDevice(uid),
-        builder: (context, snapshot) {
-          if (snapshot.connectionState == ConnectionState.waiting) {
-            return const Center(child: CircularProgressIndicator());
-          }
+      child: OnlineRefresh(
+        builder: (context) => StreamBuilder(
+          stream: DashboardService().watchPrimaryDevice(uid),
+          builder: (context, snapshot) {
+            if (snapshot.connectionState == ConnectionState.waiting) {
+              return const Center(child: CircularProgressIndicator());
+            }
 
-          final device = snapshot.data;
-          if (device == null) return const EmptyDevicesCard();
+            final device = snapshot.data;
+            if (device == null) return const EmptyDevicesCard();
 
-          return _DashboardBody(status: device.status);
-        },
+            return _DashboardBody(status: device.status);
+          },
+        ),
       ),
     );
   }

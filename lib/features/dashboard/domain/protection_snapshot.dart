@@ -90,18 +90,23 @@ abstract final class ProtectionSnapshot {
         ProtectionLevel.unknown => ChecklistSignal.muted,
       };
 
-  static String _runtimeAnswer(DeviceStatus status) => switch (status.runtimeActive) {
-        true => 'Sim — ativo',
-        false => 'Não — inativo',
-        null => 'Aguardando sync',
-      };
+  static String _runtimeAnswer(DeviceStatus status) {
+    if (!status.isOnline) return 'Indisponível — dispositivo offline';
+    return switch (status.runtimeActive) {
+      true => 'Sim — ativo',
+      false => 'Não — inativo',
+      null => 'Aguardando sync',
+    };
+  }
 
-  static ChecklistSignal _runtimeSignal(DeviceStatus status) =>
-      switch (status.runtimeActive) {
-        true => ChecklistSignal.ok,
-        false => ChecklistSignal.alert,
-        null => ChecklistSignal.muted,
-      };
+  static ChecklistSignal _runtimeSignal(DeviceStatus status) {
+    if (!status.isOnline) return ChecklistSignal.muted;
+    return switch (status.runtimeActive) {
+      true => ChecklistSignal.ok,
+      false => ChecklistSignal.alert,
+      null => ChecklistSignal.muted,
+    };
+  }
 
   static String _oysterAnswer(DeviceStatus status) => switch (status.oysterClosed) {
         true => 'Fechada — contenção ativa',

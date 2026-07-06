@@ -27,6 +27,6 @@ abstract final class AppConstants {
   /// Largura máxima do layout desktop da login.
   static const double loginMaxWidth = 1180;
 
-  /// Dispositivo considerado online se `lastSeen` for mais recente que isso.
-  static const Duration deviceOnlineThreshold = Duration(minutes: 5);
+  /// Dispositivo online se `lastSeen` for mais recente que isso (~3× o ciclo do app).
+  static const Duration deviceOnlineThreshold = Duration(seconds: 90);
 }

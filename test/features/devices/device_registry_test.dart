@@ -18,7 +18,7 @@ GuardianDevice _device({
       platform: 'android',
       appVersion: '1.0.0',
       lastSeen: lastSeen,
-      protectionIndex: 100,
+      storedProtectionIndex: 100,
       runtimeActive: true,
       oysterClosed: false,
       batteryLevel: null,
@@ -28,8 +28,6 @@ GuardianDevice _device({
       lastEventSummary: null,
       location: null,
       fingerprint: fingerprint,
-      isOnline: true,
-      level: ProtectionLevel.protected,
     ),
   );
 }
