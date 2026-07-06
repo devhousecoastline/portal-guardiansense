@@ -10,7 +10,6 @@ import 'package:guardian_portal/features/dashboard/presentation/widgets/empty_de
 import 'package:guardian_portal/features/dashboard/presentation/widgets/protection_checklist_card.dart';
 import 'package:guardian_portal/features/dashboard/presentation/widgets/protection_setup_card.dart';
 import 'package:guardian_portal/features/dashboard/presentation/widgets/protection_status_hero.dart';
-import 'package:guardian_portal/features/dashboard/presentation/widgets/quick_actions.dart';
 
 class DashboardPage extends StatelessWidget {
   const DashboardPage({super.key});
@@ -84,8 +83,6 @@ class _DashboardBody extends StatelessWidget {
           const SizedBox(height: 16),
           checklist,
         ],
-        const SizedBox(height: 20),
-        const DashboardQuickActions(),
         const SizedBox(height: 16),
         Text(
           'O celular detecta, decide e bloqueia. O portal apenas reflete o que foi sincronizado.',
