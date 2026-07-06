@@ -63,12 +63,8 @@ abstract final class ProtectionSnapshot {
       ),
       ProtectionChecklistEntry(
         question: 'Qual é meu Índice de Proteção?',
-        answer: '${status.protectionIndex}%',
-        signal: status.protectionIndex >= 90
-            ? ChecklistSignal.ok
-            : status.protectionIndex >= 50
-                ? ChecklistSignal.warn
-                : ChecklistSignal.alert,
+        answer: _protectionIndexAnswer(status),
+        signal: _protectionIndexSignal(status),
       ),
     ];
   }
@@ -142,5 +138,20 @@ abstract final class ProtectionSnapshot {
   static bool _isRecent(DateTime? at) {
     if (at == null) return false;
     return DateTime.now().difference(at) < const Duration(hours: 24);
+  }
+
+  static String _protectionIndexAnswer(DeviceStatus status) {
+    final percent = '${status.protectionIndex}%';
+    if (!status.hasSetupChecklist) return percent;
+    final pending = status.pendingSetupItems.length;
+    if (pending == 0) return '$percent — todos os requisitos ok';
+    final missing = status.pendingSetupItems.map((i) => i.label).join(', ');
+    return '$percent — falta: $missing';
+  }
+
+  static ChecklistSignal _protectionIndexSignal(DeviceStatus status) {
+    if (status.protectionIndex >= 90) return ChecklistSignal.ok;
+    if (status.protectionIndex >= 50) return ChecklistSignal.warn;
+    return ChecklistSignal.alert;
   }
 }

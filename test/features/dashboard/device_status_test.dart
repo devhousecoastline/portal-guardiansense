@@ -19,6 +19,7 @@ DeviceStatus _status({DateTime? lastSeen}) {
     lastEventSummary: null,
     location: null,
     fingerprint: 'fp',
+    protectionSetupItems: const [],
   );
 }
 

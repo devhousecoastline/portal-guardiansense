@@ -28,6 +28,7 @@ GuardianDevice _device({
       lastEventSummary: null,
       location: null,
       fingerprint: fingerprint,
+      protectionSetupItems: const [],
     ),
   );
 }

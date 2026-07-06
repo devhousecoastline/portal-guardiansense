@@ -1,6 +1,7 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:guardian_portal/app/constants.dart';
 import 'package:guardian_portal/features/dashboard/domain/device_location.dart';
+import 'package:guardian_portal/features/dashboard/domain/protection_setup_item.dart';
 
 /// Estado de proteção sincronizado pelo app mobile (read-only no portal).
 enum ProtectionLevel { protected, partial, alert, offline, unknown }
@@ -22,6 +23,7 @@ class DeviceStatus {
     required this.lastEventSummary,
     required this.location,
     required this.fingerprint,
+    required this.protectionSetupItems,
   });
 
   final String deviceId;
@@ -39,6 +41,15 @@ class DeviceStatus {
   final String? lastEventSummary;
   final DeviceLocation? location;
   final String? fingerprint;
+  final List<ProtectionSetupItem> protectionSetupItems;
+
+  bool get hasSetupChecklist => protectionSetupItems.isNotEmpty;
+
+  List<ProtectionSetupItem> get configuredSetupItems =>
+      protectionSetupItems.where((i) => i.done).toList(growable: false);
+
+  List<ProtectionSetupItem> get pendingSetupItems =>
+      protectionSetupItems.where((i) => !i.done).toList(growable: false);
 
   /// Online se houve sync recente (recalculado a cada build/tick).
   bool get isOnline {
@@ -85,6 +96,8 @@ class DeviceStatus {
       lastEventSummary: data['lastEventSummary'] as String?,
       location: DeviceLocation.fromFirestore(data),
       fingerprint: data['fingerprint'] as String?,
+      protectionSetupItems:
+          ProtectionSetupItem.fromFirestoreList(data['protectionChecklist']),
     );
   }
 

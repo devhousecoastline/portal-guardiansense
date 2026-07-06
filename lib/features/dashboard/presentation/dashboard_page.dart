@@ -8,6 +8,7 @@ import 'package:guardian_portal/features/dashboard/domain/device_status.dart';
 import 'package:guardian_portal/features/dashboard/domain/protection_snapshot.dart';
 import 'package:guardian_portal/features/dashboard/presentation/widgets/empty_devices_card.dart';
 import 'package:guardian_portal/features/dashboard/presentation/widgets/protection_checklist_card.dart';
+import 'package:guardian_portal/features/dashboard/presentation/widgets/protection_setup_card.dart';
 import 'package:guardian_portal/features/dashboard/presentation/widgets/protection_status_hero.dart';
 import 'package:guardian_portal/features/dashboard/presentation/widgets/quick_actions.dart';
 
@@ -52,6 +53,7 @@ class _DashboardBody extends StatelessWidget {
     final wide = MediaQuery.sizeOf(context).width >= 960;
 
     final hero = ProtectionStatusHero(status: status, tone: tone);
+    final setup = ProtectionSetupCard(status: status);
     final checklist = ProtectionChecklistCard(status: status);
 
     return Column(
@@ -63,12 +65,23 @@ class _DashboardBody extends StatelessWidget {
             children: [
               Expanded(flex: 5, child: hero),
               const SizedBox(width: 20),
-              Expanded(flex: 6, child: checklist),
+              Expanded(
+                flex: 6,
+                child: Column(
+                  children: [
+                    setup,
+                    const SizedBox(height: 16),
+                    checklist,
+                  ],
+                ),
+              ),
             ],
           )
         else ...[
           hero,
           const SizedBox(height: 20),
+          setup,
+          const SizedBox(height: 16),
           checklist,
         ],
         const SizedBox(height: 20),
