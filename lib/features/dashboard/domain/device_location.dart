@@ -19,9 +19,10 @@ class DeviceLocation {
   static DeviceLocation? fromFirestore(Map<String, dynamic> data) {
     final raw = data['lastLocation'];
     if (raw is! Map) return null;
+    final loc = Map<String, dynamic>.from(raw);
 
-    final lat = (raw['lat'] as num?)?.toDouble();
-    final lng = (raw['lng'] as num?)?.toDouble();
+    final lat = (loc['lat'] as num?)?.toDouble();
+    final lng = (loc['lng'] as num?)?.toDouble();
     if (lat == null || lng == null) return null;
 
     final ts = data['locationUpdatedAt'];
@@ -30,7 +31,7 @@ class DeviceLocation {
     return DeviceLocation(
       lat: lat,
       lng: lng,
-      accuracyM: (raw['accuracyM'] as num?)?.toDouble(),
+      accuracyM: (loc['accuracyM'] as num?)?.toDouble(),
       updatedAt: updatedAt,
       source: data['locationSource'] as String?,
     );
