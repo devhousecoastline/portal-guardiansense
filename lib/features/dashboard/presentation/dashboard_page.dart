@@ -70,7 +70,7 @@ class _DashboardBody extends StatelessWidget {
                 child: Column(
                   children: [
                     setup,
-                    const SizedBox(height: 16),
+                    const SizedBox(height: 14),
                     checklist,
                   ],
                 ),

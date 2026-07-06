@@ -45,6 +45,16 @@ class ProtectionStatusHero extends StatelessWidget {
                 ),
           ),
           const SizedBox(height: 24),
+          if (status.hasSetupChecklist) ...[
+            Text(
+              _setupSummary(status),
+              style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                    color: accent,
+                    fontWeight: FontWeight.w600,
+                  ),
+            ),
+            const SizedBox(height: 16),
+          ],
           Row(
             crossAxisAlignment: CrossAxisAlignment.end,
             children: [
@@ -86,4 +96,11 @@ class ProtectionStatusHero extends StatelessWidget {
         StatusTone.offline => AppColors.textMuted,
         StatusTone.neutral => AppColors.primary,
       };
+
+  String _setupSummary(DeviceStatus status) {
+    final total = status.protectionSetupItems.length;
+    final done = status.configuredSetupItems.length;
+    if (done == total) return '$done de $total requisitos configurados no app';
+    return '$done de $total requisitos — falta ${total - done}';
+  }
 }

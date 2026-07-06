@@ -14,7 +14,7 @@ class ProtectionChecklistCard extends StatelessWidget {
     final entries = ProtectionSnapshot.checklist(status);
 
     return SectionCard(
-      padding: const EdgeInsets.fromLTRB(20, 20, 20, 8),
+      padding: const EdgeInsets.fromLTRB(20, 18, 20, 6),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
@@ -24,12 +24,17 @@ class ProtectionChecklistCard extends StatelessWidget {
           ),
           const SizedBox(height: 4),
           Text(
-            'O que importa sobre a proteção do seu aparelho.',
-            style: Theme.of(context).textTheme.bodyMedium,
+            'Status em tempo real do aparelho.',
+            style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                  color: AppColors.textMuted,
+                ),
           ),
-          const SizedBox(height: 16),
+          const SizedBox(height: 12),
           ...entries.map(
-            (entry) => _ChecklistRow(entry: entry),
+            (entry) => _ChecklistRow(
+              entry: entry,
+              compact: entry.answer.length > 48,
+            ),
           ),
         ],
       ),
@@ -38,9 +43,10 @@ class ProtectionChecklistCard extends StatelessWidget {
 }
 
 class _ChecklistRow extends StatelessWidget {
-  const _ChecklistRow({required this.entry});
+  const _ChecklistRow({required this.entry, this.compact = false});
 
   final ProtectionChecklistEntry entry;
+  final bool compact;
 
   @override
   Widget build(BuildContext context) {
@@ -52,34 +58,40 @@ class _ChecklistRow extends StatelessWidget {
     };
 
     return Padding(
-      padding: const EdgeInsets.symmetric(vertical: 10),
+      padding: const EdgeInsets.symmetric(vertical: 8),
       child: Row(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Padding(
             padding: const EdgeInsets.only(top: 4),
             child: Container(
-              width: 10,
-              height: 10,
+              width: 8,
+              height: 8,
               decoration: BoxDecoration(color: color, shape: BoxShape.circle),
             ),
           ),
-          const SizedBox(width: 14),
+          const SizedBox(width: 12),
           Expanded(
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 Text(
                   entry.question,
-                  style: Theme.of(context).textTheme.bodyMedium,
+                  style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                        color: AppColors.textMuted,
+                      ),
                 ),
-                const SizedBox(height: 4),
+                const SizedBox(height: 2),
                 Text(
                   entry.answer,
-                  style: Theme.of(context).textTheme.titleMedium?.copyWith(
-                        color: color,
-                        fontWeight: FontWeight.w600,
-                      ),
+                  style: (compact
+                          ? Theme.of(context).textTheme.bodyMedium
+                          : Theme.of(context).textTheme.titleSmall)
+                      ?.copyWith(
+                    color: color,
+                    fontWeight: FontWeight.w600,
+                    height: 1.35,
+                  ),
                 ),
               ],
             ),

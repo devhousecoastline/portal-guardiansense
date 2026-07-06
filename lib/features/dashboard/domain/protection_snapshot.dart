@@ -35,7 +35,7 @@ abstract final class ProtectionSnapshot {
       };
 
   static List<ProtectionChecklistEntry> checklist(DeviceStatus status) {
-    return [
+    final entries = <ProtectionChecklistEntry>[
       ProtectionChecklistEntry(
         question: 'Meu celular está protegido?',
         answer: _protectedAnswer(status),
@@ -61,12 +61,19 @@ abstract final class ProtectionSnapshot {
         answer: formatRelativeTime(status.lastSeen),
         signal: status.isOnline ? ChecklistSignal.ok : ChecklistSignal.alert,
       ),
-      ProtectionChecklistEntry(
-        question: 'Qual é meu Índice de Proteção?',
-        answer: _protectionIndexAnswer(status),
-        signal: _protectionIndexSignal(status),
-      ),
     ];
+
+    if (!status.hasSetupChecklist) {
+      entries.add(
+        ProtectionChecklistEntry(
+          question: 'Qual é meu Índice de Proteção?',
+          answer: _protectionIndexAnswer(status),
+          signal: _protectionIndexSignal(status),
+        ),
+      );
+    }
+
+    return entries;
   }
 
   static String _protectedAnswer(DeviceStatus status) => switch (status.level) {

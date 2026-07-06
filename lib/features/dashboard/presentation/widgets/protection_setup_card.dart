@@ -11,8 +11,12 @@ class ProtectionSetupCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final complete = status.hasSetupChecklist &&
+        status.pendingSetupItems.isEmpty &&
+        status.configuredSetupItems.isNotEmpty;
+
     return SectionCard(
-      padding: const EdgeInsets.fromLTRB(20, 20, 20, 12),
+      padding: const EdgeInsets.fromLTRB(20, 18, 20, 14),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
@@ -22,57 +26,57 @@ class ProtectionSetupCard extends StatelessWidget {
           ),
           const SizedBox(height: 4),
           Text(
-            'O que você já ajustou no app e o que ainda falta para 100%.',
-            style: Theme.of(context).textTheme.bodyMedium,
+            complete
+                ? 'Todos os requisitos do app estão em dia.'
+                : 'O que falta ajustar no app para chegar a 100%.',
+            style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                  color: AppColors.textMuted,
+                ),
           ),
-          const SizedBox(height: 16),
+          const SizedBox(height: 14),
           if (!status.isOnline) ...[
             _InfoBanner(
               text: status.hasSetupChecklist
-                  ? 'Aparelho offline — lista abaixo pode estar desatualizada.'
+                  ? 'Aparelho offline — dados podem estar desatualizados.'
                   : 'Aparelho offline — abra o app no celular para sincronizar.',
             ),
             const SizedBox(height: 12),
           ],
           if (!status.hasSetupChecklist)
             Text(
-              'Detalhes ainda não sincronizados. Abra o app Guardian Sense no '
-              'celular com a mesma conta para enviar o checklist.',
+              'Abra o Guardian Sense no celular com esta conta para '
+              'sincronizar o checklist.',
               style: Theme.of(context).textTheme.bodyMedium?.copyWith(
                     color: AppColors.textMuted,
                   ),
             )
           else ...[
-            _ProgressSummary(status: status),
-            const SizedBox(height: 20),
-            if (status.configuredSetupItems.isNotEmpty) ...[
-              _SectionTitle(
-                label: 'Ajustado no app',
-                color: AppColors.trustHigh,
-              ),
-              const SizedBox(height: 8),
-              ...status.configuredSetupItems.map(
-                (item) => _SetupRow(item: item, configured: true),
-              ),
-            ],
-            if (status.pendingSetupItems.isNotEmpty) ...[
-              if (status.configuredSetupItems.isNotEmpty)
-                const SizedBox(height: 16),
-              _SectionTitle(
-                label: 'Ainda falta',
-                color: AppColors.trustMedium,
-              ),
-              const SizedBox(height: 8),
-              ...status.pendingSetupItems.map(
-                (item) => _SetupRow(item: item, configured: false),
-              ),
-              const SizedBox(height: 8),
-              Text(
-                'Conclua no app Guardian Sense → Configurações ou onboarding.',
-                style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                      color: AppColors.textMuted,
-                    ),
-              ),
+            _ProgressSummary(status: status, complete: complete),
+            const SizedBox(height: 16),
+            if (complete)
+              _CompleteGrid(items: status.configuredSetupItems)
+            else ...[
+              if (status.pendingSetupItems.isNotEmpty) ...[
+                _SectionTitle(
+                  label: 'Ainda falta (${status.pendingSetupItems.length})',
+                  color: AppColors.trustMedium,
+                ),
+                const SizedBox(height: 6),
+                ...status.pendingSetupItems.map(
+                  (item) => _PendingRow(item: item),
+                ),
+                const SizedBox(height: 6),
+                Text(
+                  'Ajuste no app → Configurações.',
+                  style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                        color: AppColors.textMuted,
+                      ),
+                ),
+              ],
+              if (status.configuredSetupItems.isNotEmpty) ...[
+                const SizedBox(height: 12),
+                _ConfiguredExpansion(items: status.configuredSetupItems),
+              ],
             ],
           ],
         ],
@@ -82,48 +86,237 @@ class ProtectionSetupCard extends StatelessWidget {
 }
 
 class _ProgressSummary extends StatelessWidget {
-  const _ProgressSummary({required this.status});
+  const _ProgressSummary({required this.status, required this.complete});
 
   final DeviceStatus status;
+  final bool complete;
 
   @override
   Widget build(BuildContext context) {
     final total = status.protectionSetupItems.length;
     final done = status.configuredSetupItems.length;
     final ratio = total == 0 ? 0.0 : done / total;
-    final color =
-        done == total ? AppColors.trustHigh : AppColors.trustMedium;
+    final color = complete ? AppColors.trustHigh : AppColors.trustMedium;
 
     return Column(
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
-        Row(
-          children: [
-            Text(
-              '$done de $total requisitos',
-              style: Theme.of(context).textTheme.titleMedium,
+        if (complete)
+          Container(
+            width: double.infinity,
+            padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
+            decoration: BoxDecoration(
+              color: AppColors.trustHigh.withValues(alpha: 0.1),
+              borderRadius: BorderRadius.circular(10),
+              border: Border.all(
+                color: AppColors.trustHigh.withValues(alpha: 0.25),
+              ),
             ),
-            const Spacer(),
-            Text(
-              '${status.protectionIndex}%',
-              style: Theme.of(context).textTheme.titleLarge?.copyWith(
-                    color: color,
-                    fontWeight: FontWeight.w700,
+            child: Row(
+              children: [
+                const Icon(
+                  Icons.verified_rounded,
+                  size: 20,
+                  color: AppColors.trustHigh,
+                ),
+                const SizedBox(width: 10),
+                Expanded(
+                  child: Text(
+                    '$done de $total requisitos configurados',
+                    style: Theme.of(context).textTheme.titleSmall?.copyWith(
+                          color: AppColors.trustHigh,
+                          fontWeight: FontWeight.w600,
+                        ),
                   ),
+                ),
+              ],
             ),
-          ],
-        ),
+          )
+        else
+          Text(
+            '$done de $total requisitos',
+            style: Theme.of(context).textTheme.titleSmall,
+          ),
         const SizedBox(height: 10),
         ClipRRect(
           borderRadius: BorderRadius.circular(6),
           child: LinearProgressIndicator(
             value: ratio,
-            minHeight: 8,
-            backgroundColor: AppColors.textMuted.withValues(alpha: 0.15),
+            minHeight: 6,
+            backgroundColor: AppColors.textMuted.withValues(alpha: 0.12),
             color: color,
           ),
         ),
       ],
+    );
+  }
+}
+
+class _CompleteGrid extends StatelessWidget {
+  const _CompleteGrid({required this.items});
+
+  final List<ProtectionSetupItem> items;
+
+  @override
+  Widget build(BuildContext context) {
+    return LayoutBuilder(
+      builder: (context, constraints) {
+        final twoColumns = constraints.maxWidth >= 320;
+        return Wrap(
+          spacing: 8,
+          runSpacing: 8,
+          children: items.map((item) {
+            return SizedBox(
+              width: twoColumns
+                  ? (constraints.maxWidth - 8) / 2
+                  : constraints.maxWidth,
+              child: _SetupChip(item: item),
+            );
+          }).toList(),
+        );
+      },
+    );
+  }
+}
+
+class _SetupChip extends StatelessWidget {
+  const _SetupChip({required this.item});
+
+  final ProtectionSetupItem item;
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 8),
+      decoration: BoxDecoration(
+        color: AppColors.trustHigh.withValues(alpha: 0.08),
+        borderRadius: BorderRadius.circular(10),
+        border: Border.all(
+          color: AppColors.trustHigh.withValues(alpha: 0.2),
+        ),
+      ),
+      child: Row(
+        children: [
+          const Icon(
+            Icons.check_rounded,
+            size: 16,
+            color: AppColors.trustHigh,
+          ),
+          const SizedBox(width: 8),
+          Expanded(
+            child: Text(
+              item.label,
+              style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                    height: 1.25,
+                  ),
+              maxLines: 2,
+              overflow: TextOverflow.ellipsis,
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+class _PendingRow extends StatelessWidget {
+  const _PendingRow({required this.item});
+
+  final ProtectionSetupItem item;
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      margin: const EdgeInsets.only(bottom: 8),
+      padding: const EdgeInsets.all(12),
+      decoration: BoxDecoration(
+        color: AppColors.trustMedium.withValues(alpha: 0.08),
+        borderRadius: BorderRadius.circular(12),
+        border: Border.all(
+          color: AppColors.trustMedium.withValues(alpha: 0.28),
+        ),
+      ),
+      child: Row(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          const Icon(
+            Icons.error_outline_rounded,
+            size: 20,
+            color: AppColors.trustMedium,
+          ),
+          const SizedBox(width: 10),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  item.label,
+                  style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                        fontWeight: FontWeight.w600,
+                      ),
+                ),
+                const SizedBox(height: 2),
+                Text(
+                  'Pendente no app',
+                  style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                        color: AppColors.trustMedium,
+                        fontWeight: FontWeight.w600,
+                      ),
+                ),
+              ],
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+class _ConfiguredExpansion extends StatelessWidget {
+  const _ConfiguredExpansion({required this.items});
+
+  final List<ProtectionSetupItem> items;
+
+  @override
+  Widget build(BuildContext context) {
+    return Theme(
+      data: Theme.of(context).copyWith(dividerColor: Colors.transparent),
+      child: ExpansionTile(
+        tilePadding: EdgeInsets.zero,
+        childrenPadding: const EdgeInsets.only(top: 4, bottom: 4),
+        title: Text(
+          'Já ajustado no app (${items.length})',
+          style: Theme.of(context).textTheme.titleSmall?.copyWith(
+                color: AppColors.trustHigh,
+                fontWeight: FontWeight.w600,
+              ),
+        ),
+        iconColor: AppColors.trustHigh,
+        collapsedIconColor: AppColors.textMuted,
+        children: items
+            .map(
+              (item) => Padding(
+                padding: const EdgeInsets.symmetric(vertical: 4),
+                child: Row(
+                  children: [
+                    const Icon(
+                      Icons.check_circle_rounded,
+                      size: 16,
+                      color: AppColors.trustHigh,
+                    ),
+                    const SizedBox(width: 8),
+                    Expanded(
+                      child: Text(
+                        item.label,
+                        style: Theme.of(context).textTheme.bodySmall,
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            )
+            .toList(),
+      ),
     );
   }
 }
@@ -141,51 +334,7 @@ class _SectionTitle extends StatelessWidget {
       style: Theme.of(context).textTheme.titleSmall?.copyWith(
             color: color,
             fontWeight: FontWeight.w700,
-            letterSpacing: 0.2,
           ),
-    );
-  }
-}
-
-class _SetupRow extends StatelessWidget {
-  const _SetupRow({required this.item, required this.configured});
-
-  final ProtectionSetupItem item;
-  final bool configured;
-
-  @override
-  Widget build(BuildContext context) {
-    final color = configured ? AppColors.trustHigh : AppColors.trustMedium;
-    final icon = configured ? Icons.check_circle_rounded : Icons.radio_button_unchecked_rounded;
-
-    return Padding(
-      padding: const EdgeInsets.symmetric(vertical: 6),
-      child: Row(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Icon(icon, size: 20, color: color),
-          const SizedBox(width: 10),
-          Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(
-                  item.label,
-                  style: Theme.of(context).textTheme.bodyMedium,
-                ),
-                const SizedBox(height: 2),
-                Text(
-                  configured ? 'Configurado' : 'Pendente — ajuste no app',
-                  style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                        color: color,
-                        fontWeight: FontWeight.w600,
-                      ),
-                ),
-              ],
-            ),
-          ),
-        ],
-      ),
     );
   }
 }
@@ -201,7 +350,7 @@ class _InfoBanner extends StatelessWidget {
       width: double.infinity,
       padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
       decoration: BoxDecoration(
-        color: AppColors.textMuted.withValues(alpha: 0.12),
+        color: AppColors.textMuted.withValues(alpha: 0.1),
         borderRadius: BorderRadius.circular(10),
       ),
       child: Text(
