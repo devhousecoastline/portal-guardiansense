@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:guardian_portal/core/theme/app_colors.dart';
+import 'package:guardian_portal/core/widgets/relative_time.dart';
 import 'package:guardian_portal/core/widgets/status_badge.dart';
 import 'package:guardian_portal/features/dashboard/domain/device_status.dart';
 import 'package:guardian_portal/features/dashboard/domain/protection_snapshot.dart';
@@ -18,6 +19,7 @@ class ProtectionStatusHero extends StatelessWidget {
   Widget build(BuildContext context) {
     final accent = _accent(tone);
     final headline = ProtectionSnapshot.headline(status);
+    final offline = !status.isOnline;
 
     return Container(
       width: double.infinity,
@@ -31,6 +33,10 @@ class ProtectionStatusHero extends StatelessWidget {
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           StatusBadge(label: status.protectionLabel.toUpperCase(), tone: tone),
+          if (offline) ...[
+            const SizedBox(height: 12),
+            _OfflineBanner(lastSeen: status.lastSeen),
+          ],
           const SizedBox(height: 16),
           Text(
             status.modelLabel,
@@ -44,22 +50,12 @@ class ProtectionStatusHero extends StatelessWidget {
                   height: 1.4,
                 ),
           ),
-          const SizedBox(height: 24),
-          if (status.hasSetupChecklist) ...[
-            Text(
-              _setupSummary(status),
-              style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                    color: accent,
-                    fontWeight: FontWeight.w600,
-                  ),
-            ),
-            const SizedBox(height: 16),
-          ],
+          const Spacer(),
           Row(
             crossAxisAlignment: CrossAxisAlignment.end,
             children: [
               Text(
-                '${status.protectionIndex}',
+                offline ? '—' : '${status.protectionIndex}',
                 style: Theme.of(context).textTheme.headlineLarge?.copyWith(
                       fontSize: 52,
                       fontWeight: FontWeight.w700,
@@ -67,23 +63,47 @@ class ProtectionStatusHero extends StatelessWidget {
                       height: 1,
                     ),
               ),
-              Padding(
-                padding: const EdgeInsets.only(bottom: 6, left: 2),
-                child: Text(
-                  '%',
-                  style: Theme.of(context).textTheme.titleLarge?.copyWith(
-                        color: accent,
-                        fontWeight: FontWeight.w600,
-                      ),
+              if (!offline)
+                Padding(
+                  padding: const EdgeInsets.only(bottom: 6, left: 2),
+                  child: Text(
+                    '%',
+                    style: Theme.of(context).textTheme.titleLarge?.copyWith(
+                          color: accent,
+                          fontWeight: FontWeight.w600,
+                        ),
+                  ),
                 ),
-              ),
               const Spacer(),
-              Text(
-                'Índice de Proteção',
-                style: Theme.of(context).textTheme.bodyMedium,
+              Column(
+                crossAxisAlignment: CrossAxisAlignment.end,
+                children: [
+                  Text(
+                    'Índice de Proteção',
+                    style: Theme.of(context).textTheme.bodyMedium,
+                  ),
+                  if (offline && status.hasSetupChecklist) ...[
+                    const SizedBox(height: 4),
+                    Text(
+                      'Último: ${status.storedProtectionIndex}%',
+                      style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                            color: AppColors.textMuted,
+                          ),
+                    ),
+                  ],
+                ],
               ),
             ],
           ),
+          if (offline) ...[
+            const SizedBox(height: 8),
+            Text(
+              'Sem sincronização recente',
+              style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                    color: AppColors.textMuted,
+                  ),
+            ),
+          ],
         ],
       ),
     );
@@ -96,11 +116,43 @@ class ProtectionStatusHero extends StatelessWidget {
         StatusTone.offline => AppColors.textMuted,
         StatusTone.neutral => AppColors.primary,
       };
+}
 
-  String _setupSummary(DeviceStatus status) {
-    final total = status.protectionSetupItems.length;
-    final done = status.configuredSetupItems.length;
-    if (done == total) return '$done de $total requisitos configurados no app';
-    return '$done de $total requisitos — falta ${total - done}';
+class _OfflineBanner extends StatelessWidget {
+  const _OfflineBanner({required this.lastSeen});
+
+  final DateTime? lastSeen;
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      width: double.infinity,
+      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
+      decoration: BoxDecoration(
+        color: AppColors.textMuted.withValues(alpha: 0.1),
+        borderRadius: BorderRadius.circular(10),
+        border: Border.all(color: AppColors.textMuted.withValues(alpha: 0.2)),
+      ),
+      child: Row(
+        children: [
+          const Icon(
+            Icons.cloud_off_outlined,
+            size: 18,
+            color: AppColors.textMuted,
+          ),
+          const SizedBox(width: 10),
+          Expanded(
+            child: Text(
+              lastSeen != null
+                  ? 'Offline · última sync ${formatRelativeTime(lastSeen)}'
+                  : 'Offline · aguardando primeira sync',
+              style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                    color: AppColors.textMuted,
+                  ),
+            ),
+          ),
+        ],
+      ),
+    );
   }
 }

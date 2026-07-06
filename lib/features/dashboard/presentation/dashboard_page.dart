@@ -58,24 +58,20 @@ class _DashboardBody extends StatelessWidget {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
-        if (wide)
-          Row(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Expanded(flex: 5, child: hero),
-              const SizedBox(width: 20),
-              Expanded(
-                flex: 6,
-                child: Column(
-                  children: [
-                    setup,
-                    const SizedBox(height: 14),
-                    checklist,
-                  ],
-                ),
-              ),
-            ],
-          )
+        if (wide) ...[
+          IntrinsicHeight(
+            child: Row(
+              crossAxisAlignment: CrossAxisAlignment.stretch,
+              children: [
+                Expanded(flex: 5, child: hero),
+                const SizedBox(width: 20),
+                Expanded(flex: 6, child: setup),
+              ],
+            ),
+          ),
+          const SizedBox(height: 14),
+          checklist,
+        ]
         else ...[
           hero,
           const SizedBox(height: 20),
@@ -85,7 +81,7 @@ class _DashboardBody extends StatelessWidget {
         ],
         const SizedBox(height: 16),
         Text(
-          'O celular detecta, decide e bloqueia. O portal apenas reflete o que foi sincronizado.',
+          ProtectionSnapshot.dashboardFooter(status),
           textAlign: TextAlign.center,
           style: Theme.of(context).textTheme.bodyMedium?.copyWith(fontSize: 13),
         ),

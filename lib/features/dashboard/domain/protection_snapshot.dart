@@ -9,11 +9,26 @@ class ProtectionChecklistEntry {
     required this.question,
     required this.answer,
     required this.signal,
+    this.fullWidth = false,
   });
 
   final String question;
   final String answer;
   final ChecklistSignal signal;
+  final bool fullWidth;
+}
+
+/// Agrupamento do checklist para layout em colunas.
+class ChecklistLayout {
+  const ChecklistLayout({
+    required this.left,
+    required this.right,
+    this.fullWidth = const [],
+  });
+
+  final List<ProtectionChecklistEntry> left;
+  final List<ProtectionChecklistEntry> right;
+  final List<ProtectionChecklistEntry> fullWidth;
 }
 
 /// Respostas rápidas derivadas do [DeviceStatus] sincronizado pelo app.
@@ -74,6 +89,61 @@ abstract final class ProtectionSnapshot {
     }
 
     return entries;
+  }
+
+  /// Coluna esq.: proteção + runtime + sync · dir.: ostra · largura total: evento.
+  static ChecklistLayout checklistLayout(DeviceStatus status) {
+    final all = checklist(status);
+    ProtectionChecklistEntry? pick(String prefix) {
+      for (final e in all) {
+        if (e.question.startsWith(prefix)) return e;
+      }
+      return null;
+    }
+
+    final left = [
+      pick('Meu celular'),
+      pick('O Runtime'),
+      pick('Quando foi'),
+    ].whereType<ProtectionChecklistEntry>().toList();
+
+    final right = [
+      pick('A Ostra'),
+    ].whereType<ProtectionChecklistEntry>().toList();
+
+    final fullWidth = [
+      pick('Houve tentativa'),
+    ].whereType<ProtectionChecklistEntry>().toList();
+
+    // Fallback se ordem mudar — distribui o que sobrou.
+    final placed = {...left, ...right, ...fullWidth};
+    final rest = all.where((e) => !placed.contains(e)).toList();
+    if (rest.isNotEmpty) {
+      left.addAll(rest.where((e) => !e.fullWidth));
+    }
+
+    return ChecklistLayout(left: left, right: right, fullWidth: fullWidth);
+  }
+
+  static String setupCardSubtitle(DeviceStatus status) {
+    if (!status.isOnline) {
+      return 'Último estado sincronizado — aparelho offline agora.';
+    }
+    if (!status.hasSetupChecklist) {
+      return 'Aguardando checklist do app.';
+    }
+    final complete = status.pendingSetupItems.isEmpty &&
+        status.configuredSetupItems.isNotEmpty;
+    if (complete) return 'Todos os requisitos do app estão em dia.';
+    return 'O que falta ajustar no app para chegar a 100%.';
+  }
+
+  static String dashboardFooter(DeviceStatus status) {
+    if (!status.isOnline) {
+      return 'Dados abaixo refletem a última sincronização do aparelho.';
+    }
+    return 'O celular detecta, decide e bloqueia. '
+        'O portal apenas reflete o que foi sincronizado.';
   }
 
   static String _protectedAnswer(DeviceStatus status) => switch (status.level) {

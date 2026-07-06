@@ -11,10 +11,11 @@ class ProtectionChecklistCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final entries = ProtectionSnapshot.checklist(status);
+    final layout = ProtectionSnapshot.checklistLayout(status);
+    final twoColumns = MediaQuery.sizeOf(context).width >= 640;
 
     return SectionCard(
-      padding: const EdgeInsets.fromLTRB(20, 18, 20, 6),
+      padding: const EdgeInsets.fromLTRB(20, 18, 20, 10),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
@@ -24,29 +25,57 @@ class ProtectionChecklistCard extends StatelessWidget {
           ),
           const SizedBox(height: 4),
           Text(
-            'Status em tempo real do aparelho.',
+            status.isOnline
+                ? 'Status em tempo real do aparelho.'
+                : 'Último estado conhecido do aparelho.',
             style: Theme.of(context).textTheme.bodyMedium?.copyWith(
                   color: AppColors.textMuted,
                 ),
           ),
           const SizedBox(height: 12),
-          ...entries.map(
-            (entry) => _ChecklistRow(
-              entry: entry,
-              compact: entry.answer.length > 48,
-            ),
-          ),
+          if (twoColumns && layout.right.isNotEmpty)
+            Row(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Expanded(child: _ChecklistColumn(entries: layout.left)),
+                const SizedBox(width: 20),
+                Expanded(child: _ChecklistColumn(entries: layout.right)),
+              ],
+            )
+          else
+            _ChecklistColumn(entries: [...layout.left, ...layout.right]),
+          if (layout.fullWidth.isNotEmpty) ...[
+            const SizedBox(height: 4),
+            for (final entry in layout.fullWidth)
+              _ChecklistRow(entry: entry, fullWidth: true),
+          ],
         ],
       ),
     );
   }
 }
 
+class _ChecklistColumn extends StatelessWidget {
+  const _ChecklistColumn({required this.entries});
+
+  final List<ProtectionChecklistEntry> entries;
+
+  @override
+  Widget build(BuildContext context) {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.stretch,
+      children: [
+        for (final entry in entries) _ChecklistRow(entry: entry),
+      ],
+    );
+  }
+}
+
 class _ChecklistRow extends StatelessWidget {
-  const _ChecklistRow({required this.entry, this.compact = false});
+  const _ChecklistRow({required this.entry, this.fullWidth = false});
 
   final ProtectionChecklistEntry entry;
-  final bool compact;
+  final bool fullWidth;
 
   @override
   Widget build(BuildContext context) {
@@ -56,47 +85,62 @@ class _ChecklistRow extends StatelessWidget {
       ChecklistSignal.alert => AppColors.riskCritical,
       ChecklistSignal.muted => AppColors.textMuted,
     };
+    final compact = fullWidth || entry.answer.length > 40;
 
     return Padding(
-      padding: const EdgeInsets.symmetric(vertical: 8),
-      child: Row(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Padding(
-            padding: const EdgeInsets.only(top: 4),
-            child: Container(
-              width: 8,
-              height: 8,
-              decoration: BoxDecoration(color: color, shape: BoxShape.circle),
+      padding: EdgeInsets.only(bottom: fullWidth ? 4 : 10, top: fullWidth ? 6 : 0),
+      child: Container(
+        width: double.infinity,
+        padding: fullWidth
+            ? const EdgeInsets.symmetric(horizontal: 12, vertical: 10)
+            : EdgeInsets.zero,
+        decoration: fullWidth
+            ? BoxDecoration(
+                color: color.withValues(alpha: 0.06),
+                borderRadius: BorderRadius.circular(10),
+                border: Border.all(color: color.withValues(alpha: 0.18)),
+              )
+            : null,
+        child: Row(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Padding(
+              padding: const EdgeInsets.only(top: 4),
+              child: Container(
+                width: 8,
+                height: 8,
+                decoration: BoxDecoration(color: color, shape: BoxShape.circle),
+              ),
             ),
-          ),
-          const SizedBox(width: 12),
-          Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(
-                  entry.question,
-                  style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                        color: AppColors.textMuted,
-                      ),
-                ),
-                const SizedBox(height: 2),
-                Text(
-                  entry.answer,
-                  style: (compact
-                          ? Theme.of(context).textTheme.bodyMedium
-                          : Theme.of(context).textTheme.titleSmall)
-                      ?.copyWith(
-                    color: color,
-                    fontWeight: FontWeight.w600,
-                    height: 1.35,
+            const SizedBox(width: 10),
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    entry.question,
+                    style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                          color: AppColors.textMuted,
+                          height: 1.25,
+                        ),
                   ),
-                ),
-              ],
+                  const SizedBox(height: 2),
+                  Text(
+                    entry.answer,
+                    style: (compact
+                            ? Theme.of(context).textTheme.bodySmall
+                            : Theme.of(context).textTheme.bodyMedium)
+                        ?.copyWith(
+                      color: color,
+                      fontWeight: FontWeight.w600,
+                      height: 1.3,
+                    ),
+                  ),
+                ],
+              ),
             ),
-          ),
-        ],
+          ],
+        ),
       ),
     );
   }
