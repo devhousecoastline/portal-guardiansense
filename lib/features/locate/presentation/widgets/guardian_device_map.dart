@@ -1,0 +1,146 @@
+import 'package:flutter/material.dart';
+import 'package:flutter_map/flutter_map.dart';
+import 'package:guardian_portal/core/theme/app_colors.dart';
+import 'package:guardian_portal/features/dashboard/domain/device_location.dart';
+import 'package:latlong2/latlong.dart';
+
+/// Mapa escuro personalizado Guardian Sense (Carto Dark Matter + pin escudo).
+class GuardianDeviceMap extends StatefulWidget {
+  const GuardianDeviceMap({
+    super.key,
+    required this.location,
+    this.height = 420,
+  });
+
+  final DeviceLocation location;
+  final double height;
+
+  @override
+  State<GuardianDeviceMap> createState() => _GuardianDeviceMapState();
+}
+
+class _GuardianDeviceMapState extends State<GuardianDeviceMap> {
+  late final MapController _controller = MapController();
+  late final LatLng _point = LatLng(widget.location.lat, widget.location.lng);
+
+  @override
+  Widget build(BuildContext context) {
+    return ClipRRect(
+      borderRadius: BorderRadius.circular(16),
+      child: SizedBox(
+        height: widget.height,
+        child: Stack(
+          children: [
+            FlutterMap(
+              mapController: _controller,
+              options: MapOptions(
+                initialCenter: _point,
+                initialZoom: 15,
+                minZoom: 4,
+                maxZoom: 18,
+                interactionOptions: const InteractionOptions(
+                  flags: InteractiveFlag.all & ~InteractiveFlag.rotate,
+                ),
+              ),
+              children: [
+                TileLayer(
+                  urlTemplate:
+                      'https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png',
+                  subdomains: const ['a', 'b', 'c', 'd'],
+                  userAgentPackageName: 'guardian_portal',
+                ),
+                CircleLayer(
+                  circles: [
+                    CircleMarker(
+                      point: _point,
+                      radius: 42,
+                      color: AppColors.trustHigh.withValues(alpha: 0.12),
+                      borderColor: AppColors.trustHigh.withValues(alpha: 0.35),
+                      borderStrokeWidth: 2,
+                    ),
+                  ],
+                ),
+                MarkerLayer(
+                  markers: [
+                    Marker(
+                      point: _point,
+                      width: 56,
+                      height: 56,
+                      alignment: Alignment.topCenter,
+                      child: const _ShieldPin(),
+                    ),
+                  ],
+                ),
+                RichAttributionWidget(
+                  attributions: [
+                    TextSourceAttribution(
+                      'OpenStreetMap · CARTO',
+                      onTap: () {},
+                    ),
+                  ],
+                ),
+              ],
+            ),
+            Positioned(
+              right: 12,
+              bottom: 12,
+              child: Material(
+                color: AppColors.card.withValues(alpha: 0.92),
+                borderRadius: BorderRadius.circular(10),
+                child: IconButton(
+                  tooltip: 'Centralizar',
+                  onPressed: () => _controller.move(_point, 15),
+                  icon: const Icon(
+                    Icons.my_location,
+                    color: AppColors.trustHigh,
+                  ),
+                ),
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+}
+
+class _ShieldPin extends StatelessWidget {
+  const _ShieldPin();
+
+  @override
+  Widget build(BuildContext context) {
+    return Column(
+      mainAxisSize: MainAxisSize.min,
+      children: [
+        Container(
+          width: 44,
+          height: 44,
+          decoration: BoxDecoration(
+            color: AppColors.card,
+            shape: BoxShape.circle,
+            border: Border.all(color: AppColors.trustHigh, width: 2),
+            boxShadow: [
+              BoxShadow(
+                color: AppColors.trustHigh.withValues(alpha: 0.35),
+                blurRadius: 12,
+              ),
+            ],
+          ),
+          padding: const EdgeInsets.all(6),
+          child: Image.asset(
+            'assets/images/shield_transparent.png',
+            fit: BoxFit.contain,
+          ),
+        ),
+        Container(
+          width: 3,
+          height: 10,
+          decoration: BoxDecoration(
+            color: AppColors.trustHigh,
+            borderRadius: BorderRadius.circular(2),
+          ),
+        ),
+      ],
+    );
+  }
+}

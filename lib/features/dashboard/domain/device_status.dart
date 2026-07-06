@@ -1,5 +1,6 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:guardian_portal/app/constants.dart';
+import 'package:guardian_portal/features/dashboard/domain/device_location.dart';
 
 /// Estado de proteção sincronizado pelo app mobile (read-only no portal).
 enum ProtectionLevel { protected, partial, alert, offline, unknown }
@@ -19,6 +20,7 @@ class DeviceStatus {
     required this.lastAlertSummary,
     required this.lastEventAt,
     required this.lastEventSummary,
+    required this.location,
     required this.isOnline,
     required this.level,
   });
@@ -36,6 +38,7 @@ class DeviceStatus {
   final String? lastAlertSummary;
   final DateTime? lastEventAt;
   final String? lastEventSummary;
+  final DeviceLocation? location;
   final bool isOnline;
   final ProtectionLevel level;
 
@@ -73,6 +76,7 @@ class DeviceStatus {
       lastAlertSummary: data['lastAlertSummary'] as String?,
       lastEventAt: _timestamp(data['lastEventAt']),
       lastEventSummary: data['lastEventSummary'] as String?,
+      location: DeviceLocation.fromFirestore(data),
       isOnline: online,
       level: _level(protectionIndex, online, runtimeActive, oysterClosed),
     );

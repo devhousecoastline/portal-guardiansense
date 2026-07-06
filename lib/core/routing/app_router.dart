@@ -7,6 +7,7 @@ import 'package:guardian_portal/features/auth/presentation/login_page.dart';
 import 'package:guardian_portal/features/dashboard/presentation/dashboard_page.dart';
 import 'package:guardian_portal/features/devices/presentation/devices_page.dart';
 import 'package:guardian_portal/features/events/presentation/events_page.dart';
+import 'package:guardian_portal/features/locate/presentation/locate_page.dart';
 import 'package:guardian_portal/features/settings/presentation/settings_page.dart';
 
 GoRouter createAppRouter({required Listenable authListenable}) {
@@ -33,6 +34,10 @@ GoRouter createAppRouter({required Listenable authListenable}) {
       GoRoute(
         path: AppRoutes.events,
         builder: (context, state) => const EventsPage(),
+      ),
+      GoRoute(
+        path: AppRoutes.locate,
+        builder: (context, state) => const LocatePage(),
       ),
       GoRoute(
         path: AppRoutes.devices,

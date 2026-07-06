@@ -218,6 +218,7 @@ class _NavItem {
 
 const _navItems = [
   _NavItem('Centro', Icons.shield_outlined, AppRoutes.dashboard),
+  _NavItem('Localizar', Icons.map_outlined, AppRoutes.locate),
   _NavItem('Eventos', Icons.timeline_outlined, AppRoutes.events),
   _NavItem('Dispositivos', Icons.smartphone_outlined, AppRoutes.devices),
   _NavItem('Configurações', Icons.tune_outlined, AppRoutes.settings),

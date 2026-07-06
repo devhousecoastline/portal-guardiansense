@@ -10,6 +10,12 @@ class DashboardQuickActions extends StatelessWidget {
     return Column(
       children: [
         _ActionButton(
+          label: 'Localizar aparelho',
+          icon: Icons.map_outlined,
+          onTap: () => context.go(AppRoutes.locate),
+        ),
+        const SizedBox(height: 10),
+        _ActionButton(
           label: 'Ver eventos',
           icon: Icons.timeline_outlined,
           onTap: () => context.go(AppRoutes.events),
