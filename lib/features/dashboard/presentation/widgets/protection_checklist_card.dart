@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:guardian_portal/core/layout/app_layout.dart';
 import 'package:guardian_portal/core/theme/app_colors.dart';
 import 'package:guardian_portal/core/widgets/section_card.dart';
 import 'package:guardian_portal/features/dashboard/domain/device_status.dart';
@@ -12,7 +13,8 @@ class ProtectionChecklistCard extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final layout = ProtectionSnapshot.checklistLayout(status);
-    final twoColumns = MediaQuery.sizeOf(context).width >= 640;
+    final mainWidth = AppLayout.mainAreaWidth(MediaQuery.sizeOf(context).width);
+    final twoColumns = mainWidth >= AppLayout.checklistTwoColBreakpoint;
 
     return SectionCard(
       padding: const EdgeInsets.fromLTRB(20, 18, 20, 10),

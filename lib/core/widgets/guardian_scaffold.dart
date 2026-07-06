@@ -1,8 +1,12 @@
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 import 'package:guardian_portal/app/constants.dart';
+import 'package:guardian_portal/core/layout/app_layout.dart';
+import 'package:guardian_portal/core/navigation/navigation_loading_controller.dart';
 import 'package:guardian_portal/core/routing/app_routes.dart';
 import 'package:guardian_portal/core/theme/app_colors.dart';
+import 'package:guardian_portal/core/widgets/drawer_premium_teaser.dart';
+import 'package:guardian_portal/core/widgets/drawer_account_tile.dart';
 import 'package:guardian_portal/core/widgets/guardian_logo.dart';
 
 /// Layout base do portal — sidebar em telas largas, drawer em mobile web.
@@ -21,35 +25,53 @@ class GuardianScaffold extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final location = GoRouterState.of(context).matchedLocation;
-    final wide = MediaQuery.sizeOf(context).width >= 900;
+    final viewportWidth = MediaQuery.sizeOf(context).width;
+    final wide = AppLayout.isWide(viewportWidth);
 
     return Scaffold(
       body: Row(
         children: [
           if (wide) _SideNav(current: location),
           Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.stretch,
-              children: [
-                _TopBar(
-                  title: title,
-                  subtitle: subtitle,
-                  showMenu: !wide,
-                  current: location,
-                ),
-                Expanded(
-                  child: Align(
-                    alignment: Alignment.topCenter,
-                    child: ConstrainedBox(
-                      constraints: const BoxConstraints(maxWidth: 960),
-                      child: SingleChildScrollView(
-                        padding: const EdgeInsets.fromLTRB(24, 8, 24, 32),
-                        child: child,
+            child: LayoutBuilder(
+              builder: (context, constraints) {
+                final mainWidth = constraints.maxWidth;
+                final contentWidth = AppLayout.contentMaxWidth(mainWidth);
+                final hPad = AppLayout.horizontalPadding(mainWidth);
+
+                return Column(
+                  crossAxisAlignment: CrossAxisAlignment.stretch,
+                  children: [
+                    Padding(
+                      padding: EdgeInsets.symmetric(horizontal: hPad),
+                      child: Align(
+                        alignment: Alignment.center,
+                        child: ConstrainedBox(
+                          constraints: BoxConstraints(maxWidth: contentWidth),
+                          child: _TopBar(
+                            title: title,
+                            subtitle: subtitle,
+                            showMenu: !wide,
+                            current: location,
+                          ),
+                        ),
                       ),
                     ),
-                  ),
-                ),
-              ],
+                    Expanded(
+                      child: SingleChildScrollView(
+                        padding: EdgeInsets.fromLTRB(hPad, 8, hPad, 32),
+                        child: Align(
+                          alignment: Alignment.topCenter,
+                          child: ConstrainedBox(
+                            constraints: BoxConstraints(maxWidth: contentWidth),
+                            child: child,
+                          ),
+                        ),
+                      ),
+                    ),
+                  ],
+                );
+              },
             ),
           ),
         ],
@@ -97,11 +119,6 @@ class _TopBar extends StatelessWidget {
               ],
             ),
           ),
-          IconButton(
-            tooltip: 'Conta',
-            icon: const Icon(Icons.person_outline_rounded),
-            onPressed: () => context.go(AppRoutes.account),
-          ),
         ],
       ),
     );
@@ -111,15 +128,38 @@ class _TopBar extends StatelessWidget {
     showModalBottomSheet<void>(
       context: context,
       backgroundColor: AppColors.surface,
+      isScrollControlled: true,
       shape: const RoundedRectangleBorder(
         borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
       ),
-      builder: (context) => SafeArea(
-        child: Padding(
-          padding: const EdgeInsets.symmetric(vertical: 12),
-          child: _NavList(current: current, onTap: () => Navigator.pop(context)),
-        ),
-      ),
+      builder: (sheetContext) {
+        final height = MediaQuery.sizeOf(sheetContext).height * 0.72;
+        return SafeArea(
+          child: SizedBox(
+            height: height,
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.stretch,
+              children: [
+                const Padding(
+                  padding: EdgeInsets.fromLTRB(20, 16, 20, 8),
+                  child: _BrandHeader(),
+                ),
+                Expanded(
+                  child: _NavList(
+                    current: current,
+                    onTap: () => Navigator.pop(sheetContext),
+                  ),
+                ),
+                const DrawerPremiumTeaser(),
+                DrawerAccountTile(
+                  current: current,
+                  onClose: () => Navigator.pop(sheetContext),
+                ),
+              ],
+            ),
+          ),
+        );
+      },
     );
   }
 }
@@ -132,7 +172,7 @@ class _SideNav extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Container(
-      width: 240,
+      width: AppLayout.sideNavWidth,
       decoration: const BoxDecoration(
         color: AppColors.surface,
         border: Border(right: BorderSide(color: AppColors.divider)),
@@ -146,6 +186,8 @@ class _SideNav extends StatelessWidget {
               child: _BrandHeader(),
             ),
             Expanded(child: _NavList(current: current)),
+            const DrawerPremiumTeaser(),
+            DrawerAccountTile(current: current),
           ],
         ),
       ),
@@ -199,8 +241,10 @@ class _NavList extends StatelessWidget {
             item: item,
             selected: current == item.route,
             onTap: () {
-              context.go(item.route);
               onTap?.call();
+              if (current != item.route) {
+                NavigationLoadingScope.of(context).go(context, item.route);
+              }
             },
           ),
       ],

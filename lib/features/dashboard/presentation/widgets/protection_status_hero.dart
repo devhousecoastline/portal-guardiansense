@@ -10,10 +10,12 @@ class ProtectionStatusHero extends StatelessWidget {
     super.key,
     required this.status,
     required this.tone,
+    this.stretchVertically = false,
   });
 
   final DeviceStatus status;
   final StatusTone tone;
+  final bool stretchVertically;
 
   @override
   Widget build(BuildContext context) {
@@ -21,7 +23,10 @@ class ProtectionStatusHero extends StatelessWidget {
     final headline = ProtectionSnapshot.headline(status);
     final offline = !status.isOnline;
 
-    return Container(
+    return SizedBox(
+      width: double.infinity,
+      height: stretchVertically ? double.infinity : null,
+      child: Container(
       width: double.infinity,
       padding: const EdgeInsets.all(24),
       decoration: BoxDecoration(
@@ -50,7 +55,7 @@ class ProtectionStatusHero extends StatelessWidget {
                   height: 1.4,
                 ),
           ),
-          const Spacer(),
+          if (stretchVertically) const Spacer(),
           Row(
             crossAxisAlignment: CrossAxisAlignment.end,
             children: [
@@ -105,6 +110,7 @@ class ProtectionStatusHero extends StatelessWidget {
             ),
           ],
         ],
+      ),
       ),
     );
   }

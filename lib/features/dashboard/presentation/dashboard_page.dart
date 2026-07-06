@@ -1,6 +1,7 @@
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import 'package:guardian_portal/app/constants.dart';
+import 'package:guardian_portal/core/layout/app_layout.dart';
 import 'package:guardian_portal/core/widgets/guardian_scaffold.dart';
 import 'package:guardian_portal/core/widgets/online_refresh.dart';
 import 'package:guardian_portal/features/dashboard/application/dashboard_service.dart';
@@ -49,10 +50,17 @@ class _DashboardBody extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final tone = ProtectionSnapshot.tone(status);
-    final wide = MediaQuery.sizeOf(context).width >= 960;
+    final wide = AppLayout.isDashboardRow(MediaQuery.sizeOf(context).width);
 
-    final hero = ProtectionStatusHero(status: status, tone: tone);
-    final setup = ProtectionSetupCard(status: status);
+    final hero = ProtectionStatusHero(
+      status: status,
+      tone: tone,
+      stretchVertically: wide,
+    );
+    final setup = ProtectionSetupCard(
+      status: status,
+      stretchVertically: wide,
+    );
     final checklist = ProtectionChecklistCard(status: status);
 
     return Column(

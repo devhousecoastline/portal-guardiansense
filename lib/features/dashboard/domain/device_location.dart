@@ -44,4 +44,11 @@ class DeviceLocation {
     if (m < 100) return '±${m.round()} m';
     return '±${m.round()} m (baixa)';
   }
+
+  String? get sourceLabel => switch (source) {
+        'foreground' => 'Enviado com o app em uso',
+        'background' => 'Enviado em segundo plano',
+        null || '' => null,
+        final s => s,
+      };
 }

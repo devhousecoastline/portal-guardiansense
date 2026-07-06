@@ -197,13 +197,24 @@ abstract final class ProtectionSnapshot {
   static String _recentEventAnswer(DeviceStatus status) {
     if (status.lastEventSummary != null && status.lastEventSummary!.isNotEmpty) {
       final when = formatRelativeTime(status.lastEventAt);
-      return '${status.lastEventSummary!} · $when';
+      return '${_shortEventSummary(status.lastEventSummary!)} · $when';
     }
     if (status.lastAlertSummary != null && status.lastAlertSummary!.isNotEmpty) {
       final when = formatRelativeTime(status.lastAlertAt);
-      return '${status.lastAlertSummary!} · $when';
+      return '${_shortEventSummary(status.lastAlertSummary!)} · $when';
     }
     return 'Nenhuma registrada';
+  }
+
+  static String _shortEventSummary(String raw) {
+    final lower = raw.toLowerCase();
+    if (lower.contains('ostra reaberta')) return 'Ostra reaberta';
+    if (lower.contains('bloqueado')) return 'App bloqueado';
+    if (lower.contains('proteção acionada')) return 'Proteção acionada';
+    if (lower.contains('ostra fechada')) return 'Ostra fechada';
+    final part = raw.split('·').first.trim();
+    if (part.length <= 36) return part;
+    return '${part.substring(0, 33)}…';
   }
 
   static ChecklistSignal _recentEventSignal(DeviceStatus status) {

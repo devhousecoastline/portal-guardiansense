@@ -4,7 +4,7 @@ import 'package:guardian_portal/core/theme/app_colors.dart';
 import 'package:guardian_portal/features/dashboard/domain/device_location.dart';
 import 'package:latlong2/latlong.dart';
 
-/// Mapa escuro personalizado Guardian Sense (Carto Dark Matter + pin escudo).
+/// Mapa Guardian Sense (Carto Voyager — legível no tema escuro do portal).
 class GuardianDeviceMap extends StatefulWidget {
   const GuardianDeviceMap({
     super.key,
@@ -19,6 +19,11 @@ class GuardianDeviceMap extends StatefulWidget {
   State<GuardianDeviceMap> createState() => _GuardianDeviceMapState();
 }
 
+double _accuracyRadiusM(double? accuracyM) {
+  final m = accuracyM ?? 50;
+  return m.clamp(15, 500);
+}
+
 class _GuardianDeviceMapState extends State<GuardianDeviceMap> {
   late final MapController _controller = MapController();
   late final LatLng _point = LatLng(widget.location.lat, widget.location.lng);
@@ -27,7 +32,12 @@ class _GuardianDeviceMapState extends State<GuardianDeviceMap> {
   Widget build(BuildContext context) {
     return ClipRRect(
       borderRadius: BorderRadius.circular(16),
-      child: SizedBox(
+      child: DecoratedBox(
+        decoration: BoxDecoration(
+          border: Border.all(color: AppColors.divider),
+          borderRadius: BorderRadius.circular(16),
+        ),
+        child: SizedBox(
         height: widget.height,
         child: Stack(
           children: [
@@ -45,7 +55,7 @@ class _GuardianDeviceMapState extends State<GuardianDeviceMap> {
               children: [
                 TileLayer(
                   urlTemplate:
-                      'https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png',
+                      'https://{s}.basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}{r}.png',
                   subdomains: const ['a', 'b', 'c', 'd'],
                   userAgentPackageName: 'guardian_portal',
                 ),
@@ -53,7 +63,8 @@ class _GuardianDeviceMapState extends State<GuardianDeviceMap> {
                   circles: [
                     CircleMarker(
                       point: _point,
-                      radius: 42,
+                      radius: _accuracyRadiusM(widget.location.accuracyM),
+                      useRadiusInMeter: true,
                       color: AppColors.trustHigh.withValues(alpha: 0.12),
                       borderColor: AppColors.trustHigh.withValues(alpha: 0.35),
                       borderStrokeWidth: 2,
@@ -82,6 +93,25 @@ class _GuardianDeviceMapState extends State<GuardianDeviceMap> {
               ],
             ),
             Positioned(
+              left: 12,
+              bottom: 12,
+              child: Material(
+                color: AppColors.card.withValues(alpha: 0.92),
+                borderRadius: BorderRadius.circular(8),
+                child: Padding(
+                  padding:
+                      const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+                  child: Text(
+                    'Círculo: margem de precisão GPS',
+                    style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                          color: AppColors.textMuted,
+                          fontSize: 11,
+                        ),
+                  ),
+                ),
+              ),
+            ),
+            Positioned(
               right: 12,
               bottom: 12,
               child: Material(
@@ -99,6 +129,7 @@ class _GuardianDeviceMapState extends State<GuardianDeviceMap> {
             ),
           ],
         ),
+      ),
       ),
     );
   }

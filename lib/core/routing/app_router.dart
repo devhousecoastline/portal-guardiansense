@@ -1,6 +1,7 @@
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
+import 'package:guardian_portal/core/navigation/navigation_shell.dart';
 import 'package:guardian_portal/core/routing/app_routes.dart';
 import 'package:guardian_portal/features/account/presentation/account_page.dart';
 import 'package:guardian_portal/features/auth/presentation/login_page.dart';
@@ -27,29 +28,34 @@ GoRouter createAppRouter({required Listenable authListenable}) {
         path: AppRoutes.login,
         builder: (context, state) => const LoginPage(),
       ),
-      GoRoute(
-        path: AppRoutes.dashboard,
-        builder: (context, state) => const DashboardPage(),
-      ),
-      GoRoute(
-        path: AppRoutes.events,
-        builder: (context, state) => const EventsPage(),
-      ),
-      GoRoute(
-        path: AppRoutes.locate,
-        builder: (context, state) => const LocatePage(),
-      ),
-      GoRoute(
-        path: AppRoutes.devices,
-        builder: (context, state) => const DevicesPage(),
-      ),
-      GoRoute(
-        path: AppRoutes.settings,
-        builder: (context, state) => const SettingsPage(),
-      ),
-      GoRoute(
-        path: AppRoutes.account,
-        builder: (context, state) => const AccountPage(),
+      ShellRoute(
+        builder: (context, state, child) => NavigationShell(child: child),
+        routes: [
+          GoRoute(
+            path: AppRoutes.dashboard,
+            builder: (context, state) => const DashboardPage(),
+          ),
+          GoRoute(
+            path: AppRoutes.events,
+            builder: (context, state) => const EventsPage(),
+          ),
+          GoRoute(
+            path: AppRoutes.locate,
+            builder: (context, state) => const LocatePage(),
+          ),
+          GoRoute(
+            path: AppRoutes.devices,
+            builder: (context, state) => const DevicesPage(),
+          ),
+          GoRoute(
+            path: AppRoutes.settings,
+            builder: (context, state) => const SettingsPage(),
+          ),
+          GoRoute(
+            path: AppRoutes.account,
+            builder: (context, state) => const AccountPage(),
+          ),
+        ],
       ),
     ],
   );

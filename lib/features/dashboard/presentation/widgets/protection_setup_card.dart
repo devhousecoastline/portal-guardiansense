@@ -6,9 +6,14 @@ import 'package:guardian_portal/features/dashboard/domain/protection_setup_item.
 import 'package:guardian_portal/features/dashboard/domain/protection_snapshot.dart';
 
 class ProtectionSetupCard extends StatelessWidget {
-  const ProtectionSetupCard({super.key, required this.status});
+  const ProtectionSetupCard({
+    super.key,
+    required this.status,
+    this.stretchVertically = false,
+  });
 
   final DeviceStatus status;
+  final bool stretchVertically;
 
   @override
   Widget build(BuildContext context) {
@@ -17,11 +22,14 @@ class ProtectionSetupCard extends StatelessWidget {
         status.pendingSetupItems.isEmpty &&
         status.configuredSetupItems.isNotEmpty;
 
-    return SectionCard(
-      padding: const EdgeInsets.fromLTRB(20, 18, 20, 14),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
+    return SizedBox(
+      width: double.infinity,
+      height: stretchVertically ? double.infinity : null,
+      child: SectionCard(
+        padding: const EdgeInsets.fromLTRB(20, 18, 20, 14),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
           Text(
             'Configurações do aparelho',
             style: Theme.of(context).textTheme.titleLarge,
@@ -83,7 +91,9 @@ class ProtectionSetupCard extends StatelessWidget {
               ],
             ],
           ],
-        ],
+          if (stretchVertically) const Spacer(),
+          ],
+        ),
       ),
     );
   }
