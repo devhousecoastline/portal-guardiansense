@@ -21,6 +21,7 @@ class DeviceStatus {
     required this.lastEventAt,
     required this.lastEventSummary,
     required this.location,
+    required this.fingerprint,
     required this.isOnline,
     required this.level,
   });
@@ -39,6 +40,7 @@ class DeviceStatus {
   final DateTime? lastEventAt;
   final String? lastEventSummary;
   final DeviceLocation? location;
+  final String? fingerprint;
   final bool isOnline;
   final ProtectionLevel level;
 
@@ -77,6 +79,7 @@ class DeviceStatus {
       lastEventAt: _timestamp(data['lastEventAt']),
       lastEventSummary: data['lastEventSummary'] as String?,
       location: DeviceLocation.fromFirestore(data),
+      fingerprint: data['fingerprint'] as String?,
       isOnline: online,
       level: _level(protectionIndex, online, runtimeActive, oysterClosed),
     );

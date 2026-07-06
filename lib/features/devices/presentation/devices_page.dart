@@ -3,7 +3,7 @@ import 'package:flutter/material.dart';
 import 'package:guardian_portal/core/widgets/guardian_scaffold.dart';
 import 'package:guardian_portal/core/widgets/section_card.dart';
 import 'package:guardian_portal/features/devices/data/device_repository.dart';
-import 'package:guardian_portal/features/devices/domain/guardian_device.dart';
+import 'package:guardian_portal/features/devices/presentation/widgets/device_plan_banner.dart';
 import 'package:guardian_portal/features/devices/presentation/widgets/device_tile.dart';
 
 class DevicesPage extends StatelessWidget {
@@ -16,16 +16,25 @@ class DevicesPage extends StatelessWidget {
 
     return GuardianScaffold(
       title: 'Dispositivos',
-      subtitle: 'Todos os aparelhos vinculados à sua conta',
-      child: StreamBuilder<List<GuardianDevice>>(
-        stream: DeviceRepository().watchDevices(uid),
+      subtitle: 'Aparelhos vinculados à sua conta',
+      child: StreamBuilder(
+        stream: DeviceRepository().watchDeviceList(uid),
         builder: (context, snapshot) {
           if (snapshot.connectionState == ConnectionState.waiting) {
             return const Center(child: CircularProgressIndicator());
           }
 
-          final devices = snapshot.data ?? [];
-          if (devices.isEmpty) {
+          final list = snapshot.data;
+          if (list == null) {
+            return const SectionCard(
+              child: Text(
+                'Não foi possível carregar os dispositivos.',
+                textAlign: TextAlign.center,
+              ),
+            );
+          }
+
+          if (list.visible.isEmpty) {
             return const SectionCard(
               child: Text(
                 'Nenhum dispositivo encontrado. Faça login no app mobile com esta conta.',
@@ -36,7 +45,8 @@ class DevicesPage extends StatelessWidget {
 
           return Column(
             children: [
-              for (final device in devices) ...[
+              DevicePlanBanner(snapshot: list),
+              for (final device in list.visible) ...[
                 DeviceTile(device: device),
                 const SizedBox(height: 12),
               ],
