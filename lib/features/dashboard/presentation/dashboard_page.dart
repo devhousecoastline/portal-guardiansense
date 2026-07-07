@@ -1,7 +1,7 @@
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
-import 'package:guardian_portal/app/constants.dart';
 import 'package:guardian_portal/core/layout/app_layout.dart';
+import 'package:guardian_portal/core/widgets/device_online_chip.dart';
 import 'package:guardian_portal/core/widgets/guardian_scaffold.dart';
 import 'package:guardian_portal/core/widgets/online_refresh.dart';
 import 'package:guardian_portal/features/dashboard/application/dashboard_service.dart';
@@ -11,33 +11,65 @@ import 'package:guardian_portal/features/dashboard/presentation/widgets/empty_de
 import 'package:guardian_portal/features/dashboard/presentation/widgets/protection_checklist_card.dart';
 import 'package:guardian_portal/features/dashboard/presentation/widgets/protection_setup_card.dart';
 import 'package:guardian_portal/features/dashboard/presentation/widgets/protection_status_hero.dart';
+import 'package:guardian_portal/features/devices/domain/guardian_device.dart';
 
-class DashboardPage extends StatelessWidget {
+class DashboardPage extends StatefulWidget {
   const DashboardPage({super.key});
+
+  @override
+  State<DashboardPage> createState() => _DashboardPageState();
+}
+
+class _DashboardPageState extends State<DashboardPage> {
+  Stream<GuardianDevice?>? _deviceStream;
+  final _refreshController = OnlineRefreshController();
 
   @override
   Widget build(BuildContext context) {
     final uid = FirebaseAuth.instance.currentUser?.uid;
     if (uid == null) return const SizedBox.shrink();
 
-    return GuardianScaffold(
-      title: AppConstants.portalTitle,
-      subtitle: 'Status do seu dispositivo',
-      child: OnlineRefresh(
-        builder: (context) => StreamBuilder(
-          stream: DashboardService().watchPrimaryDevice(uid),
-          builder: (context, snapshot) {
-            if (snapshot.connectionState == ConnectionState.waiting) {
-              return const Center(child: CircularProgressIndicator());
-            }
+    _deviceStream ??= DashboardService().watchPrimaryDevice(uid);
 
-            final device = snapshot.data;
-            if (device == null) return const EmptyDevicesCard();
+    return StreamBuilder<GuardianDevice?>(
+      stream: _deviceStream,
+      builder: (context, snapshot) {
+        final device = snapshot.data;
+        final initialLoad =
+            snapshot.connectionState == ConnectionState.waiting &&
+                !snapshot.hasData;
 
-            return _DashboardBody(status: device.status);
+        return OnlineRefresh(
+          controller: _refreshController,
+          builder: (context, isRefreshing) {
+            return GuardianScaffold(
+              title: 'Centro',
+              subtitle: 'Status do seu dispositivo',
+              subtitleTrailing: device != null
+                  ? DeviceOnlineChip(
+                      isOnline: device.status.isOnline,
+                      lastSeen: device.status.lastSeen,
+                    )
+                  : null,
+              onRefresh: _refreshController.refresh,
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.stretch,
+                children: [
+                  RefreshTickBar(
+                    visible: isRefreshing && snapshot.hasData,
+                  ),
+                  if (initialLoad)
+                    const Center(child: CircularProgressIndicator())
+                  else if (device == null)
+                    const EmptyDevicesCard()
+                  else
+                    _DashboardBody(status: device.status),
+                ],
+              ),
+            );
           },
-        ),
-      ),
+        );
+      },
     );
   }
 }
@@ -77,7 +109,7 @@ class _DashboardBody extends StatelessWidget {
               ],
             ),
           ),
-          const SizedBox(height: 14),
+          const SizedBox(height: 18),
           checklist,
         ]
         else ...[

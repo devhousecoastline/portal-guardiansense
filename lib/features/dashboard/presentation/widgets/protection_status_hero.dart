@@ -1,6 +1,5 @@
 import 'package:flutter/material.dart';
 import 'package:guardian_portal/core/theme/app_colors.dart';
-import 'package:guardian_portal/core/widgets/relative_time.dart';
 import 'package:guardian_portal/core/widgets/status_badge.dart';
 import 'package:guardian_portal/features/dashboard/domain/device_status.dart';
 import 'package:guardian_portal/features/dashboard/domain/protection_snapshot.dart';
@@ -40,12 +39,14 @@ class ProtectionStatusHero extends StatelessWidget {
           StatusBadge(label: status.protectionLabel.toUpperCase(), tone: tone),
           if (offline) ...[
             const SizedBox(height: 12),
-            _OfflineBanner(lastSeen: status.lastSeen),
+            _OfflineBanner(),
           ],
           const SizedBox(height: 16),
           Text(
             status.modelLabel,
-            style: Theme.of(context).textTheme.headlineMedium,
+            style: Theme.of(context).textTheme.titleLarge?.copyWith(
+                  fontWeight: FontWeight.w600,
+                ),
           ),
           const SizedBox(height: 8),
           Text(
@@ -100,15 +101,6 @@ class ProtectionStatusHero extends StatelessWidget {
               ),
             ],
           ),
-          if (offline) ...[
-            const SizedBox(height: 8),
-            Text(
-              'Sem sincronização recente',
-              style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                    color: AppColors.textMuted,
-                  ),
-            ),
-          ],
         ],
       ),
       ),
@@ -125,9 +117,7 @@ class ProtectionStatusHero extends StatelessWidget {
 }
 
 class _OfflineBanner extends StatelessWidget {
-  const _OfflineBanner({required this.lastSeen});
-
-  final DateTime? lastSeen;
+  const _OfflineBanner();
 
   @override
   Widget build(BuildContext context) {
@@ -149,9 +139,7 @@ class _OfflineBanner extends StatelessWidget {
           const SizedBox(width: 10),
           Expanded(
             child: Text(
-              lastSeen != null
-                  ? 'Offline · última sync ${formatRelativeTime(lastSeen)}'
-                  : 'Offline · aguardando primeira sync',
+              'Aparelho offline no momento',
               style: Theme.of(context).textTheme.bodySmall?.copyWith(
                     color: AppColors.textMuted,
                   ),

@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:guardian_portal/core/layout/app_layout.dart';
+import 'package:guardian_portal/core/navigation/navigation_loading_controller.dart';
+import 'package:guardian_portal/core/routing/app_routes.dart';
 import 'package:guardian_portal/core/theme/app_colors.dart';
 import 'package:guardian_portal/core/widgets/section_card.dart';
 import 'package:guardian_portal/features/dashboard/domain/device_status.dart';
@@ -49,7 +51,14 @@ class ProtectionChecklistCard extends StatelessWidget {
           if (layout.fullWidth.isNotEmpty) ...[
             const SizedBox(height: 4),
             for (final entry in layout.fullWidth)
-              _ChecklistRow(entry: entry, fullWidth: true),
+              _ChecklistRow(
+                entry: entry,
+                fullWidth: true,
+                onDetails: entry.answer != 'Nenhuma registrada'
+                    ? () => NavigationLoadingScope.of(context)
+                        .go(context, AppRoutes.events)
+                    : null,
+              ),
           ],
         ],
       ),
@@ -74,10 +83,27 @@ class _ChecklistColumn extends StatelessWidget {
 }
 
 class _ChecklistRow extends StatelessWidget {
-  const _ChecklistRow({required this.entry, this.fullWidth = false});
+  const _ChecklistRow({
+    required this.entry,
+    this.fullWidth = false,
+    this.onDetails,
+  });
 
   final ProtectionChecklistEntry entry;
   final bool fullWidth;
+  final VoidCallback? onDetails;
+
+  static IconData? _iconFor(String question) {
+    if (question.startsWith('Meu celular')) return Icons.shield_outlined;
+    if (question.startsWith('O Runtime')) return Icons.memory_rounded;
+    if (question.startsWith('A Ostra')) return Icons.lock_outline_rounded;
+    if (question.startsWith('Quando foi')) return Icons.sync_rounded;
+    if (question.startsWith('Último evento')) {
+      return Icons.notifications_active_outlined;
+    }
+    if (question.startsWith('Qual é meu')) return Icons.percent_rounded;
+    return null;
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -88,6 +114,7 @@ class _ChecklistRow extends StatelessWidget {
       ChecklistSignal.muted => AppColors.textMuted,
     };
     final compact = fullWidth || entry.answer.length > 40;
+    final icon = _iconFor(entry.question);
 
     return Padding(
       padding: EdgeInsets.only(bottom: fullWidth ? 4 : 10, top: fullWidth ? 6 : 0),
@@ -107,12 +134,16 @@ class _ChecklistRow extends StatelessWidget {
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             Padding(
-              padding: const EdgeInsets.only(top: 4),
-              child: Container(
-                width: 8,
-                height: 8,
-                decoration: BoxDecoration(color: color, shape: BoxShape.circle),
-              ),
+              padding: const EdgeInsets.only(top: 2),
+              child: icon != null
+                  ? Icon(icon, size: 18, color: color.withValues(alpha: 0.9))
+                  : Container(
+                      width: 8,
+                      height: 8,
+                      margin: const EdgeInsets.only(top: 4),
+                      decoration:
+                          BoxDecoration(color: color, shape: BoxShape.circle),
+                    ),
             ),
             const SizedBox(width: 10),
             Expanded(
@@ -138,6 +169,24 @@ class _ChecklistRow extends StatelessWidget {
                       height: 1.3,
                     ),
                   ),
+                  if (onDetails != null) ...[
+                    const SizedBox(height: 6),
+                    TextButton(
+                      style: TextButton.styleFrom(
+                        padding: EdgeInsets.zero,
+                        minimumSize: Size.zero,
+                        tapTargetSize: MaterialTapTargetSize.shrinkWrap,
+                      ),
+                      onPressed: onDetails,
+                      child: Text(
+                        'Ver detalhes →',
+                        style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                              color: AppColors.primary,
+                              fontWeight: FontWeight.w600,
+                            ),
+                      ),
+                    ),
+                  ],
                 ],
               ),
             ),

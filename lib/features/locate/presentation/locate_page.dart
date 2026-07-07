@@ -11,102 +11,129 @@ import 'package:guardian_portal/core/widgets/status_badge.dart';
 import 'package:guardian_portal/features/dashboard/application/dashboard_service.dart';
 import 'package:guardian_portal/features/dashboard/domain/device_location.dart';
 import 'package:guardian_portal/features/dashboard/domain/device_status.dart';
+import 'package:guardian_portal/features/devices/domain/guardian_device.dart';
 import 'package:guardian_portal/features/locate/application/location_geocode_service.dart';
 import 'package:guardian_portal/features/locate/domain/location_freshness.dart';
 import 'package:guardian_portal/features/locate/presentation/widgets/guardian_device_map.dart';
 
-class LocatePage extends StatelessWidget {
+class LocatePage extends StatefulWidget {
   const LocatePage({super.key});
+
+  @override
+  State<LocatePage> createState() => _LocatePageState();
+}
+
+class _LocatePageState extends State<LocatePage> {
+  Stream<GuardianDevice?>? _deviceStream;
+  final _refreshController = OnlineRefreshController();
 
   @override
   Widget build(BuildContext context) {
     final uid = FirebaseAuth.instance.currentUser?.uid;
     if (uid == null) return const SizedBox.shrink();
 
-    return GuardianScaffold(
-      title: 'Localizar',
-      subtitle: 'Última posição conhecida do aparelho',
-      child: OnlineRefresh(
-        builder: (context) => StreamBuilder(
-          stream: DashboardService().watchPrimaryDevice(uid),
-          builder: (context, snapshot) {
-            if (snapshot.connectionState == ConnectionState.waiting) {
-              return const Center(child: CircularProgressIndicator());
-            }
+    _deviceStream ??= DashboardService().watchPrimaryDevice(uid);
 
-            final device = snapshot.data;
-            if (device == null) {
-              return const SectionCard(
-                child: Text(
-                  'Nenhum dispositivo sincronizado ainda.\n'
-                  'Abra o app Guardian Sense no celular com a mesma conta.',
-                  textAlign: TextAlign.center,
-                ),
-              );
-            }
+    return StreamBuilder<GuardianDevice?>(
+      stream: _deviceStream,
+      builder: (context, snapshot) {
+        final initialLoad =
+            snapshot.connectionState == ConnectionState.waiting &&
+                !snapshot.hasData;
 
-            final status = device.status;
-            final location = status.location;
-            final staleMessage = location != null
-                ? LocationFreshness.staleMessage(
-                    location.updatedAt,
-                    deviceOnline: status.isOnline,
-                  )
-                : null;
-            final split = AppLayout.isLocateSplit(MediaQuery.sizeOf(context).width);
-            final mapHeight = split ? 520.0 : 420.0;
-
-            final infoColumn = Column(
-              crossAxisAlignment: CrossAxisAlignment.stretch,
-              children: [
-                _LocationInfoCard(status: status),
-                if (staleMessage != null) ...[
-                  const SizedBox(height: 12),
-                  _StaleLocationBanner(message: staleMessage),
-                ],
-                if (!split) ...[
-                  const SizedBox(height: 16),
-                  if (location != null)
-                    GuardianDeviceMap(location: location, height: mapHeight)
-                  else
-                    const _NoLocationCard(),
-                ],
-                if (!split) ...[
-                  const SizedBox(height: 16),
-                  const _LocationHintCard(),
-                ],
-              ],
-            );
-
-            final mapSection = location != null
-                ? GuardianDeviceMap(location: location, height: mapHeight)
-                : const _NoLocationCard();
-
-            if (split) {
-              return Column(
+        return OnlineRefresh(
+          controller: _refreshController,
+          builder: (context, isRefreshing) {
+            return GuardianScaffold(
+              title: 'Localizar',
+              subtitle: 'Última posição conhecida do aparelho',
+              onRefresh: _refreshController.refresh,
+              child: Column(
                 crossAxisAlignment: CrossAxisAlignment.stretch,
                 children: [
-                  IntrinsicHeight(
-                    child: Row(
-                      crossAxisAlignment: CrossAxisAlignment.stretch,
-                      children: [
-                        Expanded(flex: 4, child: infoColumn),
-                        const SizedBox(width: 20),
-                        Expanded(flex: 6, child: mapSection),
-                      ],
-                    ),
-                  ),
-                  const SizedBox(height: 16),
-                  const _LocationHintCard(),
+                  RefreshTickBar(visible: isRefreshing && snapshot.hasData),
+                  if (initialLoad)
+                    const Center(child: CircularProgressIndicator())
+                  else
+                    _buildLocateBody(context, snapshot.data),
                 ],
-              );
-            }
-
-            return infoColumn;
+              ),
+            );
           },
-        ),
-      ),
+        );
+      },
     );
+  }
+
+  Widget _buildLocateBody(BuildContext context, GuardianDevice? device) {
+    if (device == null) {
+      return const SectionCard(
+        child: Text(
+          'Nenhum dispositivo sincronizado ainda.\n'
+          'Abra o app Guardian Sense no celular com a mesma conta.',
+          textAlign: TextAlign.center,
+        ),
+      );
+    }
+
+    final status = device.status;
+    final location = status.location;
+    final staleMessage = location != null
+        ? LocationFreshness.staleMessage(
+            location.updatedAt,
+            deviceOnline: status.isOnline,
+          )
+        : null;
+    final split = AppLayout.isLocateSplit(MediaQuery.sizeOf(context).width);
+    final mapHeight = split ? 520.0 : 420.0;
+
+    final infoColumn = Column(
+      crossAxisAlignment: CrossAxisAlignment.stretch,
+      children: [
+        _LocationInfoCard(status: status),
+        if (staleMessage != null) ...[
+          const SizedBox(height: 12),
+          _StaleLocationBanner(message: staleMessage),
+        ],
+        if (!split) ...[
+          const SizedBox(height: 16),
+          if (location != null)
+            GuardianDeviceMap(location: location, height: mapHeight)
+          else
+            const _NoLocationCard(),
+        ],
+        if (!split) ...[
+          const SizedBox(height: 16),
+          const _LocationHintCard(),
+        ],
+      ],
+    );
+
+    final mapSection = location != null
+        ? GuardianDeviceMap(location: location, height: mapHeight)
+        : const _NoLocationCard();
+
+    if (split) {
+      return Column(
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        children: [
+          IntrinsicHeight(
+            child: Row(
+              crossAxisAlignment: CrossAxisAlignment.stretch,
+              children: [
+                Expanded(flex: 4, child: infoColumn),
+                const SizedBox(width: 20),
+                Expanded(flex: 6, child: mapSection),
+              ],
+            ),
+          ),
+          const SizedBox(height: 16),
+          const _LocationHintCard(),
+        ],
+      );
+    }
+
+    return infoColumn;
   }
 }
 

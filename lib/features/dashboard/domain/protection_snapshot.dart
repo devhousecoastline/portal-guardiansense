@@ -67,14 +67,14 @@ abstract final class ProtectionSnapshot {
         signal: _oysterSignal(status),
       ),
       ProtectionChecklistEntry(
-        question: 'Houve tentativa recente de abrir app protegido?',
-        answer: _recentEventAnswer(status),
-        signal: _recentEventSignal(status),
-      ),
-      ProtectionChecklistEntry(
         question: 'Quando foi a última sincronização?',
         answer: formatRelativeTime(status.lastSeen),
         signal: status.isOnline ? ChecklistSignal.ok : ChecklistSignal.alert,
+      ),
+      ProtectionChecklistEntry(
+        question: 'Último evento de segurança',
+        answer: _recentEventAnswer(status),
+        signal: _recentEventSignal(status),
       ),
     ];
 
@@ -91,7 +91,7 @@ abstract final class ProtectionSnapshot {
     return entries;
   }
 
-  /// Coluna esq.: proteção + runtime + sync · dir.: ostra · largura total: evento.
+  /// Coluna esq.: proteção + runtime · dir.: ostra + sync · largura total: evento.
   static ChecklistLayout checklistLayout(DeviceStatus status) {
     final all = checklist(status);
     ProtectionChecklistEntry? pick(String prefix) {
@@ -104,15 +104,15 @@ abstract final class ProtectionSnapshot {
     final left = [
       pick('Meu celular'),
       pick('O Runtime'),
-      pick('Quando foi'),
     ].whereType<ProtectionChecklistEntry>().toList();
 
     final right = [
       pick('A Ostra'),
+      pick('Quando foi'),
     ].whereType<ProtectionChecklistEntry>().toList();
 
     final fullWidth = [
-      pick('Houve tentativa'),
+      pick('Último evento'),
     ].whereType<ProtectionChecklistEntry>().toList();
 
     // Fallback se ordem mudar — distribui o que sobrou.
@@ -218,9 +218,39 @@ abstract final class ProtectionSnapshot {
   }
 
   static ChecklistSignal _recentEventSignal(DeviceStatus status) {
-    final recent = _isRecent(status.lastEventAt) || _isRecent(status.lastAlertAt);
-    if (recent) return ChecklistSignal.warn;
+    if (!_hasRecordedEvent(status)) return ChecklistSignal.ok;
+
+    final at = status.lastEventAt ?? status.lastAlertAt;
+    final summary = (status.lastEventSummary ?? status.lastAlertSummary ?? '')
+        .toLowerCase();
+
+    final critical = summary.contains('bloqueado') ||
+        summary.contains('proteção acionada') ||
+        summary.contains('ostra fechada');
+
+    if (critical && _isVeryRecent(at)) return ChecklistSignal.alert;
+    if (critical && _isRecent(at)) return ChecklistSignal.warn;
+    if (_isVeryRecent(at)) return ChecklistSignal.warn;
+
+    final calmNow = status.level == ProtectionLevel.protected &&
+        status.oysterClosed != true &&
+        status.isOnline;
+    if (calmNow) return ChecklistSignal.muted;
+
+    if (_isRecent(at)) return ChecklistSignal.warn;
     return ChecklistSignal.ok;
+  }
+
+  static bool _hasRecordedEvent(DeviceStatus status) {
+    final event = status.lastEventSummary;
+    final alert = status.lastAlertSummary;
+    return (event != null && event.isNotEmpty) ||
+        (alert != null && alert.isNotEmpty);
+  }
+
+  static bool _isVeryRecent(DateTime? at) {
+    if (at == null) return false;
+    return DateTime.now().difference(at) < const Duration(minutes: 15);
   }
 
   static bool _isRecent(DateTime? at) {

@@ -16,11 +16,15 @@ class GuardianScaffold extends StatelessWidget {
     required this.title,
     required this.child,
     this.subtitle,
+    this.subtitleTrailing,
+    this.onRefresh,
   });
 
   final String title;
   final String? subtitle;
+  final Widget? subtitleTrailing;
   final Widget child;
+  final Future<void> Function()? onRefresh;
 
   @override
   Widget build(BuildContext context) {
@@ -51,6 +55,7 @@ class GuardianScaffold extends StatelessWidget {
                           child: _TopBar(
                             title: title,
                             subtitle: subtitle,
+                            subtitleTrailing: subtitleTrailing,
                             showMenu: !wide,
                             current: location,
                           ),
@@ -58,16 +63,36 @@ class GuardianScaffold extends StatelessWidget {
                       ),
                     ),
                     Expanded(
-                      child: SingleChildScrollView(
-                        padding: EdgeInsets.fromLTRB(hPad, 8, hPad, 32),
-                        child: Align(
-                          alignment: Alignment.topCenter,
-                          child: ConstrainedBox(
-                            constraints: BoxConstraints(maxWidth: contentWidth),
-                            child: child,
-                          ),
-                        ),
-                      ),
+                      child: onRefresh != null
+                          ? RefreshIndicator(
+                              onRefresh: onRefresh!,
+                              color: AppColors.primary,
+                              backgroundColor: AppColors.surface,
+                              child: SingleChildScrollView(
+                                physics: const AlwaysScrollableScrollPhysics(),
+                                padding:
+                                    EdgeInsets.fromLTRB(hPad, 8, hPad, 32),
+                                child: Align(
+                                  alignment: Alignment.topCenter,
+                                  child: ConstrainedBox(
+                                    constraints:
+                                        BoxConstraints(maxWidth: contentWidth),
+                                    child: child,
+                                  ),
+                                ),
+                              ),
+                            )
+                          : SingleChildScrollView(
+                              padding: EdgeInsets.fromLTRB(hPad, 8, hPad, 32),
+                              child: Align(
+                                alignment: Alignment.topCenter,
+                                child: ConstrainedBox(
+                                  constraints:
+                                      BoxConstraints(maxWidth: contentWidth),
+                                  child: child,
+                                ),
+                              ),
+                            ),
                     ),
                   ],
                 );
@@ -86,10 +111,12 @@ class _TopBar extends StatelessWidget {
     required this.showMenu,
     required this.current,
     this.subtitle,
+    this.subtitleTrailing,
   });
 
   final String title;
   final String? subtitle;
+  final Widget? subtitleTrailing;
   final bool showMenu;
   final String current;
 
@@ -101,6 +128,7 @@ class _TopBar extends StatelessWidget {
         border: Border(bottom: BorderSide(color: AppColors.divider)),
       ),
       child: Row(
+        crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           if (showMenu)
             IconButton(
@@ -119,6 +147,13 @@ class _TopBar extends StatelessWidget {
               ],
             ),
           ),
+          if (subtitleTrailing != null) ...[
+            const SizedBox(width: 12),
+            Padding(
+              padding: const EdgeInsets.only(top: 4),
+              child: subtitleTrailing!,
+            ),
+          ],
         ],
       ),
     );

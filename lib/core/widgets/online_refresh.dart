@@ -1,20 +1,42 @@
 import 'dart:async';
 
 import 'package:flutter/material.dart';
+import 'package:guardian_portal/core/widgets/matrix_refresh_bar.dart';
+
+/// Dispara o feedback visual do [OnlineRefresh] (ex.: pull-to-refresh).
+class OnlineRefreshController {
+  Future<void> Function()? _refresh;
+
+  Future<void> refresh() async {
+    final action = _refresh;
+    if (action != null) await action();
+  }
+
+  void _attach(Future<void> Function() refresh) => _refresh = refresh;
+
+  void _detach() => _refresh = null;
+}
 
 /// Reconstrói o filho periodicamente para recalcular `isOnline` pelo relógio.
 ///
 /// O Firestore só emite quando o documento muda; sem este tick, o portal pode
 /// mostrar "online" indefinidamente após o celular parar de sincronizar.
+///
+/// [builder] recebe `isRefreshing` durante o tick (~450 ms) para exibir feedback
+/// sem recriar streams do Firestore (evita piscar a tela).
 class OnlineRefresh extends StatefulWidget {
   const OnlineRefresh({
     super.key,
     required this.builder,
+    this.controller,
     this.interval = const Duration(seconds: 30),
+    this.tickVisibleFor = const Duration(milliseconds: 850),
   });
 
-  final Widget Function(BuildContext context) builder;
+  final Widget Function(BuildContext context, bool isRefreshing) builder;
+  final OnlineRefreshController? controller;
   final Duration interval;
+  final Duration tickVisibleFor;
 
   @override
   State<OnlineRefresh> createState() => _OnlineRefreshState();
@@ -22,21 +44,60 @@ class OnlineRefresh extends StatefulWidget {
 
 class _OnlineRefreshState extends State<OnlineRefresh> {
   Timer? _timer;
+  bool _isRefreshing = false;
 
   @override
   void initState() {
     super.initState();
-    _timer = Timer.periodic(widget.interval, (_) {
-      if (mounted) setState(() {});
-    });
+    widget.controller?._attach(refreshNow);
+    _timer = Timer.periodic(widget.interval, (_) => refreshNow());
+  }
+
+  @override
+  void didUpdateWidget(covariant OnlineRefresh oldWidget) {
+    super.didUpdateWidget(oldWidget);
+    if (oldWidget.controller != widget.controller) {
+      oldWidget.controller?._detach();
+      widget.controller?._attach(refreshNow);
+    }
+  }
+
+  Future<void> refreshNow() async {
+    if (!mounted) return;
+    setState(() => _isRefreshing = true);
+    await Future<void>.delayed(widget.tickVisibleFor);
+    if (mounted) setState(() => _isRefreshing = false);
   }
 
   @override
   void dispose() {
+    widget.controller?._detach();
     _timer?.cancel();
     super.dispose();
   }
 
   @override
-  Widget build(BuildContext context) => widget.builder(context);
+  Widget build(BuildContext context) => widget.builder(context, _isRefreshing);
+}
+
+/// Faixa estilo Matrix no topo do conteúdo durante o tick de atualização.
+class RefreshTickBar extends StatelessWidget {
+  const RefreshTickBar({super.key, required this.visible});
+
+  final bool visible;
+
+  @override
+  Widget build(BuildContext context) {
+    return AnimatedSize(
+      duration: const Duration(milliseconds: 220),
+      curve: Curves.easeOutCubic,
+      alignment: Alignment.topCenter,
+      child: visible
+          ? const Padding(
+              padding: EdgeInsets.only(bottom: 8),
+              child: MatrixRefreshBar(),
+            )
+          : const SizedBox.shrink(),
+    );
+  }
 }

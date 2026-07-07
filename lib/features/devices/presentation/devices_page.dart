@@ -4,59 +4,87 @@ import 'package:guardian_portal/core/widgets/guardian_scaffold.dart';
 import 'package:guardian_portal/core/widgets/online_refresh.dart';
 import 'package:guardian_portal/core/widgets/section_card.dart';
 import 'package:guardian_portal/features/devices/data/device_repository.dart';
+import 'package:guardian_portal/features/devices/domain/device_registry.dart';
 import 'package:guardian_portal/features/devices/presentation/widgets/device_plan_banner.dart';
 import 'package:guardian_portal/features/devices/presentation/widgets/device_tile.dart';
 
-class DevicesPage extends StatelessWidget {
+class DevicesPage extends StatefulWidget {
   const DevicesPage({super.key});
+
+  @override
+  State<DevicesPage> createState() => _DevicesPageState();
+}
+
+class _DevicesPageState extends State<DevicesPage> {
+  Stream<DeviceListSnapshot>? _deviceListStream;
+  final _refreshController = OnlineRefreshController();
 
   @override
   Widget build(BuildContext context) {
     final uid = FirebaseAuth.instance.currentUser?.uid;
     if (uid == null) return const SizedBox.shrink();
 
-    return GuardianScaffold(
-      title: 'Dispositivos',
-      subtitle: 'Aparelhos vinculados à sua conta',
-      child: OnlineRefresh(
-        builder: (context) => StreamBuilder(
-          stream: DeviceRepository().watchDeviceList(uid),
-          builder: (context, snapshot) {
-          if (snapshot.connectionState == ConnectionState.waiting) {
-            return const Center(child: CircularProgressIndicator());
-          }
+    _deviceListStream ??= DeviceRepository().watchDeviceList(uid);
 
-          final list = snapshot.data;
-          if (list == null) {
-            return const SectionCard(
-              child: Text(
-                'Não foi possível carregar os dispositivos.',
-                textAlign: TextAlign.center,
+    return StreamBuilder<DeviceListSnapshot>(
+      stream: _deviceListStream,
+      builder: (context, snapshot) {
+        final initialLoad =
+            snapshot.connectionState == ConnectionState.waiting &&
+                !snapshot.hasData;
+
+        return OnlineRefresh(
+          controller: _refreshController,
+          builder: (context, isRefreshing) {
+            return GuardianScaffold(
+              title: 'Dispositivos',
+              subtitle: 'Aparelhos vinculados à sua conta',
+              onRefresh: _refreshController.refresh,
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.stretch,
+                children: [
+                  RefreshTickBar(visible: isRefreshing && snapshot.hasData),
+                  if (initialLoad)
+                    const Center(child: CircularProgressIndicator())
+                  else ..._buildContent(snapshot.data),
+                ],
               ),
             );
-          }
-
-          if (list.visible.isEmpty) {
-            return const SectionCard(
-              child: Text(
-                'Nenhum dispositivo encontrado. Faça login no app mobile com esta conta.',
-                textAlign: TextAlign.center,
-              ),
-            );
-          }
-
-          return Column(
-            children: [
-              DevicePlanBanner(snapshot: list),
-              for (final device in list.visible) ...[
-                DeviceTile(device: device),
-                const SizedBox(height: 12),
-              ],
-            ],
-          );
-        },
-        ),
-      ),
+          },
+        );
+      },
     );
+  }
+
+  List<Widget> _buildContent(DeviceListSnapshot? list) {
+    if (list == null) {
+      return const [
+        SectionCard(
+          child: Text(
+            'Não foi possível carregar os dispositivos.',
+            textAlign: TextAlign.center,
+          ),
+        ),
+      ];
+    }
+
+    if (list.visible.isEmpty) {
+      return const [
+        SectionCard(
+          child: Text(
+            'Nenhum dispositivo encontrado. Faça login no app mobile com esta conta.',
+            textAlign: TextAlign.center,
+          ),
+        ),
+      ];
+    }
+
+    return [
+      DevicePlanBanner(snapshot: list),
+      for (final device in list.visible) ...[
+        DeviceTile(device: device),
+        const SizedBox(height: 12),
+      ],
+    ];
   }
 }
