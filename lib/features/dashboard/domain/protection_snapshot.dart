@@ -1,6 +1,7 @@
 import 'package:guardian_portal/core/widgets/relative_time.dart';
 import 'package:guardian_portal/core/widgets/status_badge.dart';
 import 'package:guardian_portal/features/dashboard/domain/device_status.dart';
+import 'package:guardian_portal/features/events/domain/event_display.dart';
 
 enum ChecklistSignal { ok, warn, alert, muted }
 
@@ -206,16 +207,7 @@ abstract final class ProtectionSnapshot {
     return 'Nenhuma registrada';
   }
 
-  static String _shortEventSummary(String raw) {
-    final lower = raw.toLowerCase();
-    if (lower.contains('ostra reaberta')) return 'Ostra reaberta';
-    if (lower.contains('bloqueado')) return 'App bloqueado';
-    if (lower.contains('proteção acionada')) return 'Proteção acionada';
-    if (lower.contains('ostra fechada')) return 'Ostra fechada';
-    final part = raw.split('·').first.trim();
-    if (part.length <= 36) return part;
-    return '${part.substring(0, 33)}…';
-  }
+  static String _shortEventSummary(String raw) => EventDisplay.shortSummary(raw);
 
   static ChecklistSignal _recentEventSignal(DeviceStatus status) {
     if (!_hasRecordedEvent(status)) return ChecklistSignal.ok;
