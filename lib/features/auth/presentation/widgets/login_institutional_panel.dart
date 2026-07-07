@@ -3,18 +3,31 @@ import 'package:guardian_portal/app/constants.dart';
 import 'package:guardian_portal/core/theme/app_colors.dart';
 
 class LoginInstitutionalPanel extends StatelessWidget {
-  const LoginInstitutionalPanel({super.key, required this.creating});
+  const LoginInstitutionalPanel({
+    super.key,
+    required this.creating,
+    this.showFeatures = true,
+    this.showRuntimeBadge = false,
+    this.centered = false,
+  });
 
   final bool creating;
+  final bool showFeatures;
+  final bool showRuntimeBadge;
+  final bool centered;
 
   @override
   Widget build(BuildContext context) {
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
+    final align = centered ? CrossAxisAlignment.center : CrossAxisAlignment.start;
+    final textAlign = centered ? TextAlign.center : TextAlign.start;
+
+    final content = Column(
+      crossAxisAlignment: align,
       mainAxisSize: MainAxisSize.min,
       children: [
         Text(
           creating ? 'Criar conta' : AppConstants.loginHeadline,
+          textAlign: textAlign,
           style: Theme.of(context).textTheme.headlineMedium?.copyWith(
                 height: 1.25,
               ),
@@ -24,11 +37,16 @@ class LoginInstitutionalPanel extends StatelessWidget {
           creating
               ? 'Crie sua conta para acessar o painel de proteção.'
               : AppConstants.loginDescription,
+          textAlign: textAlign,
           style: Theme.of(context).textTheme.bodyLarge,
         ),
-        if (!creating) ...[
+        if (!creating && showRuntimeBadge) ...[
+          const SizedBox(height: 24),
+          const RuntimeProtectedBadge(),
+        ],
+        if (!creating && showFeatures) ...[
           const SizedBox(height: 32),
-          const _RuntimeBadge(),
+          const RuntimeProtectedBadge(),
           const SizedBox(height: 24),
           ...AppConstants.loginFeatures.map(
             (feature) => Padding(
@@ -39,11 +57,20 @@ class LoginInstitutionalPanel extends StatelessWidget {
         ],
       ],
     );
+
+    if (!centered) return content;
+
+    return Align(
+      child: ConstrainedBox(
+        constraints: const BoxConstraints(maxWidth: 640),
+        child: content,
+      ),
+    );
   }
 }
 
-class _RuntimeBadge extends StatelessWidget {
-  const _RuntimeBadge();
+class RuntimeProtectedBadge extends StatelessWidget {
+  const RuntimeProtectedBadge({super.key});
 
   @override
   Widget build(BuildContext context) {

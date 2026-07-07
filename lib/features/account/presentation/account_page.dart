@@ -63,7 +63,7 @@ class AccountPage extends StatelessWidget {
               ),
               onPressed: () async {
                 await auth.signOut();
-                if (context.mounted) context.go(AppRoutes.login);
+                if (context.mounted) context.go(AppRoutes.home);
               },
               icon: const Icon(Icons.logout),
               label: const Text('Sair'),
