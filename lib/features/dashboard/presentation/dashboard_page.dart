@@ -1,6 +1,6 @@
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
-import 'package:guardian_portal/core/layout/app_layout.dart';
+import 'package:guardian_portal/core/layout/dashboard_layout.dart';
 import 'package:guardian_portal/core/widgets/device_online_chip.dart';
 import 'package:guardian_portal/core/widgets/guardian_scaffold.dart';
 import 'package:guardian_portal/core/widgets/online_refresh.dart';
@@ -32,6 +32,12 @@ class _DashboardPageState extends State<DashboardPage> {
 
     _deviceStream ??= DashboardService().watchPrimaryDevice(uid);
 
+    final viewport = MediaQuery.sizeOf(context);
+    final layout = DashboardLayoutSpec.resolve(
+      viewportWidth: viewport.width,
+      viewportHeight: viewport.height,
+    );
+
     return StreamBuilder<GuardianDevice?>(
       stream: _deviceStream,
       builder: (context, snapshot) {
@@ -53,23 +59,44 @@ class _DashboardPageState extends State<DashboardPage> {
                     )
                   : null,
               onRefresh: _refreshController.refresh,
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.stretch,
-                children: [
-                  RefreshTickBar(
-                    visible: isRefreshing && snapshot.hasData,
-                  ),
-                  if (initialLoad)
-                    const Center(child: CircularProgressIndicator())
-                  else if (device == null)
-                    const EmptyDevicesCard()
-                  else
-                    _DashboardBody(
-                      uid: uid,
-                      device: device,
+              fitViewport: layout.isNotebook,
+              child: layout.isNotebook
+                  ? Column(
+                      crossAxisAlignment: CrossAxisAlignment.stretch,
+                      children: [
+                        Expanded(
+                          child: initialLoad
+                              ? const Center(
+                                  child: CircularProgressIndicator(),
+                                )
+                              : device == null
+                                  ? const EmptyDevicesCard()
+                                  : _DashboardBody(
+                                      uid: uid,
+                                      device: device,
+                                      layout: layout,
+                                      showRefreshTick:
+                                          isRefreshing && snapshot.hasData,
+                                    ),
+                        ),
+                      ],
+                    )
+                  : Column(
+                      crossAxisAlignment: CrossAxisAlignment.stretch,
+                      children: [
+                        if (initialLoad)
+                          const Center(child: CircularProgressIndicator())
+                        else if (device == null)
+                          const EmptyDevicesCard()
+                        else
+                          _DashboardBody(
+                            uid: uid,
+                            device: device,
+                            layout: layout,
+                            showRefreshTick: isRefreshing && snapshot.hasData,
+                          ),
+                      ],
                     ),
-                ],
-              ),
             );
           },
         );
@@ -82,67 +109,203 @@ class _DashboardBody extends StatelessWidget {
   const _DashboardBody({
     required this.uid,
     required this.device,
+    required this.layout,
+    this.showRefreshTick = false,
   });
 
   final String uid;
   final GuardianDevice device;
+  final DashboardLayoutSpec layout;
+  final bool showRefreshTick;
 
   DeviceStatus get status => device.status;
 
   @override
   Widget build(BuildContext context) {
     final tone = ProtectionSnapshot.tone(status);
-    final wide = AppLayout.isDashboardRow(MediaQuery.sizeOf(context).width);
 
     final hero = ProtectionStatusHero(
       status: status,
       tone: tone,
-      stretchVertically: wide,
+      stretchVertically: layout.stretchTopRow,
+      fillHeight: layout.isNotebook,
+      compact: layout.compact,
     );
     final setup = ProtectionSetupCard(
       status: status,
-      stretchVertically: wide,
+      stretchVertically: layout.stretchTopRow,
+      fillHeight: layout.isNotebook,
+      compact: layout.compact,
     );
-    final checklist = ProtectionChecklistCard(status: status);
+    final checklist = ProtectionChecklistCard(
+      status: status,
+      compact: layout.compact,
+      twoColumns: layout.checklistTwoColumns,
+      pairGrid: layout.checklistPairGrid,
+      expandVertically: layout.isNotebook,
+    );
     final containment = RemoteContainmentCard(
       uid: uid,
       deviceId: device.id,
       status: status,
+      compact: layout.compact,
+      expandVertically: layout.isNotebook,
     );
+
+    if (layout.isNotebook) {
+      return LayoutBuilder(
+        builder: (context, constraints) {
+          final available = constraints.maxHeight;
+          final cellHeight = DashboardLayoutSpec.notebookCellHeightFromAvailable(
+            available,
+            sectionGap: layout.sectionGap,
+          );
+
+          return Column(
+            crossAxisAlignment: CrossAxisAlignment.stretch,
+            children: [
+              SizedBox(
+                height: cellHeight,
+                child: Row(
+                  crossAxisAlignment: CrossAxisAlignment.stretch,
+                  children: [
+                    Expanded(flex: layout.topRowHeroFlex, child: hero),
+                    SizedBox(width: layout.columnGap),
+                    Expanded(flex: layout.topRowSetupFlex, child: setup),
+                  ],
+                ),
+              ),
+              SizedBox(height: layout.sectionGap),
+              SizedBox(
+                height: cellHeight,
+                child: Row(
+                  crossAxisAlignment: CrossAxisAlignment.stretch,
+                  children: [
+                    Expanded(
+                      flex: layout.bottomRowContainmentFlex,
+                      child: containment,
+                    ),
+                    SizedBox(width: layout.columnGap),
+                    Expanded(
+                      flex: layout.bottomRowChecklistFlex,
+                      child: checklist,
+                    ),
+                  ],
+                ),
+              ),
+              SizedBox(height: layout.compact ? 16 : 20),
+              _DashboardFooter(
+                status: status,
+                layout: layout,
+                showRefreshTick: showRefreshTick,
+              ),
+            ],
+          );
+        },
+      );
+    }
 
     return Column(
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
-        if (wide) ...[
-          IntrinsicHeight(
-            child: Row(
-              crossAxisAlignment: CrossAxisAlignment.stretch,
+        if (!layout.isMobile) ...[
+          if (layout.stretchTopRow)
+            IntrinsicHeight(
+              child: Row(
+                crossAxisAlignment: CrossAxisAlignment.stretch,
+                children: [
+                  Expanded(flex: layout.topRowHeroFlex, child: hero),
+                  SizedBox(width: layout.columnGap),
+                  Expanded(flex: layout.topRowSetupFlex, child: setup),
+                ],
+              ),
+            )
+          else
+            Row(
+              crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Expanded(flex: 5, child: hero),
-                const SizedBox(width: 20),
-                Expanded(flex: 6, child: setup),
+                Expanded(flex: layout.topRowHeroFlex, child: hero),
+                SizedBox(width: layout.columnGap),
+                Expanded(flex: layout.topRowSetupFlex, child: setup),
               ],
             ),
-          ),
-          const SizedBox(height: 18),
-          containment,
-          const SizedBox(height: 18),
-          checklist,
+          SizedBox(height: layout.sectionGap),
+          if (layout.useBottomRowSplit)
+            Row(
+              crossAxisAlignment: CrossAxisAlignment.stretch,
+              children: [
+                Expanded(
+                  flex: layout.bottomRowContainmentFlex,
+                  child: containment,
+                ),
+                SizedBox(width: layout.columnGap),
+                Expanded(
+                  flex: layout.bottomRowChecklistFlex,
+                  child: checklist,
+                ),
+              ],
+            )
+          else ...[
+            containment,
+            SizedBox(height: layout.sectionGap),
+            checklist,
+          ],
         ]
         else ...[
           hero,
-          const SizedBox(height: 20),
+          SizedBox(height: layout.sectionGap),
           setup,
-          const SizedBox(height: 16),
+          SizedBox(height: layout.sectionGap),
           containment,
-          const SizedBox(height: 16),
+          SizedBox(height: layout.sectionGap),
           checklist,
         ],
-        const SizedBox(height: 8),
+        SizedBox(height: layout.compact ? 16 : 20),
+        _DashboardFooter(
+          status: status,
+          layout: layout,
+          showRefreshTick: showRefreshTick,
+        ),
+      ],
+    );
+  }
+}
+
+class _DashboardFooter extends StatelessWidget {
+  const _DashboardFooter({
+    required this.status,
+    required this.layout,
+    required this.showRefreshTick,
+  });
+
+  final DeviceStatus status;
+  final DashboardLayoutSpec layout;
+  final bool showRefreshTick;
+
+  @override
+  Widget build(BuildContext context) {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.stretch,
+      children: [
         Text(
           ProtectionSnapshot.dashboardFooter(status),
           textAlign: TextAlign.center,
-          style: Theme.of(context).textTheme.bodyMedium?.copyWith(fontSize: 13),
+          style: Theme.of(context).textTheme.titleSmall?.copyWith(
+                fontSize: layout.footerFontSize,
+                fontWeight: FontWeight.w600,
+                height: 1.35,
+                color: Theme.of(context)
+                    .textTheme
+                    .bodyMedium
+                    ?.color
+                    ?.withValues(alpha: 0.92),
+              ),
+        ),
+        RefreshTickBar(
+          visible: showRefreshTick,
+          placement: RefreshTickBarPlacement.bottom,
+          reserveSpace: true,
+          alwaysVisible: true,
         ),
       ],
     );

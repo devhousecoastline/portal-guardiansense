@@ -3,6 +3,8 @@ abstract final class AppLayout {
   static const double sideNavWidth = 240;
   static const double wideBreakpoint = 900;
   static const double dashboardRowBreakpoint = 960;
+  /// Notebooks e janelas baixas — densidade maior no Centro.
+  static const double dashboardCompactHeightBreakpoint = 900;
   static const double checklistTwoColBreakpoint = 720;
   static const double locateSplitBreakpoint = 1100;
 
@@ -17,11 +19,12 @@ abstract final class AppLayout {
     const pad = 48.0;
     final usable = mainAreaWidth - pad;
     if (usable <= 720) return usable.clamp(0, double.infinity);
-    if (usable <= 1040) return usable;
-    if (usable <= 1360) return 1000;
-    if (usable <= 1680) return 1200;
-    if (usable <= 2100) return 1360;
-    return 1520;
+    // Notebooks 1366px: usa quase toda a área útil (evita faixa vazia à direita).
+    if (usable <= 1120) return usable;
+    if (usable <= 1360) return 1120;
+    if (usable <= 1680) return 1240;
+    if (usable <= 2100) return 1400;
+    return 1560;
   }
 
   static double horizontalPadding(double mainAreaWidth) {

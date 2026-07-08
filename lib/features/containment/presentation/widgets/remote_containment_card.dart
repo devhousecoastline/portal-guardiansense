@@ -1,6 +1,7 @@
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import 'package:guardian_portal/core/theme/app_colors.dart';
+import 'package:guardian_portal/core/theme/dashboard_typography.dart';
 import 'package:guardian_portal/core/widgets/relative_time.dart';
 import 'package:guardian_portal/core/widgets/section_card.dart';
 import 'package:guardian_portal/features/containment/data/device_commands_repository.dart';
@@ -13,11 +14,15 @@ class RemoteContainmentCard extends StatefulWidget {
     required this.uid,
     required this.deviceId,
     required this.status,
+    this.compact = false,
+    this.expandVertically = false,
   });
 
   final String uid;
   final String deviceId;
   final DeviceStatus status;
+  final bool compact;
+  final bool expandVertically;
 
   @override
   State<RemoteContainmentCard> createState() => _RemoteContainmentCardState();
@@ -107,30 +112,49 @@ class _RemoteContainmentCardState extends State<RemoteContainmentCard> {
         final command = snapshot.data;
 
         return SectionCard(
-          padding: const EdgeInsets.fromLTRB(20, 18, 20, 16),
+          expandVertically: widget.expandVertically,
+          padding: EdgeInsets.fromLTRB(
+            20,
+            widget.compact ? 12 : 18,
+            20,
+            widget.compact ? 10 : 16,
+          ),
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.stretch,
             children: [
               Text(
                 'Contenção remota',
-                style: Theme.of(context).textTheme.titleLarge,
-              ),
-              const SizedBox(height: 4),
-              Text(
-                _headerSubtitle(
-                  oysterClosed: oysterClosed,
-                  command: command,
+                style: DashboardTypography.cardTitle(
+                  context,
+                  compact: widget.compact,
                 ),
-                style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                      color: AppColors.textMuted,
-                    ),
               ),
-              const SizedBox(height: 12),
-              _buildBody(
-                context,
-                command: command,
-                oysterClosed: oysterClosed,
-              ),
+              if (!widget.compact) ...[
+                const SizedBox(height: 4),
+                Text(
+                  _headerSubtitle(
+                    oysterClosed: oysterClosed,
+                    command: command,
+                  ),
+                  style: DashboardTypography.cardSubtitle(context),
+                ),
+              ],
+              SizedBox(height: widget.compact ? 8 : 12),
+              if (widget.expandVertically)
+                Expanded(
+                  child: _buildBody(
+                    context,
+                    command: command,
+                    oysterClosed: oysterClosed,
+                    fillHeight: true,
+                  ),
+                )
+              else
+                _buildBody(
+                  context,
+                  command: command,
+                  oysterClosed: oysterClosed,
+                ),
             ],
           ),
         );
@@ -160,6 +184,7 @@ class _RemoteContainmentCardState extends State<RemoteContainmentCard> {
     BuildContext context, {
     required DeviceCommand? command,
     required bool oysterClosed,
+    bool fillHeight = false,
   }) {
     if (oysterClosed) {
       return _TintedPanel(
@@ -169,6 +194,8 @@ class _RemoteContainmentCardState extends State<RemoteContainmentCard> {
         subtitle: widget.status.isOnline
             ? 'Reabra somente no app Android, com biometria ou PIN.'
             : 'Contenção ativa. Última sync ${formatRelativeTime(widget.status.lastSeen)}.',
+        compact: widget.compact,
+        fillHeight: fillHeight,
       );
     }
 
@@ -180,6 +207,8 @@ class _RemoteContainmentCardState extends State<RemoteContainmentCard> {
         subtitle: widget.status.isOnline
             ? 'Aguardando o aparelho aplicar o fechamento…'
             : 'Será aplicado na próxima sincronização com a nuvem.',
+        compact: widget.compact,
+        fillHeight: fillHeight,
         trailing: _submitting
             ? const SizedBox(
                 width: 20,
@@ -197,6 +226,8 @@ class _RemoteContainmentCardState extends State<RemoteContainmentCard> {
         title: 'Falha ao aplicar',
         subtitle: command?.failureMessage ??
             'O aparelho não confirmou o fechamento.',
+        compact: widget.compact,
+        fillHeight: fillHeight,
         action: _ContainmentActionButton(
           loading: _submitting,
           onPressed: _confirmAndSend,
@@ -212,6 +243,8 @@ class _RemoteContainmentCardState extends State<RemoteContainmentCard> {
       subtitle: widget.status.isOnline
           ? 'Bloqueia apps protegidos quando o celular receber o comando.'
           : 'O fechamento ocorre assim que o aparelho voltar online.',
+      compact: widget.compact,
+      fillHeight: fillHeight,
       action: _ContainmentActionButton(
         loading: _submitting,
         onPressed: _confirmAndSend,
@@ -229,6 +262,8 @@ class _TintedPanel extends StatelessWidget {
     required this.subtitle,
     this.action,
     this.trailing,
+    this.compact = false,
+    this.fillHeight = false,
   });
 
   final Color color;
@@ -237,29 +272,41 @@ class _TintedPanel extends StatelessWidget {
   final String subtitle;
   final Widget? action;
   final Widget? trailing;
+  final bool compact;
+  final bool fillHeight;
 
   @override
   Widget build(BuildContext context) {
-    final wide = MediaQuery.sizeOf(context).width >= 640;
+    final sideBySide = !compact &&
+        !fillHeight &&
+        MediaQuery.sizeOf(context).width >= 640 &&
+        action != null;
 
     return Container(
       width: double.infinity,
-      padding: const EdgeInsets.all(14),
+      height: fillHeight ? double.infinity : null,
+      padding: EdgeInsets.symmetric(
+        horizontal: compact ? 10 : 14,
+        vertical: compact ? 8 : 14,
+      ),
       decoration: BoxDecoration(
         color: color.withValues(alpha: 0.06),
         borderRadius: BorderRadius.circular(10),
         border: Border.all(color: color.withValues(alpha: 0.2)),
       ),
-      child: wide && action != null
+      child: sideBySide
           ? Row(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Expanded(child: _PanelContent(
-                  color: color,
-                  icon: icon,
-                  title: title,
-                  subtitle: subtitle,
-                )),
+                Expanded(
+                  child: _PanelContent(
+                    color: color,
+                    icon: icon,
+                    title: title,
+                    subtitle: subtitle,
+                    compact: compact,
+                  ),
+                ),
                 const SizedBox(width: 16),
                 action!,
               ],
@@ -267,26 +314,46 @@ class _TintedPanel extends StatelessWidget {
           : Column(
               crossAxisAlignment: CrossAxisAlignment.stretch,
               children: [
-                Row(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Expanded(
-                      child: _PanelContent(
-                        color: color,
-                        icon: icon,
-                        title: title,
-                        subtitle: subtitle,
-                      ),
-                    ),
-                    if (trailing != null) trailing!,
-                  ],
-                ),
-                if (action != null) ...[
-                  const SizedBox(height: 12),
-                  Align(
-                    alignment: Alignment.centerLeft,
-                    child: action,
+                if (fillHeight) ...[
+                  _PanelContent(
+                    color: color,
+                    icon: icon,
+                    title: title,
+                    subtitle: subtitle,
+                    compact: compact,
+                    trailing: trailing,
                   ),
+                  if (action != null) ...[
+                    SizedBox(height: compact ? 6 : 8),
+                    Align(
+                      alignment: Alignment.centerLeft,
+                      child: action,
+                    ),
+                  ],
+                  const Spacer(),
+                ] else ...[
+                  Row(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Expanded(
+                        child: _PanelContent(
+                          color: color,
+                          icon: icon,
+                          title: title,
+                          subtitle: subtitle,
+                          compact: compact,
+                        ),
+                      ),
+                      if (trailing != null) trailing!,
+                    ],
+                  ),
+                  if (action != null) ...[
+                    SizedBox(height: compact ? 8 : 12),
+                    Align(
+                      alignment: Alignment.centerLeft,
+                      child: action,
+                    ),
+                  ],
                 ],
               ],
             ),
@@ -300,12 +367,16 @@ class _PanelContent extends StatelessWidget {
     required this.icon,
     required this.title,
     required this.subtitle,
+    this.compact = false,
+    this.trailing,
   });
 
   final Color color;
   final IconData icon;
   final String title;
   final String subtitle;
+  final bool compact;
+  final Widget? trailing;
 
   @override
   Widget build(BuildContext context) {
@@ -314,31 +385,30 @@ class _PanelContent extends StatelessWidget {
       children: [
         Padding(
           padding: const EdgeInsets.only(top: 1),
-          child: Icon(icon, size: 20, color: color.withValues(alpha: 0.95)),
+          child: Icon(
+            icon,
+            size: compact ? 18 : 20,
+            color: color.withValues(alpha: 0.95),
+          ),
         ),
-        const SizedBox(width: 10),
+        SizedBox(width: compact ? 8 : 10),
         Expanded(
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               Text(
                 title,
-                style: Theme.of(context).textTheme.titleSmall?.copyWith(
-                      fontWeight: FontWeight.w600,
-                      color: color,
-                    ),
+                style: DashboardTypography.panelTitle(context, color: color),
               ),
-              const SizedBox(height: 4),
+              SizedBox(height: compact ? 2 : 4),
               Text(
                 subtitle,
-                style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                      color: AppColors.textMuted,
-                      height: 1.35,
-                    ),
+                style: DashboardTypography.panelSubtitle(context),
               ),
             ],
           ),
         ),
+        if (trailing != null) trailing!,
       ],
     );
   }

@@ -3,80 +3,218 @@ import 'package:guardian_portal/core/layout/app_layout.dart';
 import 'package:guardian_portal/core/navigation/navigation_loading_controller.dart';
 import 'package:guardian_portal/core/routing/app_routes.dart';
 import 'package:guardian_portal/core/theme/app_colors.dart';
+import 'package:guardian_portal/core/theme/dashboard_typography.dart';
 import 'package:guardian_portal/core/widgets/section_card.dart';
 import 'package:guardian_portal/features/dashboard/domain/device_status.dart';
 import 'package:guardian_portal/features/dashboard/domain/protection_snapshot.dart';
 
 class ProtectionChecklistCard extends StatelessWidget {
-  const ProtectionChecklistCard({super.key, required this.status});
+  const ProtectionChecklistCard({
+    super.key,
+    required this.status,
+    this.compact = false,
+    this.twoColumns,
+    this.pairGrid = false,
+    this.expandVertically = false,
+  });
 
   final DeviceStatus status;
+  final bool compact;
+
+  /// Quando null, deriva de [AppLayout.checklistTwoColBreakpoint].
+  final bool? twoColumns;
+  final bool pairGrid;
+  final bool expandVertically;
 
   @override
   Widget build(BuildContext context) {
     final layout = ProtectionSnapshot.checklistLayout(status);
     final mainWidth = AppLayout.mainAreaWidth(MediaQuery.sizeOf(context).width);
-    final twoColumns = mainWidth >= AppLayout.checklistTwoColBreakpoint;
+    final useTwoColumns = !pairGrid &&
+        (twoColumns ?? (mainWidth >= AppLayout.checklistTwoColBreakpoint));
+    final body = _ChecklistBody(
+      layout: layout,
+      compact: compact,
+      useTwoColumns: useTwoColumns,
+      pairGrid: pairGrid,
+      alignEventToBottom: pairGrid && expandVertically,
+    );
 
     return SectionCard(
-      padding: const EdgeInsets.fromLTRB(20, 18, 20, 10),
+      expandVertically: expandVertically,
+      padding: EdgeInsets.fromLTRB(
+        20,
+        compact ? 12 : 18,
+        20,
+        compact ? 8 : 10,
+      ),
       child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
+        crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
           Text(
             'Respostas em segundos',
-            style: Theme.of(context).textTheme.titleLarge,
+            style: DashboardTypography.cardTitle(context, compact: compact),
           ),
-          const SizedBox(height: 4),
-          Text(
-            status.isOnline
-                ? 'Status em tempo real do aparelho.'
-                : 'Último estado conhecido do aparelho.',
-            style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                  color: AppColors.textMuted,
-                ),
-          ),
-          const SizedBox(height: 12),
-          if (twoColumns && layout.right.isNotEmpty)
-            Row(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Expanded(child: _ChecklistColumn(entries: layout.left)),
-                const SizedBox(width: 20),
-                Expanded(child: _ChecklistColumn(entries: layout.right)),
-              ],
-            )
-          else
-            _ChecklistColumn(entries: [...layout.left, ...layout.right]),
-          if (layout.fullWidth.isNotEmpty) ...[
+          if (!compact) ...[
             const SizedBox(height: 4),
-            for (final entry in layout.fullWidth)
-              _ChecklistRow(
-                entry: entry,
-                fullWidth: true,
-                onDetails: entry.answer != 'Nenhuma registrada'
-                    ? () => NavigationLoadingScope.of(context)
-                        .go(context, AppRoutes.events)
-                    : null,
-              ),
+            Text(
+              status.isOnline
+                  ? 'Status em tempo real do aparelho.'
+                  : 'Último estado conhecido do aparelho.',
+              style: DashboardTypography.cardSubtitle(context),
+            ),
           ],
+          SizedBox(height: compact ? 8 : 12),
+          if (expandVertically && !pairGrid)
+            Expanded(
+              child: SingleChildScrollView(
+                physics: const ClampingScrollPhysics(),
+                child: body,
+              ),
+            )
+          else if (expandVertically)
+            Expanded(child: body)
+          else
+            body,
         ],
       ),
     );
   }
 }
 
-class _ChecklistColumn extends StatelessWidget {
-  const _ChecklistColumn({required this.entries});
+class _ChecklistBody extends StatelessWidget {
+  const _ChecklistBody({
+    required this.layout,
+    required this.compact,
+    required this.useTwoColumns,
+    required this.pairGrid,
+    this.alignEventToBottom = false,
+  });
+
+  final ChecklistLayout layout;
+  final bool compact;
+  final bool useTwoColumns;
+  final bool pairGrid;
+  final bool alignEventToBottom;
+
+  @override
+  Widget build(BuildContext context) {
+    final iconEntries = [...layout.left, ...layout.right];
+
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.stretch,
+      children: [
+        if (pairGrid)
+          alignEventToBottom
+              ? Expanded(
+                  child: Align(
+                    alignment: Alignment.topLeft,
+                    child: _ChecklistPairGrid(
+                      entries: iconEntries,
+                      compact: compact,
+                    ),
+                  ),
+                )
+              : _ChecklistPairGrid(entries: iconEntries, compact: compact)
+        else if (useTwoColumns && layout.right.isNotEmpty)
+          Row(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Expanded(
+                child: _ChecklistColumn(entries: layout.left, compact: compact),
+              ),
+              SizedBox(width: compact ? 14 : 20),
+              Expanded(
+                child: _ChecklistColumn(entries: layout.right, compact: compact),
+              ),
+            ],
+          )
+        else
+          _ChecklistColumn(entries: iconEntries, compact: compact),
+        if (alignEventToBottom) const Spacer(),
+        if (layout.fullWidth.isNotEmpty) ...[
+          SizedBox(height: compact ? 2 : 4),
+          for (final entry in layout.fullWidth)
+            _ChecklistRow(
+              entry: entry,
+              fullWidth: true,
+              compact: compact,
+              onDetails: entry.answer != 'Nenhuma registrada'
+                  ? () => NavigationLoadingScope.of(context)
+                      .go(context, AppRoutes.events)
+                  : null,
+            ),
+        ],
+      ],
+    );
+  }
+}
+
+class _ChecklistPairGrid extends StatelessWidget {
+  const _ChecklistPairGrid({
+    required this.entries,
+    required this.compact,
+  });
 
   final List<ProtectionChecklistEntry> entries;
+  final bool compact;
+
+  @override
+  Widget build(BuildContext context) {
+    final rows = <Widget>[];
+    for (var i = 0; i < entries.length; i += 2) {
+      rows.add(
+        Row(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Expanded(
+              child: _ChecklistRow(
+                entry: entries[i],
+                compact: compact,
+                tight: true,
+              ),
+            ),
+            const SizedBox(width: 10),
+            if (i + 1 < entries.length)
+              Expanded(
+                child: _ChecklistRow(
+                  entry: entries[i + 1],
+                  compact: compact,
+                  tight: true,
+                ),
+              )
+            else
+              const Expanded(child: SizedBox.shrink()),
+          ],
+        ),
+      );
+      if (i + 2 < entries.length) {
+        rows.add(SizedBox(height: compact ? 4 : 6));
+      }
+    }
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.stretch,
+      children: rows,
+    );
+  }
+}
+
+class _ChecklistColumn extends StatelessWidget {
+  const _ChecklistColumn({
+    required this.entries,
+    this.compact = false,
+  });
+
+  final List<ProtectionChecklistEntry> entries;
+  final bool compact;
 
   @override
   Widget build(BuildContext context) {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
-        for (final entry in entries) _ChecklistRow(entry: entry),
+        for (final entry in entries)
+          _ChecklistRow(entry: entry, compact: compact),
       ],
     );
   }
@@ -86,11 +224,15 @@ class _ChecklistRow extends StatelessWidget {
   const _ChecklistRow({
     required this.entry,
     this.fullWidth = false,
+    this.compact = false,
+    this.tight = false,
     this.onDetails,
   });
 
   final ProtectionChecklistEntry entry;
   final bool fullWidth;
+  final bool compact;
+  final bool tight;
   final VoidCallback? onDetails;
 
   static IconData? _iconFor(String question) {
@@ -113,15 +255,21 @@ class _ChecklistRow extends StatelessWidget {
       ChecklistSignal.alert => AppColors.riskCritical,
       ChecklistSignal.muted => AppColors.textMuted,
     };
-    final compact = fullWidth || entry.answer.length > 40;
     final icon = _iconFor(entry.question);
+    final iconSize = tight ? 16.0 : 18.0;
 
     return Padding(
-      padding: EdgeInsets.only(bottom: fullWidth ? 4 : 10, top: fullWidth ? 6 : 0),
+      padding: EdgeInsets.only(
+        bottom: fullWidth ? (compact ? 3 : 4) : (tight ? 0 : (compact ? 6 : 10)),
+        top: fullWidth ? (compact ? 4 : 6) : 0,
+      ),
       child: Container(
         width: double.infinity,
         padding: fullWidth
-            ? const EdgeInsets.symmetric(horizontal: 12, vertical: 10)
+            ? EdgeInsets.symmetric(
+                horizontal: 12,
+                vertical: compact ? 8 : 10,
+              )
             : EdgeInsets.zero,
         decoration: fullWidth
             ? BoxDecoration(
@@ -136,7 +284,7 @@ class _ChecklistRow extends StatelessWidget {
             Padding(
               padding: const EdgeInsets.only(top: 2),
               child: icon != null
-                  ? Icon(icon, size: 18, color: color.withValues(alpha: 0.9))
+                  ? Icon(icon, size: iconSize, color: color.withValues(alpha: 0.9))
                   : Container(
                       width: 8,
                       height: 8,
@@ -145,29 +293,23 @@ class _ChecklistRow extends StatelessWidget {
                           BoxDecoration(color: color, shape: BoxShape.circle),
                     ),
             ),
-            const SizedBox(width: 10),
+            SizedBox(width: tight ? 6 : 10),
             Expanded(
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   Text(
                     entry.question,
-                    style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                          color: AppColors.textMuted,
-                          height: 1.25,
-                        ),
+                    style: DashboardTypography.mutedLabel(context),
+                    maxLines: tight ? 2 : null,
+                    overflow: tight ? TextOverflow.ellipsis : null,
                   ),
-                  const SizedBox(height: 2),
+                  SizedBox(height: tight ? 1 : 2),
                   Text(
                     entry.answer,
-                    style: (compact
-                            ? Theme.of(context).textTheme.bodySmall
-                            : Theme.of(context).textTheme.bodyMedium)
-                        ?.copyWith(
-                      color: color,
-                      fontWeight: FontWeight.w600,
-                      height: 1.3,
-                    ),
+                    style: DashboardTypography.emphasis(context, color: color),
+                    maxLines: tight ? 2 : null,
+                    overflow: tight ? TextOverflow.ellipsis : null,
                   ),
                   if (onDetails != null) ...[
                     const SizedBox(height: 6),
@@ -180,10 +322,10 @@ class _ChecklistRow extends StatelessWidget {
                       onPressed: onDetails,
                       child: Text(
                         'Ver detalhes →',
-                        style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                              color: AppColors.primary,
-                              fontWeight: FontWeight.w600,
-                            ),
+                        style: DashboardTypography.emphasis(
+                          context,
+                          color: AppColors.primary,
+                        ),
                       ),
                     ),
                   ],

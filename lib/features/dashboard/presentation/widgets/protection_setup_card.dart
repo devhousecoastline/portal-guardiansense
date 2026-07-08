@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:guardian_portal/core/theme/app_colors.dart';
+import 'package:guardian_portal/core/theme/dashboard_typography.dart';
 import 'package:guardian_portal/core/widgets/section_card.dart';
 import 'package:guardian_portal/features/dashboard/domain/device_status.dart';
 import 'package:guardian_portal/features/dashboard/domain/protection_setup_item.dart';
@@ -10,10 +11,14 @@ class ProtectionSetupCard extends StatelessWidget {
     super.key,
     required this.status,
     this.stretchVertically = false,
+    this.fillHeight = false,
+    this.compact = false,
   });
 
   final DeviceStatus status;
   final bool stretchVertically;
+  final bool fillHeight;
+  final bool compact;
 
   @override
   Widget build(BuildContext context) {
@@ -21,50 +26,68 @@ class ProtectionSetupCard extends StatelessWidget {
     final complete = status.hasSetupChecklist &&
         status.pendingSetupItems.isEmpty &&
         status.configuredSetupItems.isNotEmpty;
+    final expands = stretchVertically || fillHeight;
 
     return SizedBox(
       width: double.infinity,
-      height: stretchVertically ? double.infinity : null,
+      height: expands ? double.infinity : null,
       child: SectionCard(
-        padding: const EdgeInsets.fromLTRB(20, 18, 20, 14),
+        expandVertically: expands,
+        padding: EdgeInsets.fromLTRB(
+          20,
+          compact ? 12 : 18,
+          20,
+          compact ? 8 : 14,
+        ),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
           Text(
             'Configurações do aparelho',
-            style: Theme.of(context).textTheme.titleLarge,
+            style: DashboardTypography.cardTitle(context, compact: compact),
           ),
-          const SizedBox(height: 4),
-          Text(
-            ProtectionSnapshot.setupCardSubtitle(status),
-            style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                  color: AppColors.textMuted,
-                ),
-          ),
-          const SizedBox(height: 14),
-          if (!status.hasSetupChecklist)
+          if (!compact) ...[
+            const SizedBox(height: 4),
             Text(
-              status.isOnline
-                  ? 'Abra o Guardian Sense no celular com esta conta para '
-                      'sincronizar o checklist.'
-                  : 'Abra o app no celular para sincronizar quando voltar online.',
-              style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                    color: AppColors.textMuted,
-                  ),
-            )
-          else ...[
-            _ProgressSummary(
-              status: status,
-              complete: complete,
-              muted: muted,
+              ProtectionSnapshot.setupCardSubtitle(status),
+              style: DashboardTypography.cardSubtitle(context),
             ),
-            const SizedBox(height: 16),
-            if (complete)
-              _CompleteGrid(
-                items: status.configuredSetupItems,
-                muted: muted,
+          ],
+            SizedBox(height: compact ? 10 : 16),
+            if (!status.hasSetupChecklist)
+              Text(
+                status.isOnline
+                    ? 'Abra o Guardian Sense no celular com esta conta para '
+                        'sincronizar o checklist.'
+                    : 'Abra o app no celular para sincronizar quando voltar online.',
+                style: DashboardTypography.cardSubtitle(context),
               )
             else ...[
+              _ProgressSummary(
+                status: status,
+                complete: complete,
+                muted: muted,
+                compact: compact,
+              ),
+              SizedBox(height: compact ? 10 : 16),
+              if (complete)
+                fillHeight
+                    ? Expanded(
+                        child: Align(
+                          alignment: Alignment.topLeft,
+                          child: _CompleteGrid(
+                            items: status.configuredSetupItems,
+                            muted: muted,
+                            compact: compact,
+                          ),
+                        ),
+                      )
+                    : _CompleteGrid(
+                        items: status.configuredSetupItems,
+                        muted: muted,
+                        compact: compact,
+                      )
+              else ...[
               if (status.pendingSetupItems.isNotEmpty) ...[
                 _SectionTitle(
                   label: 'Ainda falta (${status.pendingSetupItems.length})',
@@ -77,9 +100,7 @@ class ProtectionSetupCard extends StatelessWidget {
                 const SizedBox(height: 6),
                 Text(
                   'Ajuste no app → Configurações.',
-                  style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                        color: AppColors.textMuted,
-                      ),
+                  style: DashboardTypography.mutedLabel(context),
                 ),
               ],
               if (status.configuredSetupItems.isNotEmpty) ...[
@@ -91,7 +112,7 @@ class ProtectionSetupCard extends StatelessWidget {
               ],
             ],
           ],
-          if (stretchVertically) const Spacer(),
+          if (fillHeight && !complete) const Spacer(),
           ],
         ),
       ),
@@ -104,11 +125,13 @@ class _ProgressSummary extends StatelessWidget {
     required this.status,
     required this.complete,
     required this.muted,
+    this.compact = false,
   });
 
   final DeviceStatus status;
   final bool complete;
   final bool muted;
+  final bool compact;
 
   @override
   Widget build(BuildContext context) {
@@ -131,7 +154,10 @@ class _ProgressSummary extends StatelessWidget {
         if (complete)
           Container(
             width: double.infinity,
-            padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
+            padding: EdgeInsets.symmetric(
+              horizontal: 12,
+              vertical: compact ? 8 : 10,
+            ),
             decoration: BoxDecoration(
               color: accent.withValues(alpha: 0.1),
               borderRadius: BorderRadius.circular(10),
@@ -148,17 +174,17 @@ class _ProgressSummary extends StatelessWidget {
                 Expanded(
                   child: Text(
                     muted ? '$label (pode estar desatualizado)' : label,
-                    style: Theme.of(context).textTheme.titleSmall?.copyWith(
-                          color: accent,
-                          fontWeight: FontWeight.w600,
-                        ),
+                    style: DashboardTypography.highlightCaption(
+                      context,
+                      color: accent,
+                    ),
                   ),
                 ),
               ],
             ),
           )
         else
-          Text(label, style: Theme.of(context).textTheme.titleSmall),
+          Text(label, style: DashboardTypography.highlightCaption(context)),
         const SizedBox(height: 10),
         ClipRRect(
           borderRadius: BorderRadius.circular(6),
@@ -175,10 +201,15 @@ class _ProgressSummary extends StatelessWidget {
 }
 
 class _CompleteGrid extends StatelessWidget {
-  const _CompleteGrid({required this.items, required this.muted});
+  const _CompleteGrid({
+    required this.items,
+    required this.muted,
+    this.compact = false,
+  });
 
   final List<ProtectionSetupItem> items;
   final bool muted;
+  final bool compact;
 
   @override
   Widget build(BuildContext context) {
@@ -188,16 +219,22 @@ class _CompleteGrid extends StatelessWidget {
         Row(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            Expanded(child: _SetupChip(item: items[i], muted: muted)),
+            Expanded(child: _SetupChip(item: items[i], muted: muted, compact: compact)),
             const SizedBox(width: 8),
             if (i + 1 < items.length)
-              Expanded(child: _SetupChip(item: items[i + 1], muted: muted))
+              Expanded(
+                child: _SetupChip(
+                  item: items[i + 1],
+                  muted: muted,
+                  compact: compact,
+                ),
+              )
             else
               const Expanded(child: SizedBox.shrink()),
           ],
         ),
       );
-      if (i + 2 < items.length) rows.add(const SizedBox(height: 8));
+      if (i + 2 < items.length) rows.add(SizedBox(height: compact ? 6 : 8));
     }
     return Column(
       crossAxisAlignment: CrossAxisAlignment.stretch,
@@ -207,17 +244,25 @@ class _CompleteGrid extends StatelessWidget {
 }
 
 class _SetupChip extends StatelessWidget {
-  const _SetupChip({required this.item, required this.muted});
+  const _SetupChip({
+    required this.item,
+    required this.muted,
+    this.compact = false,
+  });
 
   final ProtectionSetupItem item;
   final bool muted;
+  final bool compact;
 
   @override
   Widget build(BuildContext context) {
     final accent = muted ? AppColors.textMuted : AppColors.trustHigh;
 
     return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 8),
+      padding: EdgeInsets.symmetric(
+        horizontal: 10,
+        vertical: compact ? 6 : 8,
+      ),
       decoration: BoxDecoration(
         color: accent.withValues(alpha: 0.08),
         borderRadius: BorderRadius.circular(10),
@@ -234,10 +279,10 @@ class _SetupChip extends StatelessWidget {
           Expanded(
             child: Text(
               item.label,
-              style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                    height: 1.25,
-                    color: muted ? AppColors.textMuted : null,
-                  ),
+              style: DashboardTypography.emphasis(
+                context,
+                color: muted ? AppColors.textMuted : null,
+              ),
               maxLines: 2,
               overflow: TextOverflow.ellipsis,
             ),
@@ -280,17 +325,15 @@ class _PendingRow extends StatelessWidget {
               children: [
                 Text(
                   item.label,
-                  style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                        fontWeight: FontWeight.w600,
-                      ),
+                  style: DashboardTypography.emphasis(context),
                 ),
                 const SizedBox(height: 2),
                 Text(
                   'Pendente no app',
-                  style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                        color: AppColors.trustMedium,
-                        fontWeight: FontWeight.w600,
-                      ),
+                  style: DashboardTypography.emphasis(
+                    context,
+                    color: AppColors.trustMedium,
+                  ),
                 ),
               ],
             ),
@@ -316,10 +359,7 @@ class _ConfiguredList extends StatelessWidget {
       children: [
         Text(
           'Já ajustado no app (${items.length})',
-          style: Theme.of(context).textTheme.titleSmall?.copyWith(
-                color: accent,
-                fontWeight: FontWeight.w600,
-              ),
+          style: DashboardTypography.highlightCaption(context, color: accent),
         ),
         const SizedBox(height: 6),
         ...items.map(
@@ -332,8 +372,8 @@ class _ConfiguredList extends StatelessWidget {
                 Expanded(
                   child: Text(
                     item.label,
-                    style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                          color: muted ? AppColors.textMuted : null,
+                    style: DashboardTypography.mutedLabel(context).copyWith(
+                          color: muted ? AppColors.textMuted : AppColors.textPrimary,
                         ),
                   ),
                 ),
@@ -356,10 +396,7 @@ class _SectionTitle extends StatelessWidget {
   Widget build(BuildContext context) {
     return Text(
       label,
-      style: Theme.of(context).textTheme.titleSmall?.copyWith(
-            color: color,
-            fontWeight: FontWeight.w700,
-          ),
+      style: DashboardTypography.highlightCaption(context, color: color),
     );
   }
 }

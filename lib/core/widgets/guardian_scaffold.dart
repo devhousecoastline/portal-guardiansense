@@ -18,6 +18,7 @@ class GuardianScaffold extends StatelessWidget {
     this.subtitle,
     this.subtitleTrailing,
     this.onRefresh,
+    this.fitViewport = false,
   });
 
   final String title;
@@ -25,6 +26,9 @@ class GuardianScaffold extends StatelessWidget {
   final Widget? subtitleTrailing;
   final Widget child;
   final Future<void> Function()? onRefresh;
+
+  /// Preenche a altura útil sem scroll (grade 2×2 do Centro em notebook).
+  final bool fitViewport;
 
   @override
   Widget build(BuildContext context) {
@@ -63,36 +67,18 @@ class GuardianScaffold extends StatelessWidget {
                       ),
                     ),
                     Expanded(
-                      child: onRefresh != null
-                          ? RefreshIndicator(
-                              onRefresh: onRefresh!,
-                              color: AppColors.primary,
-                              backgroundColor: AppColors.surface,
-                              child: SingleChildScrollView(
-                                physics: const AlwaysScrollableScrollPhysics(),
-                                padding:
-                                    EdgeInsets.fromLTRB(hPad, 8, hPad, 32),
-                                child: Align(
-                                  alignment: Alignment.topCenter,
-                                  child: ConstrainedBox(
-                                    constraints:
-                                        BoxConstraints(maxWidth: contentWidth),
-                                    child: child,
-                                  ),
-                                ),
-                              ),
-                            )
-                          : SingleChildScrollView(
-                              padding: EdgeInsets.fromLTRB(hPad, 8, hPad, 32),
-                              child: Align(
-                                alignment: Alignment.topCenter,
-                                child: ConstrainedBox(
-                                  constraints:
-                                      BoxConstraints(maxWidth: contentWidth),
-                                  child: child,
-                                ),
-                              ),
-                            ),
+                      child: _ViewportContent(
+                        fitViewport: fitViewport,
+                        padding: EdgeInsets.fromLTRB(
+                          hPad,
+                          8,
+                          hPad,
+                          _contentBottomPadding(context, fitViewport),
+                        ),
+                        maxWidth: contentWidth,
+                        onRefresh: onRefresh,
+                        child: child,
+                      ),
                     ),
                   ],
                 );
@@ -101,6 +87,98 @@ class GuardianScaffold extends StatelessWidget {
           ),
         ],
       ),
+    );
+  }
+
+  static double _contentBottomPadding(BuildContext context, bool fitViewport) {
+    if (fitViewport) return 12;
+    final height = MediaQuery.sizeOf(context).height;
+    if (height < AppLayout.dashboardCompactHeightBreakpoint) return 16;
+    return 32;
+  }
+}
+
+class _ViewportContent extends StatelessWidget {
+  const _ViewportContent({
+    required this.fitViewport,
+    required this.padding,
+    required this.maxWidth,
+    required this.child,
+    this.onRefresh,
+  });
+
+  final bool fitViewport;
+  final EdgeInsets padding;
+  final double maxWidth;
+  final Widget child;
+  final Future<void> Function()? onRefresh;
+
+  @override
+  Widget build(BuildContext context) {
+    final alignedChild = Align(
+      alignment: Alignment.topCenter,
+      child: ConstrainedBox(
+        constraints: BoxConstraints(maxWidth: maxWidth),
+        child: child,
+      ),
+    );
+
+    if (fitViewport) {
+      return LayoutBuilder(
+        builder: (context, constraints) {
+          final innerHeight = (constraints.maxHeight - padding.vertical)
+              .clamp(0.0, double.infinity);
+          final fittedChild = Align(
+            alignment: Alignment.topCenter,
+            child: SizedBox(
+              width: maxWidth,
+              height: innerHeight,
+              child: child,
+            ),
+          );
+
+          if (onRefresh != null) {
+            return RefreshIndicator(
+              onRefresh: onRefresh!,
+              color: AppColors.primary,
+              backgroundColor: AppColors.surface,
+              child: ListView(
+                physics: const AlwaysScrollableScrollPhysics(),
+                padding: padding,
+                children: [
+                  SizedBox(
+                    height: innerHeight,
+                    child: fittedChild,
+                  ),
+                ],
+              ),
+            );
+          }
+
+          return Padding(
+            padding: padding,
+            child: fittedChild,
+          );
+        },
+      );
+    }
+
+    if (onRefresh != null) {
+      return RefreshIndicator(
+        onRefresh: onRefresh!,
+        color: AppColors.primary,
+        backgroundColor: AppColors.surface,
+        child: SingleChildScrollView(
+          physics: const AlwaysScrollableScrollPhysics(),
+          padding: padding,
+          child: alignedChild,
+        ),
+      );
+    }
+
+    return SingleChildScrollView(
+      padding: padding,
+      child: alignedChild,
     );
   }
 }

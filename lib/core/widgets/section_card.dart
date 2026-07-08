@@ -6,15 +6,18 @@ class SectionCard extends StatelessWidget {
     super.key,
     required this.child,
     this.padding = const EdgeInsets.all(20),
+    this.expandVertically = false,
   });
 
   final Widget child;
   final EdgeInsets padding;
+  final bool expandVertically;
 
   @override
   Widget build(BuildContext context) {
     return Container(
       width: double.infinity,
+      height: expandVertically ? double.infinity : null,
       padding: padding,
       decoration: BoxDecoration(
         color: AppColors.card,

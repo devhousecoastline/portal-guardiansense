@@ -80,22 +80,71 @@ class _OnlineRefreshState extends State<OnlineRefresh> {
   Widget build(BuildContext context) => widget.builder(context, _isRefreshing);
 }
 
-/// Faixa estilo Matrix no topo do conteúdo durante o tick de atualização.
+/// Posição da faixa Matrix durante o tick de atualização.
+enum RefreshTickBarPlacement {
+  top,
+  bottom,
+}
+
+/// Faixa estilo Matrix durante o tick de atualização online.
 class RefreshTickBar extends StatelessWidget {
-  const RefreshTickBar({super.key, required this.visible});
+  const RefreshTickBar({
+    super.key,
+    required this.visible,
+    this.placement = RefreshTickBarPlacement.top,
+    this.reserveSpace = false,
+    this.alwaysVisible = false,
+  });
 
   final bool visible;
+  final RefreshTickBarPlacement placement;
+
+  /// Mantém altura fixa para o tick não empurrar o conteúdo acima.
+  final bool reserveSpace;
+
+  /// Exibe a faixa Matrix o tempo todo (mais intensa quando [visible]).
+  final bool alwaysVisible;
+
+  static const double _barHeight = 14;
+  static const double _padding = 8;
+  static double get reservedHeight => _barHeight + _padding;
 
   @override
   Widget build(BuildContext context) {
+    final atBottom = placement == RefreshTickBarPlacement.bottom;
+
+    if (reserveSpace) {
+      final showBar = alwaysVisible || visible;
+      return SizedBox(
+        height: reservedHeight,
+        child: Padding(
+          padding: EdgeInsets.only(top: atBottom ? _padding : 0),
+          child: showBar
+              ? MatrixRefreshBar(
+                  intensity: visible
+                      ? MatrixRefreshIntensity.active
+                      : MatrixRefreshIntensity.ambient,
+                )
+              : const SizedBox.shrink(),
+        ),
+      );
+    }
+
     return AnimatedSize(
       duration: const Duration(milliseconds: 220),
       curve: Curves.easeOutCubic,
-      alignment: Alignment.topCenter,
+      alignment: atBottom ? Alignment.bottomCenter : Alignment.topCenter,
       child: visible
-          ? const Padding(
-              padding: EdgeInsets.only(bottom: 8),
-              child: MatrixRefreshBar(),
+          ? Padding(
+              padding: EdgeInsets.only(
+                top: atBottom ? 8 : 0,
+                bottom: atBottom ? 0 : 8,
+              ),
+              child: MatrixRefreshBar(
+                intensity: visible
+                    ? MatrixRefreshIntensity.active
+                    : MatrixRefreshIntensity.ambient,
+              ),
             )
           : const SizedBox.shrink(),
     );
