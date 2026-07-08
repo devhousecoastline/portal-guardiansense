@@ -1,6 +1,7 @@
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import 'package:guardian_portal/core/layout/dashboard_layout.dart';
+import 'package:guardian_portal/core/widgets/celular_seguro_link.dart';
 import 'package:guardian_portal/core/widgets/device_online_chip.dart';
 import 'package:guardian_portal/core/widgets/guardian_scaffold.dart';
 import 'package:guardian_portal/core/widgets/online_refresh.dart';
@@ -301,6 +302,8 @@ class _DashboardFooter extends StatelessWidget {
                     ?.withValues(alpha: 0.92),
               ),
         ),
+        SizedBox(height: layout.compact ? 8 : 10),
+        CelularSeguroLink(compact: layout.compact),
         RefreshTickBar(
           visible: showRefreshTick,
           placement: RefreshTickBarPlacement.bottom,

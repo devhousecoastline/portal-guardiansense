@@ -2,6 +2,7 @@ import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import 'package:guardian_portal/core/theme/app_colors.dart';
 import 'package:guardian_portal/core/theme/dashboard_typography.dart';
+import 'package:guardian_portal/core/widgets/celular_seguro_link.dart';
 import 'package:guardian_portal/core/widgets/relative_time.dart';
 import 'package:guardian_portal/core/widgets/section_card.dart';
 import 'package:guardian_portal/features/containment/data/device_commands_repository.dart';
@@ -329,6 +330,10 @@ class _TintedPanel extends StatelessWidget {
                       alignment: Alignment.centerLeft,
                       child: action,
                     ),
+                    if (compact) ...[
+                      const SizedBox(height: 8),
+                      const CelularSeguroLink(compact: true, align: TextAlign.start),
+                    ],
                   ],
                   const Spacer(),
                 ] else ...[

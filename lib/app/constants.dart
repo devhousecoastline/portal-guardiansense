@@ -29,4 +29,7 @@ abstract final class AppConstants {
 
   /// Dispositivo online se `lastSeen` for mais recente que isso (~3× o ciclo do app).
   static const Duration deviceOnlineThreshold = Duration(seconds: 90);
+
+  /// Programa Nacional Celular Seguro (MJSP) — bloqueio de IMEI/linha na operadora.
+  static const String celularSeguroUrl = 'https://celularseguro.mj.gov.br/';
 }
