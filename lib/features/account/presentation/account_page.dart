@@ -61,7 +61,7 @@ class AccountPage extends StatelessWidget {
                       showChevron: false,
                       onTap: () async {
                         await auth.signOut();
-                        if (context.mounted) context.go(AppRoutes.home);
+                        if (context.mounted) context.go(AppRoutes.login);
                       },
                     ),
                   ],

@@ -102,7 +102,7 @@ class _LoginPageState extends State<LoginPage> {
     final compact = MediaQuery.sizeOf(context).width < 720;
 
     return AuthPageShell(
-      appBar: const AuthAppBar.login(),
+      appBar: const AuthAppBar(),
       body: LayoutBuilder(
         builder: (context, constraints) {
           return SingleChildScrollView(

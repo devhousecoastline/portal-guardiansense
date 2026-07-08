@@ -4,7 +4,6 @@ import 'package:go_router/go_router.dart';
 import 'package:guardian_portal/core/navigation/navigation_shell.dart';
 import 'package:guardian_portal/core/routing/app_routes.dart';
 import 'package:guardian_portal/features/account/presentation/account_page.dart';
-import 'package:guardian_portal/features/auth/presentation/home_page.dart';
 import 'package:guardian_portal/features/auth/presentation/login_page.dart';
 import 'package:guardian_portal/features/dashboard/presentation/dashboard_page.dart';
 import 'package:guardian_portal/features/devices/presentation/devices_page.dart';
@@ -12,20 +11,22 @@ import 'package:guardian_portal/features/events/presentation/events_page.dart';
 import 'package:guardian_portal/features/locate/presentation/locate_page.dart';
 import 'package:guardian_portal/features/settings/presentation/settings_page.dart';
 
-bool _isPublicRoute(String path) =>
-    path == AppRoutes.home || path == AppRoutes.login;
+bool _isPublicRoute(String path) => path == AppRoutes.login;
 
 GoRouter createAppRouter({required Listenable authListenable}) {
   return GoRouter(
-    initialLocation: AppRoutes.home,
+    initialLocation: AppRoutes.login,
     refreshListenable: authListenable,
     redirect: (context, state) {
       final user = FirebaseAuth.instance.currentUser;
       final path = state.matchedLocation;
+
+      if (path == AppRoutes.home) return AppRoutes.login;
+
       final onPublicRoute = _isPublicRoute(path);
 
       if (user == null) {
-        return onPublicRoute ? null : AppRoutes.home;
+        return onPublicRoute ? null : AppRoutes.login;
       }
       if (onPublicRoute) return AppRoutes.dashboard;
       return null;
@@ -33,7 +34,7 @@ GoRouter createAppRouter({required Listenable authListenable}) {
     routes: [
       GoRoute(
         path: AppRoutes.home,
-        builder: (context, state) => const HomePage(),
+        redirect: (context, state) => AppRoutes.login,
       ),
       GoRoute(
         path: AppRoutes.login,
