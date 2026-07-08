@@ -4,6 +4,7 @@ import 'package:guardian_portal/core/layout/app_layout.dart';
 import 'package:guardian_portal/core/widgets/device_online_chip.dart';
 import 'package:guardian_portal/core/widgets/guardian_scaffold.dart';
 import 'package:guardian_portal/core/widgets/online_refresh.dart';
+import 'package:guardian_portal/features/containment/presentation/widgets/remote_containment_card.dart';
 import 'package:guardian_portal/features/dashboard/application/dashboard_service.dart';
 import 'package:guardian_portal/features/dashboard/domain/device_status.dart';
 import 'package:guardian_portal/features/dashboard/domain/protection_snapshot.dart';
@@ -63,7 +64,10 @@ class _DashboardPageState extends State<DashboardPage> {
                   else if (device == null)
                     const EmptyDevicesCard()
                   else
-                    _DashboardBody(status: device.status),
+                    _DashboardBody(
+                      uid: uid,
+                      device: device,
+                    ),
                 ],
               ),
             );
@@ -75,9 +79,15 @@ class _DashboardPageState extends State<DashboardPage> {
 }
 
 class _DashboardBody extends StatelessWidget {
-  const _DashboardBody({required this.status});
+  const _DashboardBody({
+    required this.uid,
+    required this.device,
+  });
 
-  final DeviceStatus status;
+  final String uid;
+  final GuardianDevice device;
+
+  DeviceStatus get status => device.status;
 
   @override
   Widget build(BuildContext context) {
@@ -94,6 +104,11 @@ class _DashboardBody extends StatelessWidget {
       stretchVertically: wide,
     );
     final checklist = ProtectionChecklistCard(status: status);
+    final containment = RemoteContainmentCard(
+      uid: uid,
+      deviceId: device.id,
+      status: status,
+    );
 
     return Column(
       crossAxisAlignment: CrossAxisAlignment.stretch,
@@ -120,6 +135,7 @@ class _DashboardBody extends StatelessWidget {
           checklist,
         ],
         const SizedBox(height: 16),
+        containment,
         Text(
           ProtectionSnapshot.dashboardFooter(status),
           textAlign: TextAlign.center,

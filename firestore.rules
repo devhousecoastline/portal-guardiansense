@@ -11,6 +11,10 @@ service cloud.firestore {
         match /events/{eventId} {
           allow read, write: if request.auth != null && request.auth.uid == userId;
         }
+
+        match /commands/{commandId} {
+          allow read, write: if request.auth != null && request.auth.uid == userId;
+        }
       }
 
       match /events/{eventId} {
