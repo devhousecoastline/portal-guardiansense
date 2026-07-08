@@ -125,6 +125,8 @@ class _DashboardBody extends StatelessWidget {
             ),
           ),
           const SizedBox(height: 18),
+          containment,
+          const SizedBox(height: 18),
           checklist,
         ]
         else ...[
@@ -132,10 +134,11 @@ class _DashboardBody extends StatelessWidget {
           const SizedBox(height: 20),
           setup,
           const SizedBox(height: 16),
+          containment,
+          const SizedBox(height: 16),
           checklist,
         ],
-        const SizedBox(height: 16),
-        containment,
+        const SizedBox(height: 8),
         Text(
           ProtectionSnapshot.dashboardFooter(status),
           textAlign: TextAlign.center,

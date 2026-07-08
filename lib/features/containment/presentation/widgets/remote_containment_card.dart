@@ -105,36 +105,55 @@ class _RemoteContainmentCardState extends State<RemoteContainmentCard> {
       stream: _repository.watchLatestCloseOyster(widget.uid, widget.deviceId),
       builder: (context, snapshot) {
         final command = snapshot.data;
-        final body = _buildBody(context, command: command, oysterClosed: oysterClosed);
 
         return SectionCard(
+          padding: const EdgeInsets.fromLTRB(20, 18, 20, 16),
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.stretch,
             children: [
-              Row(
-                children: [
-                  Icon(
-                    oysterClosed ? Icons.lock_rounded : Icons.lock_open_rounded,
-                    color: oysterClosed ? AppColors.trustHigh : AppColors.riskCritical,
-                  ),
-                  const SizedBox(width: 12),
-                  Expanded(
-                    child: Text(
-                      'Contenção remota',
-                      style: Theme.of(context).textTheme.titleSmall?.copyWith(
-                            fontWeight: FontWeight.w700,
-                          ),
+              Text(
+                'Contenção remota',
+                style: Theme.of(context).textTheme.titleLarge,
+              ),
+              const SizedBox(height: 4),
+              Text(
+                _headerSubtitle(
+                  oysterClosed: oysterClosed,
+                  command: command,
+                ),
+                style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                      color: AppColors.textMuted,
                     ),
-                  ),
-                ],
               ),
               const SizedBox(height: 12),
-              body,
+              _buildBody(
+                context,
+                command: command,
+                oysterClosed: oysterClosed,
+              ),
             ],
           ),
         );
       },
     );
+  }
+
+  String _headerSubtitle({
+    required bool oysterClosed,
+    required DeviceCommand? command,
+  }) {
+    if (oysterClosed) {
+      return 'O aparelho está em contenção ativa.';
+    }
+    if (command?.isPending == true) {
+      return 'Comando enviado — aguardando o celular aplicar.';
+    }
+    if (command?.isFailed == true) {
+      return 'O último comando não foi confirmado pelo aparelho.';
+    }
+    return widget.status.isOnline
+        ? 'Ação de emergência se o aparelho saiu do seu controle.'
+        : 'Celular offline — o comando ficará na fila até sincronizar.';
   }
 
   Widget _buildBody(
@@ -143,28 +162,28 @@ class _RemoteContainmentCardState extends State<RemoteContainmentCard> {
     required bool oysterClosed,
   }) {
     if (oysterClosed) {
-      return _StatusBlock(
-        icon: Icons.check_circle_outline,
+      return _TintedPanel(
         color: AppColors.trustHigh,
+        icon: Icons.lock_rounded,
         title: 'Ostra fechada',
         subtitle: widget.status.isOnline
-            ? 'O aparelho está em contenção. Reabra somente no celular.'
+            ? 'Reabra somente no app Android, com biometria ou PIN.'
             : 'Contenção ativa. Última sync ${formatRelativeTime(widget.status.lastSeen)}.',
       );
     }
 
     if (command?.isPending == true) {
-      return _StatusBlock(
-        icon: Icons.hourglass_top_rounded,
+      return _TintedPanel(
         color: AppColors.riskElevated,
+        icon: Icons.hourglass_top_rounded,
         title: 'Comando pendente',
         subtitle: widget.status.isOnline
             ? 'Aguardando o aparelho aplicar o fechamento…'
-            : 'Celular offline — o comando será aplicado na próxima sync.',
+            : 'Será aplicado na próxima sincronização com a nuvem.',
         trailing: _submitting
             ? const SizedBox(
-                width: 22,
-                height: 22,
+                width: 20,
+                height: 20,
                 child: CircularProgressIndicator(strokeWidth: 2),
               )
             : null,
@@ -172,70 +191,131 @@ class _RemoteContainmentCardState extends State<RemoteContainmentCard> {
     }
 
     if (command?.isFailed == true) {
-      return Column(
-        crossAxisAlignment: CrossAxisAlignment.stretch,
-        children: [
-          _StatusBlock(
-            icon: Icons.error_outline,
-            color: AppColors.riskCritical,
-            title: 'Falha ao aplicar',
-            subtitle: command?.failureMessage ??
-                'O aparelho não confirmou o fechamento. Tente novamente.',
-          ),
-          const SizedBox(height: 12),
-          _ActionButton(
-            loading: _submitting,
-            onPressed: _confirmAndSend,
-            label: 'Tentar novamente',
-          ),
-        ],
+      return _TintedPanel(
+        color: AppColors.riskCritical,
+        icon: Icons.error_outline_rounded,
+        title: 'Falha ao aplicar',
+        subtitle: command?.failureMessage ??
+            'O aparelho não confirmou o fechamento.',
+        action: _ContainmentActionButton(
+          loading: _submitting,
+          onPressed: _confirmAndSend,
+          label: 'Tentar novamente',
+        ),
       );
     }
 
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.stretch,
-      children: [
-        Text(
-          widget.status.isOnline
-              ? 'Use se o aparelho foi roubado ou está fora do seu controle.'
-              : 'O celular está offline. O comando ficará na fila até sincronizar.',
-          style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                color: AppColors.textMuted,
-                height: 1.4,
-              ),
-        ),
-        const SizedBox(height: 14),
-        _ActionButton(
-          loading: _submitting,
-          onPressed: _confirmAndSend,
-          label: 'Fechar ostra agora',
-        ),
-      ],
+    return _TintedPanel(
+      color: AppColors.riskCritical,
+      icon: Icons.lock_outline_rounded,
+      title: 'Fechar ostra remotamente',
+      subtitle: widget.status.isOnline
+          ? 'Bloqueia apps protegidos quando o celular receber o comando.'
+          : 'O fechamento ocorre assim que o aparelho voltar online.',
+      action: _ContainmentActionButton(
+        loading: _submitting,
+        onPressed: _confirmAndSend,
+        label: 'Fechar ostra',
+      ),
     );
   }
 }
 
-class _StatusBlock extends StatelessWidget {
-  const _StatusBlock({
-    required this.icon,
+class _TintedPanel extends StatelessWidget {
+  const _TintedPanel({
     required this.color,
+    required this.icon,
     required this.title,
     required this.subtitle,
+    this.action,
     this.trailing,
   });
 
-  final IconData icon;
   final Color color;
+  final IconData icon;
   final String title;
   final String subtitle;
+  final Widget? action;
   final Widget? trailing;
+
+  @override
+  Widget build(BuildContext context) {
+    final wide = MediaQuery.sizeOf(context).width >= 640;
+
+    return Container(
+      width: double.infinity,
+      padding: const EdgeInsets.all(14),
+      decoration: BoxDecoration(
+        color: color.withValues(alpha: 0.06),
+        borderRadius: BorderRadius.circular(10),
+        border: Border.all(color: color.withValues(alpha: 0.2)),
+      ),
+      child: wide && action != null
+          ? Row(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Expanded(child: _PanelContent(
+                  color: color,
+                  icon: icon,
+                  title: title,
+                  subtitle: subtitle,
+                )),
+                const SizedBox(width: 16),
+                action!,
+              ],
+            )
+          : Column(
+              crossAxisAlignment: CrossAxisAlignment.stretch,
+              children: [
+                Row(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Expanded(
+                      child: _PanelContent(
+                        color: color,
+                        icon: icon,
+                        title: title,
+                        subtitle: subtitle,
+                      ),
+                    ),
+                    if (trailing != null) trailing!,
+                  ],
+                ),
+                if (action != null) ...[
+                  const SizedBox(height: 12),
+                  Align(
+                    alignment: Alignment.centerLeft,
+                    child: action,
+                  ),
+                ],
+              ],
+            ),
+    );
+  }
+}
+
+class _PanelContent extends StatelessWidget {
+  const _PanelContent({
+    required this.color,
+    required this.icon,
+    required this.title,
+    required this.subtitle,
+  });
+
+  final Color color;
+  final IconData icon;
+  final String title;
+  final String subtitle;
 
   @override
   Widget build(BuildContext context) {
     return Row(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        Icon(icon, color: color, size: 22),
+        Padding(
+          padding: const EdgeInsets.only(top: 1),
+          child: Icon(icon, size: 20, color: color.withValues(alpha: 0.95)),
+        ),
         const SizedBox(width: 10),
         Expanded(
           child: Column(
@@ -251,7 +331,7 @@ class _StatusBlock extends StatelessWidget {
               const SizedBox(height: 4),
               Text(
                 subtitle,
-                style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                style: Theme.of(context).textTheme.bodySmall?.copyWith(
                       color: AppColors.textMuted,
                       height: 1.35,
                     ),
@@ -259,14 +339,13 @@ class _StatusBlock extends StatelessWidget {
             ],
           ),
         ),
-        if (trailing != null) trailing!,
       ],
     );
   }
 }
 
-class _ActionButton extends StatelessWidget {
-  const _ActionButton({
+class _ContainmentActionButton extends StatelessWidget {
+  const _ContainmentActionButton({
     required this.loading,
     required this.onPressed,
     required this.label,
@@ -278,22 +357,27 @@ class _ActionButton extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return FilledButton.icon(
+    return OutlinedButton.icon(
       onPressed: loading ? null : onPressed,
-      style: FilledButton.styleFrom(
-        backgroundColor: AppColors.riskCritical,
-        padding: const EdgeInsets.symmetric(vertical: 14),
+      style: OutlinedButton.styleFrom(
+        foregroundColor: AppColors.riskCritical,
+        side: BorderSide(
+          color: AppColors.riskCritical.withValues(alpha: loading ? 0.25 : 0.55),
+        ),
+        backgroundColor: AppColors.riskCritical.withValues(alpha: 0.08),
+        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
+        visualDensity: VisualDensity.compact,
       ),
       icon: loading
-          ? const SizedBox(
-              width: 18,
-              height: 18,
+          ? SizedBox(
+              width: 16,
+              height: 16,
               child: CircularProgressIndicator(
                 strokeWidth: 2,
-                color: Colors.white,
+                color: AppColors.riskCritical.withValues(alpha: 0.8),
               ),
             )
-          : const Icon(Icons.lock_rounded),
+          : const Icon(Icons.lock_rounded, size: 18),
       label: Text(label),
     );
   }
