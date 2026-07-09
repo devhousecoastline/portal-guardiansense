@@ -87,35 +87,66 @@ class ProtectionSetupCard extends StatelessWidget {
                         muted: muted,
                         compact: compact,
                       )
-              else ...[
-              if (status.pendingSetupItems.isNotEmpty) ...[
-                _SectionTitle(
-                  label: 'Ainda falta (${status.pendingSetupItems.length})',
-                  color: AppColors.trustMedium,
-                ),
-                const SizedBox(height: 6),
-                ...status.pendingSetupItems.map(
-                  (item) => _PendingRow(item: item),
-                ),
-                const SizedBox(height: 6),
-                Text(
-                  'Ajuste no app → Configurações.',
-                  style: DashboardTypography.mutedLabel(context),
-                ),
-              ],
-              if (status.configuredSetupItems.isNotEmpty) ...[
-                const SizedBox(height: 12),
-                _ConfiguredList(
-                  items: status.configuredSetupItems,
+              else if (fillHeight)
+                Expanded(
+                  child: SingleChildScrollView(
+                    physics: const ClampingScrollPhysics(),
+                    child: _IncompleteSetupBody(
+                      status: status,
+                      muted: muted,
+                    ),
+                  ),
+                )
+              else
+                _IncompleteSetupBody(
+                  status: status,
                   muted: muted,
                 ),
-              ],
             ],
-          ],
-          if (fillHeight && !complete) const Spacer(),
           ],
         ),
       ),
+    );
+  }
+}
+
+class _IncompleteSetupBody extends StatelessWidget {
+  const _IncompleteSetupBody({
+    required this.status,
+    required this.muted,
+  });
+
+  final DeviceStatus status;
+  final bool muted;
+
+  @override
+  Widget build(BuildContext context) {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        if (status.pendingSetupItems.isNotEmpty) ...[
+          _SectionTitle(
+            label: 'Ainda falta (${status.pendingSetupItems.length})',
+            color: AppColors.trustMedium,
+          ),
+          const SizedBox(height: 6),
+          ...status.pendingSetupItems.map(
+            (item) => _PendingRow(item: item),
+          ),
+          const SizedBox(height: 6),
+          Text(
+            'Ajuste no app → Configurações.',
+            style: DashboardTypography.mutedLabel(context),
+          ),
+        ],
+        if (status.configuredSetupItems.isNotEmpty) ...[
+          const SizedBox(height: 12),
+          _ConfiguredList(
+            items: status.configuredSetupItems,
+            muted: muted,
+          ),
+        ],
+      ],
     );
   }
 }

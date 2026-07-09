@@ -303,7 +303,8 @@ class _DashboardFooter extends StatelessWidget {
               ),
         ),
         SizedBox(height: layout.compact ? 8 : 10),
-        CelularSeguroLink(compact: layout.compact),
+        if (status.oysterClosed != true)
+          CelularSeguroLink(compact: layout.compact),
         RefreshTickBar(
           visible: showRefreshTick,
           placement: RefreshTickBarPlacement.bottom,

@@ -193,13 +193,8 @@ class _RemoteContainmentCardState extends State<RemoteContainmentCard> {
     bool fillHeight = false,
   }) {
     if (oysterClosed) {
-      return _TintedPanel(
-        color: AppColors.trustHigh,
-        icon: Icons.lock_rounded,
-        title: 'Ostra fechada',
-        subtitle: widget.status.isOnline
-            ? 'Só reabre no app ${AppConstants.appName}.'
-            : 'Contenção ativa. Última sync ${formatRelativeTime(widget.status.lastSeen)}.',
+      return _OysterClosedPanel(
+        status: widget.status,
         compact: widget.compact,
         fillHeight: fillHeight,
       );
@@ -256,6 +251,113 @@ class _RemoteContainmentCardState extends State<RemoteContainmentCard> {
         onPressed: _confirmAndSend,
         label: 'Fechar ostra',
       ),
+    );
+  }
+}
+
+class _OysterClosedPanel extends StatelessWidget {
+  const _OysterClosedPanel({
+    required this.status,
+    required this.compact,
+    required this.fillHeight,
+  });
+
+  final DeviceStatus status;
+  final bool compact;
+  final bool fillHeight;
+
+  @override
+  Widget build(BuildContext context) {
+    const color = AppColors.trustHigh;
+    final subtitle = status.isOnline
+        ? 'Só reabre no app ${AppConstants.appName}.'
+        : 'Contenção ativa. Última sync ${formatRelativeTime(status.lastSeen)}.';
+
+    return Container(
+      width: double.infinity,
+      height: fillHeight ? double.infinity : null,
+      padding: EdgeInsets.symmetric(
+        horizontal: compact ? 10 : 14,
+        vertical: compact ? 10 : 14,
+      ),
+      decoration: BoxDecoration(
+        color: color.withValues(alpha: 0.06),
+        borderRadius: BorderRadius.circular(10),
+        border: Border.all(color: color.withValues(alpha: 0.2)),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        children: [
+          if (fillHeight)
+            Expanded(
+              child: Center(
+                child: _OysterClosedHero(
+                  color: color,
+                  subtitle: subtitle,
+                  compact: compact,
+                ),
+              ),
+            )
+          else
+            _OysterClosedHero(
+              color: color,
+              subtitle: subtitle,
+              compact: compact,
+            ),
+          SizedBox(height: compact ? 10 : 14),
+          CelularSeguroCallout(compact: compact),
+        ],
+      ),
+    );
+  }
+}
+
+class _OysterClosedHero extends StatelessWidget {
+  const _OysterClosedHero({
+    required this.color,
+    required this.subtitle,
+    required this.compact,
+  });
+
+  final Color color;
+  final String subtitle;
+  final bool compact;
+
+  @override
+  Widget build(BuildContext context) {
+    final iconSize = compact ? 22.0 : 28.0;
+    final ring = compact ? 40.0 : 48.0;
+
+    return Column(
+      mainAxisSize: MainAxisSize.min,
+      children: [
+        Container(
+          width: ring,
+          height: ring,
+          decoration: BoxDecoration(
+            color: color.withValues(alpha: 0.12),
+            shape: BoxShape.circle,
+            border: Border.all(color: color.withValues(alpha: 0.28)),
+          ),
+          child: Icon(
+            Icons.lock_rounded,
+            size: iconSize,
+            color: color,
+          ),
+        ),
+        SizedBox(height: compact ? 8 : 10),
+        Text(
+          'Ostra fechada',
+          textAlign: TextAlign.center,
+          style: DashboardTypography.panelTitle(context, color: color),
+        ),
+        SizedBox(height: compact ? 4 : 6),
+        Text(
+          subtitle,
+          textAlign: TextAlign.center,
+          style: DashboardTypography.panelSubtitle(context),
+        ),
+      ],
     );
   }
 }
@@ -335,10 +437,6 @@ class _TintedPanel extends StatelessWidget {
                       alignment: Alignment.centerLeft,
                       child: action,
                     ),
-                    if (compact) ...[
-                      const SizedBox(height: 8),
-                      const CelularSeguroLink(compact: true, align: TextAlign.start),
-                    ],
                   ],
                   const Spacer(),
                 ] else ...[
