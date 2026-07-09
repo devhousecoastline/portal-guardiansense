@@ -4,7 +4,7 @@ import 'package:guardian_portal/core/theme/app_colors.dart';
 import 'package:guardian_portal/core/widgets/section_card.dart';
 import 'package:guardian_portal/features/dashboard/domain/device_status.dart';
 import 'package:guardian_portal/features/dashboard/domain/protected_layer_summary.dart';
-import 'package:guardian_portal/features/settings/presentation/widgets/protected_layer_detail_sheet.dart';
+import 'package:guardian_portal/features/settings/presentation/widgets/protected_layer_detail_dialog.dart';
 
 class ProtectedLayersCard extends StatelessWidget {
   const ProtectedLayersCard({
@@ -132,7 +132,7 @@ class _LayerTile extends StatelessWidget {
       borderRadius: BorderRadius.circular(10),
       child: InkWell(
         onTap: () {
-          showProtectedLayerDetailSheet(context, layer, muted: muted);
+          showProtectedLayerDetailDialog(context, layer, muted: muted);
         },
         borderRadius: BorderRadius.circular(10),
         child: DecoratedBox(
