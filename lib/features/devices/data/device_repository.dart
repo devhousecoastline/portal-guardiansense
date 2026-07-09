@@ -19,9 +19,13 @@ class DeviceRepository {
   CollectionReference<Map<String, dynamic>> _devices(String uid) =>
       _firestore.collection('users').doc(uid).collection('devices');
 
+  /// Limite alinhado ao máximo visível por plano — evita ler docs órfãos.
+  static const deviceListenLimit = 5;
+
   Stream<List<GuardianDevice>> watchDevices(String uid) {
     return _devices(uid)
         .orderBy('lastSeen', descending: true)
+        .limit(deviceListenLimit)
         .snapshots()
         .map((snap) => snap.docs.map(GuardianDevice.fromDoc).toList());
   }

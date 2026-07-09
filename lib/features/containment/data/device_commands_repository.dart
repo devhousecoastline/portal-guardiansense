@@ -1,4 +1,7 @@
+import 'dart:async';
+
 import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:guardian_portal/features/containment/data/device_commands_purge.dart';
 import 'package:guardian_portal/features/containment/domain/device_command.dart';
 
 class DeviceCommandRateLimitException implements Exception {
@@ -19,7 +22,6 @@ class DeviceCommandsRepository {
   final FirebaseFirestore _firestore;
 
   static const minInterval = Duration(seconds: 30);
-  static const listenLimit = 20;
 
   CollectionReference<Map<String, dynamic>> _commands(
     String uid,
@@ -32,17 +34,16 @@ class DeviceCommandsRepository {
           .doc(deviceId)
           .collection('commands');
 
+  Query<Map<String, dynamic>> _closeOysterQuery(String uid, String deviceId) =>
+      _commands(uid, deviceId)
+          .where('type', isEqualTo: DeviceCommandType.closeOyster.storageKey)
+          .orderBy('createdAt', descending: true)
+          .limit(1);
+
   Stream<DeviceCommand?> watchLatestCloseOyster(String uid, String deviceId) {
-    return _commands(uid, deviceId)
-        .orderBy('createdAt', descending: true)
-        .limit(listenLimit)
-        .snapshots()
-        .map((snap) {
-      for (final doc in snap.docs) {
-        final command = DeviceCommand.fromDoc(doc);
-        if (command.type == DeviceCommandType.closeOyster) return command;
-      }
-      return null;
+    return _closeOysterQuery(uid, deviceId).snapshots().map((snap) {
+      if (snap.docs.isEmpty) return null;
+      return DeviceCommand.fromDoc(snap.docs.first);
     });
   }
 
@@ -64,29 +65,37 @@ class DeviceCommandsRepository {
 
     final ref = _commands(uid, deviceId).doc();
     final now = DateTime.now();
-    final payload = {
+    await ref.set({
       'type': DeviceCommandType.closeOyster.storageKey,
       'status': DeviceCommandStatus.pending.storageKey,
       'reason': 'portal_remote',
       'createdAt': Timestamp.fromDate(now),
       'requestedBy': requestedBy,
-    };
+    });
 
-    await ref.set(payload);
-    final created = await ref.get();
-    return DeviceCommand.fromDoc(created);
+    unawaited(
+      DeviceCommandsPurge.purgeCollection(_commands(uid, deviceId))
+          .catchError((_) => 0),
+    );
+
+    return DeviceCommand(
+      id: ref.id,
+      type: DeviceCommandType.closeOyster,
+      status: DeviceCommandStatus.pending,
+      createdAt: now,
+      requestedBy: requestedBy,
+      reason: 'portal_remote',
+    );
   }
 
   Future<DeviceCommand?> _latestCloseOyster(String uid, String deviceId) async {
-    final snap = await _commands(uid, deviceId)
-        .orderBy('createdAt', descending: true)
-        .limit(listenLimit)
-        .get();
+    final snap = await _closeOysterQuery(uid, deviceId).get();
+    if (snap.docs.isEmpty) return null;
+    return DeviceCommand.fromDoc(snap.docs.first);
+  }
 
-    for (final doc in snap.docs) {
-      final command = DeviceCommand.fromDoc(doc);
-      if (command.type == DeviceCommandType.closeOyster) return command;
-    }
-    return null;
+  /// Limpeza manual (ex.: pull-to-refresh futuro). Best-effort.
+  Future<int> purgeStaleCommands(String uid, String deviceId) {
+    return DeviceCommandsPurge.purgeCollection(_commands(uid, deviceId));
   }
 }

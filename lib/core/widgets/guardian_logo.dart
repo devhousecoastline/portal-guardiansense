@@ -16,11 +16,12 @@ class GuardianLogo extends StatelessWidget {
 
     return RepaintBoundary(
       child: SizedBox(
-        width: size,
-        height: size,
+        width: renderW,
+        height: renderH,
         child: Image.asset(
           'assets/images/shield_transparent.png',
           fit: BoxFit.contain,
+          alignment: Alignment.center,
           filterQuality: FilterQuality.high,
           cacheWidth: (renderW * dpr).round().clamp(1, 4096),
           cacheHeight: (renderH * dpr).round().clamp(1, 4096),

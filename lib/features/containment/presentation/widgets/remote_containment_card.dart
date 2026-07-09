@@ -1,8 +1,10 @@
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
+import 'package:guardian_portal/app/constants.dart';
 import 'package:guardian_portal/core/theme/app_colors.dart';
 import 'package:guardian_portal/core/theme/dashboard_typography.dart';
 import 'package:guardian_portal/core/widgets/celular_seguro_link.dart';
+import 'package:guardian_portal/core/widgets/guardian_confirm_dialog.dart';
 import 'package:guardian_portal/core/widgets/relative_time.dart';
 import 'package:guardian_portal/core/widgets/section_card.dart';
 import 'package:guardian_portal/features/containment/data/device_commands_repository.dart';
@@ -31,33 +33,36 @@ class RemoteContainmentCard extends StatefulWidget {
 
 class _RemoteContainmentCardState extends State<RemoteContainmentCard> {
   final _repository = DeviceCommandsRepository();
+  Stream<DeviceCommand?>? _commandStream;
   var _submitting = false;
 
+  @override
+  void initState() {
+    super.initState();
+    _commandStream =
+        _repository.watchLatestCloseOyster(widget.uid, widget.deviceId);
+  }
+
+  @override
+  void didUpdateWidget(covariant RemoteContainmentCard oldWidget) {
+    super.didUpdateWidget(oldWidget);
+    if (oldWidget.uid != widget.uid || oldWidget.deviceId != widget.deviceId) {
+      _commandStream =
+          _repository.watchLatestCloseOyster(widget.uid, widget.deviceId);
+    }
+  }
+
   Future<void> _confirmAndSend() async {
-    final confirmed = await showDialog<bool>(
-      context: context,
-      builder: (ctx) => AlertDialog(
-        backgroundColor: AppColors.card,
-        title: const Text('Fechar a ostra remotamente?'),
-        content: const Text(
+    final confirmed = await showGuardianConfirmDialog(
+      context,
+      title: 'Fechar a ostra remotamente?',
+      message:
           'O aparelho entrará em contenção: apps protegidos serão bloqueados '
-          'quando o celular receber o comando.\n\n'
-          'Só reabra no app Android, com biometria ou PIN.',
-        ),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.pop(ctx, false),
-            child: const Text('Cancelar'),
-          ),
-          FilledButton(
-            style: FilledButton.styleFrom(
-              backgroundColor: AppColors.riskCritical,
-            ),
-            onPressed: () => Navigator.pop(ctx, true),
-            child: const Text('Fechar ostra'),
-          ),
-        ],
-      ),
+          'quando o celular receber o comando.',
+      callout: 'Só reabre no app ${AppConstants.appName}.',
+      confirmLabel: 'Fechar ostra',
+      icon: Icons.lock_rounded,
+      accentColor: AppColors.riskCritical,
     );
 
     if (confirmed != true || !mounted) return;
@@ -108,7 +113,7 @@ class _RemoteContainmentCardState extends State<RemoteContainmentCard> {
     final oysterClosed = widget.status.oysterClosed == true;
 
     return StreamBuilder<DeviceCommand?>(
-      stream: _repository.watchLatestCloseOyster(widget.uid, widget.deviceId),
+      stream: _commandStream,
       builder: (context, snapshot) {
         final command = snapshot.data;
 
@@ -193,7 +198,7 @@ class _RemoteContainmentCardState extends State<RemoteContainmentCard> {
         icon: Icons.lock_rounded,
         title: 'Ostra fechada',
         subtitle: widget.status.isOnline
-            ? 'Reabra somente no app Android, com biometria ou PIN.'
+            ? 'Só reabre no app ${AppConstants.appName}.'
             : 'Contenção ativa. Última sync ${formatRelativeTime(widget.status.lastSeen)}.',
         compact: widget.compact,
         fillHeight: fillHeight,

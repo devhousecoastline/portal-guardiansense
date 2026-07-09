@@ -48,8 +48,12 @@ class _EventsPageState extends State<EventsPage> {
             ? 'Linha do tempo de segurança'
             : 'Aparelho: ${primary.status.modelLabel}';
 
+        final eventsStream = primary == null
+            ? Stream<List<SecurityEvent>>.value(const [])
+            : EventsRepository().watchForDevice(uid, primary.id);
+
         return StreamBuilder<List<SecurityEvent>>(
-          stream: EventsRepository().watchForUser(uid),
+          stream: eventsStream,
           builder: (context, snapshot) {
             final initialLoad =
                 snapshot.connectionState == ConnectionState.waiting &&

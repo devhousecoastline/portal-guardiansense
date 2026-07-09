@@ -2,23 +2,66 @@ rules_version = '2';
 
 service cloud.firestore {
   match /databases/{database}/documents {
+    function isOwner(userId) {
+      return request.auth != null && request.auth.uid == userId;
+    }
+
+    function isCloseOysterCommand(data) {
+      return data.type == 'close_oyster';
+    }
+
+    function isValidCommandCreate() {
+      let data = request.resource.data;
+      return isCloseOysterCommand(data)
+        && data.status == 'pending'
+        && data.requestedBy == request.auth.uid
+        && data.createdAt is timestamp
+        && (!('reason' in data) || data.reason is string);
+    }
+
+    function isValidCommandUpdate() {
+      let before = resource.data;
+      let after = request.resource.data;
+      return isCloseOysterCommand(before)
+        && isCloseOysterCommand(after)
+        && after.type == before.type
+        && after.createdAt == before.createdAt
+        && after.requestedBy == before.requestedBy
+        && before.status == 'pending'
+        && after.status in ['applied', 'failed']
+        && (!('appliedAt' in after) || after.appliedAt is timestamp)
+        && (!('failureMessage' in after)
+          || after.failureMessage is string);
+    }
+
     match /users/{userId} {
-      allow read, write: if request.auth != null && request.auth.uid == userId;
+      allow read: if isOwner(userId);
+      allow create, update: if isOwner(userId);
+      allow delete: if false;
 
       match /devices/{deviceId} {
-        allow read, write: if request.auth != null && request.auth.uid == userId;
+        allow read: if isOwner(userId);
+        allow create, update: if isOwner(userId);
+        allow delete: if false;
 
         match /events/{eventId} {
-          allow read, write: if request.auth != null && request.auth.uid == userId;
+          allow read: if isOwner(userId);
+          allow create, update: if isOwner(userId);
+          allow delete: if isOwner(userId);
         }
 
         match /commands/{commandId} {
-          allow read, write: if request.auth != null && request.auth.uid == userId;
+          allow read: if isOwner(userId);
+          allow create: if isOwner(userId) && isValidCommandCreate();
+          allow update: if isOwner(userId) && isValidCommandUpdate();
+          allow delete: if isOwner(userId);
         }
       }
 
+      // Legado — timeline antiga em users/{uid}/events (app ainda limpa aqui).
       match /events/{eventId} {
-        allow read, write: if request.auth != null && request.auth.uid == userId;
+        allow read: if isOwner(userId);
+        allow create, update, delete: if isOwner(userId);
       }
     }
   }

@@ -14,6 +14,13 @@ class EventsRepository {
   final FirebaseFirestore _firestore;
   final DeviceRepository _devices;
 
+  static const eventsListenLimit = 40;
+
+  /// Eventos de um aparelho específico (1 leitura por snapshot).
+  Stream<List<SecurityEvent>> watchForDevice(String uid, String deviceId) {
+    return _deviceEvents(uid, deviceId).snapshots().map(_normalizeDocs);
+  }
+
   /// Eventos do dispositivo principal (mesmo doc que o app usa ao sincronizar).
   Stream<List<SecurityEvent>> watchForUser(String uid) {
     return _devices.watchDevices(uid).asyncExpand((devices) {
@@ -22,7 +29,7 @@ class EventsRepository {
         return Stream.value(const []);
       }
 
-      return _deviceEvents(uid, primaryId).snapshots().map(_normalizeDocs);
+      return watchForDevice(uid, primaryId);
     });
   }
 
@@ -59,5 +66,5 @@ class EventsRepository {
           .doc(deviceId)
           .collection('events')
           .orderBy('occurredAt', descending: true)
-          .limit(100);
+          .limit(eventsListenLimit);
 }
