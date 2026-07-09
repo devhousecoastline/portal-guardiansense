@@ -4,6 +4,7 @@ import 'package:guardian_portal/core/theme/app_colors.dart';
 import 'package:guardian_portal/core/widgets/section_card.dart';
 import 'package:guardian_portal/features/dashboard/domain/device_status.dart';
 import 'package:guardian_portal/features/dashboard/domain/protected_layer_summary.dart';
+import 'package:guardian_portal/features/settings/presentation/widgets/protected_layer_detail_sheet.dart';
 
 class ProtectedLayersCard extends StatelessWidget {
   const ProtectedLayersCard({
@@ -131,14 +132,7 @@ class _LayerTile extends StatelessWidget {
       borderRadius: BorderRadius.circular(10),
       child: InkWell(
         onTap: () {
-          ScaffoldMessenger.of(context).showSnackBar(
-            SnackBar(
-              content: Text(
-                'Ajuste "${layer.displayTitle}" no app Guardian Sense no celular.',
-              ),
-              behavior: SnackBarBehavior.floating,
-            ),
-          );
+          showProtectedLayerDetailSheet(context, layer, muted: muted);
         },
         borderRadius: BorderRadius.circular(10),
         child: DecoratedBox(

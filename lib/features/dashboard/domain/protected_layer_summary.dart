@@ -1,5 +1,39 @@
 import 'package:flutter/material.dart';
 
+/// App instalado em uma camada protegida — sincronizado pelo app mobile.
+class ProtectedLayerAppSummary {
+  const ProtectedLayerAppSummary({
+    required this.label,
+    required this.protected,
+  });
+
+  final String label;
+  final bool protected;
+
+  static List<ProtectedLayerAppSummary> fromFirestoreList(Object? raw) {
+    if (raw is! List) return const [];
+
+    final items = <ProtectedLayerAppSummary>[];
+    for (final entry in raw) {
+      if (entry is! Map) continue;
+      final map = Map<String, dynamic>.from(entry);
+      final label = map['label'] as String?;
+      if (label == null || label.isEmpty) continue;
+      items.add(
+        ProtectedLayerAppSummary(
+          label: label,
+          protected: map['protected'] as bool? ?? false,
+        ),
+      );
+    }
+
+    items.sort(
+      (a, b) => a.label.toLowerCase().compareTo(b.label.toLowerCase()),
+    );
+    return items;
+  }
+}
+
 /// Resumo de uma seção de camadas protegidas sincronizada pelo app mobile.
 class ProtectedLayerSummary {
   const ProtectedLayerSummary({
@@ -7,12 +41,14 @@ class ProtectedLayerSummary {
     required this.title,
     required this.activeCount,
     required this.installedCount,
+    this.apps = const [],
   });
 
   final String sectionId;
   final String title;
   final int activeCount;
   final int installedCount;
+  final List<ProtectedLayerAppSummary> apps;
 
   static const _sectionOrder = [
     'bancos',
@@ -44,6 +80,7 @@ class ProtectedLayerSummary {
           title: title,
           activeCount: active,
           installedCount: installed < active ? active : installed,
+          apps: ProtectedLayerAppSummary.fromFirestoreList(map['apps']),
         ),
       );
     }

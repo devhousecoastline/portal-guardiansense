@@ -11,7 +11,6 @@ import 'package:guardian_portal/features/dashboard/domain/device_status.dart';
 import 'package:guardian_portal/features/dashboard/domain/protection_setup_item.dart';
 import 'package:guardian_portal/features/dashboard/domain/protection_snapshot.dart';
 import 'package:guardian_portal/features/dashboard/presentation/widgets/empty_devices_card.dart';
-import 'package:guardian_portal/features/dashboard/presentation/widgets/protection_setup_card.dart';
 import 'package:guardian_portal/features/devices/domain/guardian_device.dart';
 import 'package:guardian_portal/features/settings/presentation/widgets/protected_layers_card.dart';
 
@@ -89,50 +88,25 @@ class _SettingsBody extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final pending = status.pendingSetupItems;
     final hasChecklist = status.hasSetupChecklist;
 
     return Column(
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
-        if (hasChecklist && pending.isNotEmpty && status.isOnline) ...[
-          _PendingAlertBanner(count: pending.length),
-          const SizedBox(height: 16),
-        ],
-        ProtectionSetupCard(status: status),
-        const SizedBox(height: 16),
         _DeviceInfoCard(status: status),
         const SizedBox(height: 16),
+        ProtectedLayersCard(status: status),
+        const SizedBox(height: 16),
         _SettingsGroup(
-          title: 'Proteção',
-          children: [
-            _SyncedSettingRow(
-              icon: Icons.notifications_outlined,
-              title: 'Notificações',
-              item: _item('notifications'),
-              hasChecklist: hasChecklist,
-            ),
-            _SyncedSettingRow(
-              icon: Icons.apps_outlined,
-              title: 'Apps protegidos',
-              item: _item('accessibility'),
-              hasChecklist: hasChecklist,
-            ),
-            _SyncedSettingRow(
-              icon: Icons.battery_charging_full_outlined,
-              title: 'Bateria sem otimização',
-              item: _item('battery'),
-              hasChecklist: hasChecklist,
-            ),
-            const _PlannedSettingRow(
+          title: 'Detecção',
+          children: const [
+            _PlannedSettingRow(
               icon: Icons.tune_outlined,
               title: 'Sensibilidade',
               subtitle: 'Em breve — ajuste remoto via comandos',
             ),
           ],
         ),
-        const SizedBox(height: 16),
-        ProtectedLayersCard(status: status),
         const SizedBox(height: 16),
         _SettingsGroup(
           title: 'Recuperação',
@@ -162,12 +136,11 @@ class _SettingsBody extends StatelessWidget {
               Expanded(
                 child: Text(
                   hasChecklist
-                      ? 'Estado refletido em tempo real quando o app sincroniza. '
-                          'Permissões e camadas são ajustadas no celular; '
-                          'o portal apenas exibe o que foi enviado.'
+                      ? 'Índice e checklist de permissões estão no Centro. '
+                          'Camadas e demais opções são ajustadas no celular; '
+                          'o portal apenas exibe o que foi sincronizado.'
                       : 'Abra o Guardian Sense no celular com esta conta para '
-                          'sincronizar as configurações. Alterações remotas '
-                          'via comandos chegarão em fases futuras.',
+                          'sincronizar. O resumo de proteção aparece no Centro.',
                   style: Theme.of(context).textTheme.bodyMedium,
                 ),
               ),
@@ -175,49 +148,6 @@ class _SettingsBody extends StatelessWidget {
           ),
         ),
       ],
-    );
-  }
-}
-
-class _PendingAlertBanner extends StatelessWidget {
-  const _PendingAlertBanner({required this.count});
-
-  final int count;
-
-  @override
-  Widget build(BuildContext context) {
-    return Container(
-      width: double.infinity,
-      padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
-      decoration: BoxDecoration(
-        color: AppColors.trustMedium.withValues(alpha: 0.1),
-        borderRadius: BorderRadius.circular(12),
-        border: Border.all(color: AppColors.trustMedium.withValues(alpha: 0.28)),
-      ),
-      child: Row(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          const Icon(
-            Icons.warning_amber_rounded,
-            color: AppColors.trustMedium,
-            size: 22,
-          ),
-          const SizedBox(width: 12),
-          Expanded(
-            child: Text(
-              count == 1
-                  ? '1 opção ainda falta no aparelho. Ajuste no app e volte '
-                      '— o portal atualiza em segundos.'
-                  : '$count opções ainda faltam no aparelho. Ajuste no app e '
-                      'volte — o portal atualiza em segundos.',
-              style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                    color: AppColors.trustMedium,
-                    height: 1.35,
-                  ),
-            ),
-          ),
-        ],
-      ),
     );
   }
 }

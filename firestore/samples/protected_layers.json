@@ -2,36 +2,64 @@
   {
     "sectionId": "bancos",
     "title": "Bancos",
-    "activeCount": 3
+    "activeCount": 2,
+    "installedCount": 3,
+    "apps": [
+      { "label": "Nubank", "protected": true },
+      { "label": "Bradesco", "protected": true },
+      { "label": "Banco do Brasil", "protected": false }
+    ]
   },
   {
     "sectionId": "carteiras",
     "title": "Carteiras",
-    "activeCount": 2
+    "activeCount": 2,
+    "installedCount": 2,
+    "apps": [
+      { "label": "Mercado Pago", "protected": true },
+      { "label": "PicPay", "protected": true }
+    ]
   },
   {
     "sectionId": "email",
     "title": "E-mail",
-    "activeCount": 1
+    "activeCount": 1,
+    "installedCount": 1,
+    "apps": [
+      { "label": "Gmail", "protected": true }
+    ]
   },
   {
     "sectionId": "contas",
     "title": "Contas",
-    "activeCount": 5
+    "activeCount": 5,
+    "installedCount": 5,
+    "apps": [
+      { "label": "WhatsApp", "protected": true },
+      { "label": "Telegram", "protected": true }
+    ]
   },
   {
     "sectionId": "contatos",
     "title": "Contatos",
-    "activeCount": 2
+    "activeCount": 2,
+    "installedCount": 2,
+    "apps": []
   },
   {
     "sectionId": "redesSociais",
     "title": "Redes sociais",
-    "activeCount": 3
+    "activeCount": 3,
+    "installedCount": 3,
+    "apps": []
   },
   {
     "sectionId": "outros",
     "title": "Meus apps",
-    "activeCount": 1
+    "activeCount": 1,
+    "installedCount": 1,
+    "apps": [
+      { "label": "Meu app extra", "protected": true }
+    ]
   }
 ]

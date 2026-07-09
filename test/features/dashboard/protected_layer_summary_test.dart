@@ -3,6 +3,29 @@ import 'package:guardian_portal/features/dashboard/domain/device_status.dart';
 import 'package:guardian_portal/features/dashboard/domain/protected_layer_summary.dart';
 
 void main() {
+  test('fromFirestoreList parseia apps instalados por categoria', () {
+    final layers = ProtectedLayerSummary.fromFirestoreList([
+      {
+        'sectionId': 'bancos',
+        'title': 'Bancos',
+        'activeCount': 2,
+        'installedCount': 3,
+        'apps': [
+          {'label': 'Nubank', 'protected': true},
+          {'label': 'Bradesco', 'protected': true},
+          {'label': 'Banco do Brasil', 'protected': false},
+        ],
+      },
+    ]);
+
+    expect(layers.single.apps.length, 3);
+    expect(layers.single.apps[0].label, 'Banco do Brasil');
+    expect(layers.single.apps[1].label, 'Bradesco');
+    expect(layers.single.apps[2].label, 'Nubank');
+    expect(layers.single.apps[2].protected, isTrue);
+    expect(layers.single.apps[0].protected, isFalse);
+  });
+
   test('fromFirestoreList ordena seções e ignora entradas inválidas', () {
     final layers = ProtectedLayerSummary.fromFirestoreList([
       {
