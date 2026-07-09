@@ -2,15 +2,18 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 
 enum DeviceCommandType {
   closeOyster,
+  protectApp,
   unknown;
 
   static DeviceCommandType parse(String? raw) => switch (raw) {
         'close_oyster' => DeviceCommandType.closeOyster,
+        'protect_app' => DeviceCommandType.protectApp,
         _ => DeviceCommandType.unknown,
       };
 
   String get storageKey => switch (this) {
         DeviceCommandType.closeOyster => 'close_oyster',
+        DeviceCommandType.protectApp => 'protect_app',
         DeviceCommandType.unknown => 'unknown',
       };
 }
@@ -46,6 +49,9 @@ class DeviceCommand {
     this.reason,
     this.appliedAt,
     this.failureMessage,
+    this.packageName,
+    this.label,
+    this.sectionId,
   });
 
   final String id;
@@ -56,6 +62,9 @@ class DeviceCommand {
   final String? reason;
   final DateTime? appliedAt;
   final String? failureMessage;
+  final String? packageName;
+  final String? label;
+  final String? sectionId;
 
   bool get isPending => status == DeviceCommandStatus.pending;
   bool get isApplied => status == DeviceCommandStatus.applied;
@@ -72,6 +81,9 @@ class DeviceCommand {
       reason: data['reason'] as String?,
       appliedAt: _timestamp(data['appliedAt']),
       failureMessage: data['failureMessage'] as String?,
+      packageName: data['packageName'] as String?,
+      label: data['label'] as String?,
+      sectionId: data['sectionId'] as String?,
     );
   }
 

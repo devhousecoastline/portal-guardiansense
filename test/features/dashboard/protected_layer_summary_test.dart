@@ -11,9 +11,21 @@ void main() {
         'activeCount': 2,
         'installedCount': 3,
         'apps': [
-          {'label': 'Nubank', 'protected': true},
-          {'label': 'Bradesco', 'protected': true},
-          {'label': 'Banco do Brasil', 'protected': false},
+          {
+            'label': 'Nubank',
+            'packageName': 'com.nu.production',
+            'protected': true,
+          },
+          {
+            'label': 'Bradesco',
+            'packageName': 'com.bradesco',
+            'protected': true,
+          },
+          {
+            'label': 'Banco do Brasil',
+            'packageName': 'br.com.bb.android',
+            'protected': false,
+          },
         ],
       },
     ]);
@@ -24,6 +36,9 @@ void main() {
     expect(layers.single.apps[2].label, 'Nubank');
     expect(layers.single.apps[2].protected, isTrue);
     expect(layers.single.apps[0].protected, isFalse);
+    expect(layers.single.apps[0].packageName, 'br.com.bb.android');
+    expect(layers.single.apps[0].canProtectRemotely, isTrue);
+    expect(layers.single.apps[2].canProtectRemotely, isFalse);
   });
 
   test('fromFirestoreList ordena seções e ignora entradas inválidas', () {

@@ -5,10 +5,15 @@ class ProtectedLayerAppSummary {
   const ProtectedLayerAppSummary({
     required this.label,
     required this.protected,
+    this.packageName,
   });
 
   final String label;
   final bool protected;
+  final String? packageName;
+
+  bool get canProtectRemotely =>
+      !protected && packageName != null && packageName!.isNotEmpty;
 
   static List<ProtectedLayerAppSummary> fromFirestoreList(Object? raw) {
     if (raw is! List) return const [];
@@ -19,10 +24,12 @@ class ProtectedLayerAppSummary {
       final map = Map<String, dynamic>.from(entry);
       final label = map['label'] as String?;
       if (label == null || label.isEmpty) continue;
+      final packageName = map['packageName'] as String?;
       items.add(
         ProtectedLayerAppSummary(
           label: label,
           protected: map['protected'] as bool? ?? false,
+          packageName: packageName?.isNotEmpty == true ? packageName : null,
         ),
       );
     }

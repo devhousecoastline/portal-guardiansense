@@ -63,7 +63,7 @@ class _SettingsPageState extends State<SettingsPage> {
                   else if (device == null)
                     const EmptyDevicesCard()
                   else
-                    _SettingsBody(status: device.status),
+                    _SettingsBody(uid: uid, status: device.status),
                 ],
               ),
             );
@@ -75,8 +75,9 @@ class _SettingsPageState extends State<SettingsPage> {
 }
 
 class _SettingsBody extends StatelessWidget {
-  const _SettingsBody({required this.status});
+  const _SettingsBody({required this.uid, required this.status});
 
+  final String uid;
   final DeviceStatus status;
 
   ProtectionSetupItem? _item(String id) {
@@ -95,7 +96,7 @@ class _SettingsBody extends StatelessWidget {
       children: [
         _DeviceInfoCard(status: status),
         const SizedBox(height: 16),
-        ProtectedLayersCard(status: status),
+        ProtectedLayersCard(uid: uid, status: status),
         const SizedBox(height: 16),
         _SettingsGroup(
           title: 'Detecção',

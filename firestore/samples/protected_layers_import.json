@@ -11,9 +11,9 @@
                 "activeCount": 2,
                 "installedCount": 3,
                 "apps": [
-                  { "label": "Nubank", "protected": true },
-                  { "label": "Bradesco", "protected": true },
-                  { "label": "Banco do Brasil", "protected": false }
+                  { "label": "Nubank", "packageName": "com.nu.production", "protected": true },
+                  { "label": "Bradesco", "packageName": "com.bradesco", "protected": true },
+                  { "label": "Banco do Brasil", "packageName": "br.com.bb.android", "protected": false }
                 ]
               },
               {

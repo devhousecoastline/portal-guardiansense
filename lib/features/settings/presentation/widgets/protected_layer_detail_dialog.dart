@@ -1,32 +1,117 @@
+import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import 'package:guardian_portal/core/theme/app_colors.dart';
+import 'package:guardian_portal/core/widgets/guardian_confirm_dialog.dart';
+import 'package:guardian_portal/features/containment/data/device_commands_repository.dart';
 import 'package:guardian_portal/features/dashboard/domain/protected_layer_summary.dart';
 
 Future<void> showProtectedLayerDetailDialog(
-  BuildContext context,
-  ProtectedLayerSummary layer, {
+  BuildContext context, {
+  required ProtectedLayerSummary layer,
+  required String uid,
+  required String deviceId,
   required bool muted,
 }) {
   return showDialog<void>(
     context: context,
     barrierDismissible: true,
-    builder: (ctx) => _ProtectedLayerDetailDialog(layer: layer, muted: muted),
+    builder: (ctx) => _ProtectedLayerDetailDialog(
+      layer: layer,
+      uid: uid,
+      deviceId: deviceId,
+      muted: muted,
+    ),
   );
 }
 
-class _ProtectedLayerDetailDialog extends StatelessWidget {
+class _ProtectedLayerDetailDialog extends StatefulWidget {
   const _ProtectedLayerDetailDialog({
     required this.layer,
+    required this.uid,
+    required this.deviceId,
     required this.muted,
   });
 
   final ProtectedLayerSummary layer;
+  final String uid;
+  final String deviceId;
   final bool muted;
+
+  @override
+  State<_ProtectedLayerDetailDialog> createState() =>
+      _ProtectedLayerDetailDialogState();
+}
+
+class _ProtectedLayerDetailDialogState extends State<_ProtectedLayerDetailDialog> {
+  final _repository = DeviceCommandsRepository();
+  String? _submittingPackage;
+
+  Future<void> _protectApp(ProtectedLayerAppSummary app) async {
+    if (widget.muted || !app.canProtectRemotely || _submittingPackage != null) {
+      return;
+    }
+
+    final confirmed = await showGuardianConfirmDialog(
+      context,
+      title: 'Proteger ${app.label} remotamente?',
+      message:
+          'O aparelho adicionará o app à lista de proteção quando receber o comando.',
+      confirmLabel: 'Proteger app',
+      icon: Icons.verified_user,
+      accentColor: AppColors.trustHigh,
+    );
+
+    if (confirmed != true || !mounted) return;
+
+    setState(() => _submittingPackage = app.packageName);
+    try {
+      final user = FirebaseAuth.instance.currentUser;
+      if (user == null) return;
+
+      await _repository.requestProtectApp(
+        uid: widget.uid,
+        deviceId: widget.deviceId,
+        requestedBy: user.uid,
+        packageName: app.packageName!,
+        label: app.label,
+        sectionId: widget.layer.sectionId,
+      );
+
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text(
+            'Comando enviado. ${app.label} será protegido quando o celular sincronizar.',
+          ),
+          behavior: SnackBarBehavior.floating,
+        ),
+      );
+    } on DeviceCommandRateLimitException catch (error) {
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text(error.toString()),
+          behavior: SnackBarBehavior.floating,
+        ),
+      );
+    } catch (error) {
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text('Não foi possível enviar o comando: $error'),
+          behavior: SnackBarBehavior.floating,
+        ),
+      );
+    } finally {
+      if (mounted) setState(() => _submittingPackage = null);
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
     final maxListHeight = MediaQuery.sizeOf(context).height * 0.42;
+    final hasRemoteActions = widget.layer.apps.any((app) => app.canProtectRemotely);
 
     return Dialog(
       insetPadding: const EdgeInsets.symmetric(horizontal: 20, vertical: 24),
@@ -47,7 +132,7 @@ class _ProtectedLayerDetailDialog extends StatelessWidget {
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   _DialogAccentIcon(
-                    child: Icon(layer.icon, size: 22, color: AppColors.primary),
+                    child: Icon(widget.layer.icon, size: 22, color: AppColors.primary),
                   ),
                   const SizedBox(width: 14),
                   Expanded(
@@ -57,7 +142,7 @@ class _ProtectedLayerDetailDialog extends StatelessWidget {
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
                           Text(
-                            layer.displayTitle,
+                            widget.layer.displayTitle,
                             style: theme.textTheme.titleMedium?.copyWith(
                               fontWeight: FontWeight.w700,
                               height: 1.25,
@@ -65,7 +150,7 @@ class _ProtectedLayerDetailDialog extends StatelessWidget {
                           ),
                           const SizedBox(height: 4),
                           Text(
-                            _headerSubtitle(layer),
+                            _headerSubtitle(widget.layer),
                             style: theme.textTheme.bodySmall?.copyWith(
                               color: AppColors.textMuted,
                             ),
@@ -91,24 +176,34 @@ class _ProtectedLayerDetailDialog extends StatelessWidget {
                 ],
               ),
               const SizedBox(height: 18),
-              if (layer.apps.isEmpty)
+              if (widget.layer.apps.isEmpty)
                 const _AppsUnavailableHint()
               else
                 ConstrainedBox(
                   constraints: BoxConstraints(maxHeight: maxListHeight),
                   child: ListView.separated(
                     shrinkWrap: true,
-                    itemCount: layer.apps.length,
+                    itemCount: widget.layer.apps.length,
                     separatorBuilder: (_, __) => const SizedBox(height: 6),
-                    itemBuilder: (_, index) => _AppRow(
-                      app: layer.apps[index],
-                      muted: muted,
-                    ),
+                    itemBuilder: (_, index) {
+                      final app = widget.layer.apps[index];
+                      return _AppRow(
+                        app: app,
+                        muted: widget.muted,
+                        submitting: _submittingPackage == app.packageName,
+                        onProtect: app.canProtectRemotely
+                            ? () => _protectApp(app)
+                            : null,
+                      );
+                    },
                   ),
                 ),
               const SizedBox(height: 16),
               Text(
-                'Para alterar a proteção, abra Camadas protegidas no app Guardian Sense.',
+                hasRemoteActions
+                    ? 'Apps fora da proteção podem ser reforçados remotamente. '
+                        'Outros ajustes ficam no app Guardian Sense.'
+                    : 'Para alterar a proteção, abra Camadas protegidas no app Guardian Sense.',
                 style: theme.textTheme.bodySmall?.copyWith(
                   color: AppColors.textMuted,
                   height: 1.35,
@@ -159,10 +254,17 @@ class _DialogAccentIcon extends StatelessWidget {
 }
 
 class _AppRow extends StatelessWidget {
-  const _AppRow({required this.app, required this.muted});
+  const _AppRow({
+    required this.app,
+    required this.muted,
+    required this.submitting,
+    required this.onProtect,
+  });
 
   final ProtectedLayerAppSummary app;
   final bool muted;
+  final bool submitting;
+  final VoidCallback? onProtect;
 
   @override
   Widget build(BuildContext context) {
@@ -170,6 +272,7 @@ class _AppRow extends StatelessWidget {
     final accent = muted
         ? AppColors.textMuted
         : (protected ? AppColors.trustHigh : AppColors.trustMedium);
+    final canProtect = onProtect != null && !muted;
 
     return DecoratedBox(
       decoration: BoxDecoration(
@@ -207,6 +310,25 @@ class _AppRow extends StatelessWidget {
                 ],
               ),
             ),
+            if (canProtect) ...[
+              const SizedBox(width: 8),
+              submitting
+                  ? const SizedBox(
+                      width: 22,
+                      height: 22,
+                      child: CircularProgressIndicator(strokeWidth: 2),
+                    )
+                  : TextButton(
+                      onPressed: onProtect,
+                      style: TextButton.styleFrom(
+                        foregroundColor: AppColors.trustHigh,
+                        padding: const EdgeInsets.symmetric(horizontal: 10),
+                        minimumSize: Size.zero,
+                        tapTargetSize: MaterialTapTargetSize.shrinkWrap,
+                      ),
+                      child: const Text('Proteger'),
+                    ),
+            ],
           ],
         ),
       ),

@@ -9,9 +9,11 @@ import 'package:guardian_portal/features/settings/presentation/widgets/protected
 class ProtectedLayersCard extends StatelessWidget {
   const ProtectedLayersCard({
     super.key,
+    required this.uid,
     required this.status,
   });
 
+  final String uid;
   final DeviceStatus status;
 
   @override
@@ -57,7 +59,12 @@ class ProtectedLayersCard extends StatelessWidget {
             const _EmptyLayersHint(),
           ] else ...[
             const SizedBox(height: 12),
-            _LayersGrid(layers: active, muted: muted),
+            _LayersGrid(
+              uid: uid,
+              deviceId: status.deviceId,
+              layers: active,
+              muted: muted,
+            ),
           ],
         ],
       ),
@@ -76,8 +83,15 @@ class ProtectedLayersCard extends StatelessWidget {
 }
 
 class _LayersGrid extends StatelessWidget {
-  const _LayersGrid({required this.layers, required this.muted});
+  const _LayersGrid({
+    required this.uid,
+    required this.deviceId,
+    required this.layers,
+    required this.muted,
+  });
 
+  final String uid;
+  final String deviceId;
   final List<ProtectedLayerSummary> layers;
   final bool muted;
 
@@ -97,8 +111,12 @@ class _LayersGrid extends StatelessWidget {
             mainAxisExtent: 52,
           ),
           itemCount: layers.length,
-          itemBuilder: (context, index) =>
-              _LayerTile(layer: layers[index], muted: muted),
+          itemBuilder: (context, index) => _LayerTile(
+                uid: uid,
+                deviceId: deviceId,
+                layer: layers[index],
+                muted: muted,
+              ),
         );
       },
     );
@@ -112,8 +130,15 @@ class _LayersGrid extends StatelessWidget {
 }
 
 class _LayerTile extends StatelessWidget {
-  const _LayerTile({required this.layer, required this.muted});
+  const _LayerTile({
+    required this.uid,
+    required this.deviceId,
+    required this.layer,
+    required this.muted,
+  });
 
+  final String uid;
+  final String deviceId;
   final ProtectedLayerSummary layer;
   final bool muted;
 
@@ -132,7 +157,13 @@ class _LayerTile extends StatelessWidget {
       borderRadius: BorderRadius.circular(10),
       child: InkWell(
         onTap: () {
-          showProtectedLayerDetailDialog(context, layer, muted: muted);
+          showProtectedLayerDetailDialog(
+            context,
+            layer: layer,
+            uid: uid,
+            deviceId: deviceId,
+            muted: muted,
+          );
         },
         borderRadius: BorderRadius.circular(10),
         child: DecoratedBox(
