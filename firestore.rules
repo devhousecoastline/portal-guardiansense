@@ -10,8 +10,21 @@ service cloud.firestore {
       return data.type == 'close_oyster';
     }
 
-    function isValidCommandCreate() {
-      let data = request.resource.data;
+    function isProtectAppCommand(data) {
+      return data.type == 'protect_app';
+    }
+
+    function isProtectAppsCommand(data) {
+      return data.type == 'protect_apps';
+    }
+
+    function isAllowedCommandType(data) {
+      return isCloseOysterCommand(data)
+        || isProtectAppCommand(data)
+        || isProtectAppsCommand(data);
+    }
+
+    function isValidCloseOysterCreate(data) {
       return isCloseOysterCommand(data)
         && data.status == 'pending'
         && data.requestedBy == request.auth.uid
@@ -19,11 +32,55 @@ service cloud.firestore {
         && (!('reason' in data) || data.reason is string);
     }
 
+    function isValidProtectAppCreate(data) {
+      return isProtectAppCommand(data)
+        && data.status == 'pending'
+        && data.requestedBy == request.auth.uid
+        && data.createdAt is timestamp
+        && data.packageName is string
+        && data.packageName.size() > 0
+        && data.label is string
+        && data.label.size() > 0
+        && data.sectionId is string
+        && data.sectionId.size() > 0
+        && (!('reason' in data) || data.reason is string);
+    }
+
+    function isValidProtectAppsCreate(data) {
+      return isProtectAppsCommand(data)
+        && data.status == 'pending'
+        && data.requestedBy == request.auth.uid
+        && data.createdAt is timestamp
+        && data.apps is list
+        && data.apps.size() > 0
+        && data.apps.size() <= 50
+        && data.appCount is int
+        && data.appCount > 0
+        && data.appCount <= 50
+        && (!('reason' in data) || data.reason is string);
+    }
+
+    function isValidCommandCreate() {
+      let data = request.resource.data;
+      return isValidCloseOysterCreate(data)
+        || isValidProtectAppCreate(data)
+        || isValidProtectAppsCreate(data);
+    }
+
+    function commandImmutableFieldsUnchanged(before, after) {
+      return (!('reason' in before) || after.reason == before.reason)
+        && (!('packageName' in before) || after.packageName == before.packageName)
+        && (!('label' in before) || after.label == before.label)
+        && (!('sectionId' in before) || after.sectionId == before.sectionId)
+        && (!('apps' in before) || after.apps == before.apps)
+        && (!('appCount' in before) || after.appCount == before.appCount);
+    }
+
     function isValidCommandUpdate() {
       let before = resource.data;
       let after = request.resource.data;
-      return isCloseOysterCommand(before)
-        && isCloseOysterCommand(after)
+      return isAllowedCommandType(before)
+        && isAllowedCommandType(after)
         && after.type == before.type
         && after.createdAt == before.createdAt
         && after.requestedBy == before.requestedBy
@@ -31,7 +88,8 @@ service cloud.firestore {
         && after.status in ['applied', 'failed']
         && (!('appliedAt' in after) || after.appliedAt is timestamp)
         && (!('failureMessage' in after)
-          || after.failureMessage is string);
+          || after.failureMessage is string)
+        && commandImmutableFieldsUnchanged(before, after);
     }
 
     match /users/{userId} {

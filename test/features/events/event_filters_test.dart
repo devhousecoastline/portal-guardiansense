@@ -21,6 +21,29 @@ SecurityEvent _event({
 void main() {
   final now = DateTime(2026, 7, 7, 18, 0);
 
+  test('estado inicial filtra eventos de hoje', () {
+    final events = [
+      _event(
+        title: 'Hoje',
+        summary: '',
+        severity: SecurityEventSeverity.info,
+        occurredAt: now,
+      ),
+      _event(
+        title: 'Ontem',
+        summary: '',
+        severity: SecurityEventSeverity.info,
+        occurredAt: now.subtract(const Duration(days: 1)),
+      ),
+    ];
+
+    final filtered = EventFilters.apply(events, EventFilterState.initial, now: now);
+
+    expect(filtered, hasLength(1));
+    expect(filtered.first.title, 'Hoje');
+    expect(EventFilterState.initial.hasActiveFilters, isFalse);
+  });
+
   test('filtra por severidade e período', () {
     final events = [
       _event(

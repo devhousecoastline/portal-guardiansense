@@ -3,6 +3,7 @@ import 'dart:async';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:guardian_portal/features/containment/data/device_commands_purge.dart';
 import 'package:guardian_portal/features/containment/domain/device_command.dart';
+import 'package:guardian_portal/features/dashboard/domain/protected_layer_summary.dart';
 
 class DeviceCommandRateLimitException implements Exception {
   DeviceCommandRateLimitException(this.retryAfter);
@@ -11,8 +12,20 @@ class DeviceCommandRateLimitException implements Exception {
 
   @override
   String toString() {
-    return 'Aguarde ${retryAfter.inSeconds}s antes de enviar outro comando.';
+    final seconds = (retryAfter.inMilliseconds / 1000).ceil().clamp(1, 999);
+    return seconds == 1
+        ? 'Aguarde 1 segundo antes de enviar outro comando.'
+        : 'Aguarde $seconds segundos antes de enviar outro comando.';
   }
+}
+
+/// Já existe um comando pendente na fila do aparelho.
+class DeviceCommandAlreadyPendingException implements Exception {
+  const DeviceCommandAlreadyPendingException();
+
+  @override
+  String toString() =>
+      'Comando já enviado. Aguardando o celular aplicar.';
 }
 
 class DeviceCommandsRepository {
@@ -22,6 +35,7 @@ class DeviceCommandsRepository {
   final FirebaseFirestore _firestore;
 
   static const minInterval = Duration(seconds: 30);
+  static const stalePendingAfter = Duration(minutes: 5);
 
   CollectionReference<Map<String, dynamic>> _commands(
     String uid,
@@ -53,15 +67,7 @@ class DeviceCommandsRepository {
     required String requestedBy,
   }) async {
     final latest = await _latestCloseOyster(uid, deviceId);
-    if (latest != null) {
-      if (latest.isPending) {
-        throw DeviceCommandRateLimitException(minInterval);
-      }
-      final age = DateTime.now().difference(latest.createdAt);
-      if (age < minInterval) {
-        throw DeviceCommandRateLimitException(minInterval - age);
-      }
-    }
+    _guardCommandSend(latest);
 
     final ref = _commands(uid, deviceId).doc();
     final now = DateTime.now();
@@ -109,15 +115,7 @@ class DeviceCommandsRepository {
     required String sectionId,
   }) async {
     final latest = await _latestProtectApp(uid, deviceId, packageName);
-    if (latest != null) {
-      if (latest.isPending) {
-        throw DeviceCommandRateLimitException(minInterval);
-      }
-      final age = DateTime.now().difference(latest.createdAt);
-      if (age < minInterval) {
-        throw DeviceCommandRateLimitException(minInterval - age);
-      }
-    }
+    _guardCommandSend(latest);
 
     final ref = _commands(uid, deviceId).doc();
     final now = DateTime.now();
@@ -161,6 +159,77 @@ class DeviceCommandsRepository {
       if (command.packageName == packageName) return command;
     }
     return null;
+  }
+
+  Query<Map<String, dynamic>> _protectAppsQuery(String uid, String deviceId) =>
+      _commands(uid, deviceId)
+          .where('type', isEqualTo: DeviceCommandType.protectApps.storageKey)
+          .orderBy('createdAt', descending: true)
+          .limit(1);
+
+  Future<DeviceCommand> requestProtectApps({
+    required String uid,
+    required String deviceId,
+    required String requestedBy,
+    required List<ProtectAppCommandTarget> apps,
+  }) async {
+    if (apps.isEmpty) {
+      throw ArgumentError('Nenhum app elegível para proteção em massa');
+    }
+
+    final latest = await _latestProtectApps(uid, deviceId);
+    _guardCommandSend(latest);
+
+    final ref = _commands(uid, deviceId).doc();
+    final now = DateTime.now();
+    await ref.set({
+      'type': DeviceCommandType.protectApps.storageKey,
+      'status': DeviceCommandStatus.pending.storageKey,
+      'reason': 'portal_remote',
+      'apps': apps.map((app) => app.toFirestoreMap()).toList(),
+      'appCount': apps.length,
+      'createdAt': Timestamp.fromDate(now),
+      'requestedBy': requestedBy,
+    });
+
+    unawaited(
+      DeviceCommandsPurge.purgeCollection(_commands(uid, deviceId))
+          .catchError((_) => 0),
+    );
+
+    return DeviceCommand(
+      id: ref.id,
+      type: DeviceCommandType.protectApps,
+      status: DeviceCommandStatus.pending,
+      createdAt: now,
+      requestedBy: requestedBy,
+      reason: 'portal_remote',
+      apps: apps,
+      appCount: apps.length,
+    );
+  }
+
+  Future<DeviceCommand?> _latestProtectApps(String uid, String deviceId) async {
+    final snap = await _protectAppsQuery(uid, deviceId).get();
+    if (snap.docs.isEmpty) return null;
+    return DeviceCommand.fromDoc(snap.docs.first);
+  }
+
+  void _guardCommandSend(DeviceCommand? latest) {
+    if (latest == null) return;
+
+    final age = DateTime.now().difference(latest.createdAt);
+
+    if (latest.isPending) {
+      if (age < stalePendingAfter) {
+        throw const DeviceCommandAlreadyPendingException();
+      }
+      return;
+    }
+
+    if (age < minInterval) {
+      throw DeviceCommandRateLimitException(minInterval - age);
+    }
   }
 
   /// Limpeza manual (ex.: pull-to-refresh futuro). Best-effort.

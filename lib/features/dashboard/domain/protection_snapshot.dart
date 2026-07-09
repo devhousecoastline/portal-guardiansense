@@ -1,6 +1,7 @@
 import 'package:guardian_portal/core/widgets/relative_time.dart';
 import 'package:guardian_portal/core/widgets/status_badge.dart';
 import 'package:guardian_portal/features/dashboard/domain/device_status.dart';
+import 'package:guardian_portal/features/dashboard/domain/protected_layer_summary.dart';
 import 'package:guardian_portal/features/events/domain/event_display.dart';
 
 enum ChecklistSignal { ok, warn, alert, muted }
@@ -72,6 +73,13 @@ abstract final class ProtectionSnapshot {
         answer: formatRelativeTime(status.lastSeen),
         signal: status.isOnline ? ChecklistSignal.ok : ChecklistSignal.alert,
       ),
+      if (_hasUnprotectedApps(status))
+        ProtectionChecklistEntry(
+          question: 'Apps fora da proteção',
+          answer: _unprotectedAppsAnswer(status),
+          signal: ChecklistSignal.warn,
+          fullWidth: true,
+        ),
       ProtectionChecklistEntry(
         question: 'Último evento de segurança',
         answer: _recentEventAnswer(status),
@@ -113,6 +121,7 @@ abstract final class ProtectionSnapshot {
     ].whereType<ProtectionChecklistEntry>().toList();
 
     final fullWidth = [
+      pick('Apps fora'),
       pick('Último evento'),
     ].whereType<ProtectionChecklistEntry>().toList();
 
@@ -145,6 +154,18 @@ abstract final class ProtectionSnapshot {
     }
     return 'O celular detecta, decide e bloqueia. '
         'O portal apenas reflete o que foi sincronizado.';
+  }
+
+  static String _unprotectedAppsAnswer(DeviceStatus status) {
+    if (!status.hasProtectedLayersSnapshot) {
+      return 'Aguardando sync das camadas';
+    }
+    return ProtectedLayerSnapshot.unprotectedAppsSummary(status.protectedLayers);
+  }
+
+  static bool _hasUnprotectedApps(DeviceStatus status) {
+    if (!status.hasProtectedLayersSnapshot) return false;
+    return ProtectedLayerSnapshot.hasUnprotectedApps(status.protectedLayers);
   }
 
   static String _protectedAnswer(DeviceStatus status) => switch (status.level) {

@@ -5,6 +5,7 @@ void main() {
   test('parseia tipo e status do comando', () {
     expect(DeviceCommandType.parse('close_oyster'), DeviceCommandType.closeOyster);
     expect(DeviceCommandType.parse('protect_app'), DeviceCommandType.protectApp);
+    expect(DeviceCommandType.parse('protect_apps'), DeviceCommandType.protectApps);
     expect(DeviceCommandStatus.parse('pending'), DeviceCommandStatus.pending);
     expect(DeviceCommandStatus.parse('applied'), DeviceCommandStatus.applied);
   });

@@ -87,6 +87,14 @@ class _RemoteContainmentCardState extends State<RemoteContainmentCard> {
           behavior: SnackBarBehavior.floating,
         ),
       );
+    } on DeviceCommandAlreadyPendingException catch (error) {
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text(error.toString()),
+          behavior: SnackBarBehavior.floating,
+        ),
+      );
     } on DeviceCommandRateLimitException catch (error) {
       if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(

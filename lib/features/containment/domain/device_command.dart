@@ -1,19 +1,23 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:guardian_portal/features/dashboard/domain/protected_layer_summary.dart';
 
 enum DeviceCommandType {
   closeOyster,
   protectApp,
+  protectApps,
   unknown;
 
   static DeviceCommandType parse(String? raw) => switch (raw) {
         'close_oyster' => DeviceCommandType.closeOyster,
         'protect_app' => DeviceCommandType.protectApp,
+        'protect_apps' => DeviceCommandType.protectApps,
         _ => DeviceCommandType.unknown,
       };
 
   String get storageKey => switch (this) {
         DeviceCommandType.closeOyster => 'close_oyster',
         DeviceCommandType.protectApp => 'protect_app',
+        DeviceCommandType.protectApps => 'protect_apps',
         DeviceCommandType.unknown => 'unknown',
       };
 }
@@ -52,6 +56,8 @@ class DeviceCommand {
     this.packageName,
     this.label,
     this.sectionId,
+    this.apps = const [],
+    this.appCount,
   });
 
   final String id;
@@ -65,6 +71,8 @@ class DeviceCommand {
   final String? packageName;
   final String? label;
   final String? sectionId;
+  final List<ProtectAppCommandTarget> apps;
+  final int? appCount;
 
   bool get isPending => status == DeviceCommandStatus.pending;
   bool get isApplied => status == DeviceCommandStatus.applied;
@@ -84,6 +92,8 @@ class DeviceCommand {
       packageName: data['packageName'] as String?,
       label: data['label'] as String?,
       sectionId: data['sectionId'] as String?,
+      apps: ProtectAppCommandTarget.fromFirestoreList(data['apps']),
+      appCount: (data['appCount'] as num?)?.toInt(),
     );
   }
 

@@ -41,6 +41,25 @@ void main() {
     expect(layers.single.apps[2].canProtectRemotely, isFalse);
   });
 
+  test('protectableUnprotectedTargets lista apps com packageName', () {
+    final layers = ProtectedLayerSummary.fromFirestoreList([
+      {
+        'sectionId': 'bancos',
+        'title': 'Bancos',
+        'activeCount': 1,
+        'installedCount': 2,
+        'apps': [
+          {'label': 'Bradesco', 'packageName': 'com.bradesco', 'protected': false},
+          {'label': 'Nubank', 'packageName': 'com.nu.production', 'protected': true},
+        ],
+      },
+    ]);
+
+    final targets = ProtectedLayerSnapshot.protectableUnprotectedTargets(layers);
+    expect(targets, hasLength(1));
+    expect(targets.single.packageName, 'com.bradesco');
+  });
+
   test('fromFirestoreList ordena seções e ignora entradas inválidas', () {
     final layers = ProtectedLayerSummary.fromFirestoreList([
       {

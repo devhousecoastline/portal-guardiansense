@@ -9,7 +9,7 @@ enum EventCategoryFilter { all, oyster, risk, protection, blocked }
 class EventFilterState {
   const EventFilterState({
     this.severity,
-    this.period = EventPeriod.all,
+    this.period = EventPeriod.today,
     this.category = EventCategoryFilter.all,
     this.customRange,
   });
@@ -23,7 +23,7 @@ class EventFilterState {
 
   bool get hasActiveFilters =>
       severity != null ||
-      period != EventPeriod.all ||
+      period != EventPeriod.today ||
       category != EventCategoryFilter.all ||
       customRange != null;
 

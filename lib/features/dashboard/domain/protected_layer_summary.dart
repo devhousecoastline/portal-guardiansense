@@ -41,6 +41,54 @@ class ProtectedLayerAppSummary {
   }
 }
 
+/// Alvo de comando remoto `protect_app` / `protect_apps`.
+class ProtectAppCommandTarget {
+  const ProtectAppCommandTarget({
+    required this.packageName,
+    required this.label,
+    required this.sectionId,
+  });
+
+  final String packageName;
+  final String label;
+  final String sectionId;
+
+  Map<String, Object> toFirestoreMap() => {
+        'packageName': packageName,
+        'label': label,
+        'sectionId': sectionId,
+      };
+
+  static List<ProtectAppCommandTarget> fromFirestoreList(Object? raw) {
+    if (raw is! List) return const [];
+
+    final items = <ProtectAppCommandTarget>[];
+    for (final entry in raw) {
+      if (entry is! Map) continue;
+      final map = Map<String, dynamic>.from(entry);
+      final packageName = map['packageName'] as String?;
+      final label = map['label'] as String?;
+      final sectionId = map['sectionId'] as String?;
+      if (packageName == null ||
+          packageName.isEmpty ||
+          label == null ||
+          label.isEmpty ||
+          sectionId == null ||
+          sectionId.isEmpty) {
+        continue;
+      }
+      items.add(
+        ProtectAppCommandTarget(
+          packageName: packageName,
+          label: label,
+          sectionId: sectionId,
+        ),
+      );
+    }
+    return items;
+  }
+}
+
 /// Resumo de uma seção de camadas protegidas sincronizada pelo app mobile.
 class ProtectedLayerSummary {
   const ProtectedLayerSummary({
@@ -175,6 +223,54 @@ abstract final class ProtectedLayerSnapshot {
 
   static int totalUnprotectedApps(List<ProtectedLayerSummary> layers) =>
       layers.fold(0, (sum, layer) => sum + layer.unprotectedCount);
+
+  /// Apps instalados mas fora da proteção — detalhe sincronizado pelo app.
+  static List<ProtectedLayerAppSummary> unprotectedApps(
+    List<ProtectedLayerSummary> layers,
+  ) {
+    final items = <ProtectedLayerAppSummary>[
+      for (final layer in layers)
+        for (final app in layer.apps)
+          if (!app.protected) app,
+    ];
+    items.sort(
+      (a, b) => a.label.toLowerCase().compareTo(b.label.toLowerCase()),
+    );
+    return items;
+  }
+
+  /// Rótulo curto para UI — ex.: "Existem 2 apps fora da proteção".
+  static String unprotectedAppsSummary(List<ProtectedLayerSummary> layers) {
+    final count = totalUnprotectedApps(layers);
+    if (count == 0) return 'Nenhum';
+    if (count == 1) return 'Existe 1 app fora da proteção';
+    return 'Existem $count apps fora da proteção';
+  }
+
+  static bool hasUnprotectedApps(List<ProtectedLayerSummary> layers) =>
+      totalUnprotectedApps(layers) > 0;
+
+  static List<ProtectAppCommandTarget> protectableUnprotectedTargets(
+    List<ProtectedLayerSummary> layers,
+  ) {
+    final items = <ProtectAppCommandTarget>[];
+    for (final layer in layers) {
+      for (final app in layer.apps) {
+        if (!app.canProtectRemotely) continue;
+        items.add(
+          ProtectAppCommandTarget(
+            packageName: app.packageName!,
+            label: app.label,
+            sectionId: layer.sectionId,
+          ),
+        );
+      }
+    }
+    items.sort(
+      (a, b) => a.label.toLowerCase().compareTo(b.label.toLowerCase()),
+    );
+    return items;
+  }
 
   /// Ex.: "Bancos 3 · Carteiras 2 · Meus apps 1"
   static String? shortSummary(List<ProtectedLayerSummary> layers) {

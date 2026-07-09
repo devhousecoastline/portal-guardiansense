@@ -37,7 +37,6 @@ class ProtectionChecklistCard extends StatelessWidget {
       compact: compact,
       useTwoColumns: useTwoColumns,
       pairGrid: pairGrid,
-      alignEventToBottom: pairGrid && expandVertically,
     );
 
     return SectionCard(
@@ -73,7 +72,12 @@ class ProtectionChecklistCard extends StatelessWidget {
               ),
             )
           else if (expandVertically)
-            Expanded(child: body)
+            Expanded(
+              child: SingleChildScrollView(
+                physics: const ClampingScrollPhysics(),
+                child: body,
+              ),
+            )
           else
             body,
         ],
@@ -88,14 +92,12 @@ class _ChecklistBody extends StatelessWidget {
     required this.compact,
     required this.useTwoColumns,
     required this.pairGrid,
-    this.alignEventToBottom = false,
   });
 
   final ChecklistLayout layout;
   final bool compact;
   final bool useTwoColumns;
   final bool pairGrid;
-  final bool alignEventToBottom;
 
   @override
   Widget build(BuildContext context) {
@@ -105,17 +107,7 @@ class _ChecklistBody extends StatelessWidget {
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
         if (pairGrid)
-          alignEventToBottom
-              ? Expanded(
-                  child: Align(
-                    alignment: Alignment.topLeft,
-                    child: _ChecklistPairGrid(
-                      entries: iconEntries,
-                      compact: compact,
-                    ),
-                  ),
-                )
-              : _ChecklistPairGrid(entries: iconEntries, compact: compact)
+          _ChecklistPairGrid(entries: iconEntries, compact: compact)
         else if (useTwoColumns && layout.right.isNotEmpty)
           Row(
             crossAxisAlignment: CrossAxisAlignment.start,
@@ -131,7 +123,6 @@ class _ChecklistBody extends StatelessWidget {
           )
         else
           _ChecklistColumn(entries: iconEntries, compact: compact),
-        if (alignEventToBottom) const Spacer(),
         if (layout.fullWidth.isNotEmpty) ...[
           SizedBox(height: compact ? 2 : 4),
           for (final entry in layout.fullWidth)
@@ -139,10 +130,14 @@ class _ChecklistBody extends StatelessWidget {
               entry: entry,
               fullWidth: true,
               compact: compact,
-              onDetails: entry.answer != 'Nenhuma registrada'
+              onDetails: entry.question.startsWith('Último evento') &&
+                      entry.answer != 'Nenhuma registrada'
                   ? () => NavigationLoadingScope.of(context)
                       .go(context, AppRoutes.events)
-                  : null,
+                  : entry.question.startsWith('Apps fora')
+                      ? () => NavigationLoadingScope.of(context)
+                          .go(context, AppRoutes.settings)
+                      : null,
             ),
         ],
       ],
@@ -243,6 +238,9 @@ class _ChecklistRow extends StatelessWidget {
     if (question.startsWith('Último evento')) {
       return Icons.notifications_active_outlined;
     }
+    if (question.startsWith('Apps fora')) {
+      return Icons.warning_amber_rounded;
+    }
     if (question.startsWith('Qual é meu')) return Icons.percent_rounded;
     return null;
   }
@@ -321,7 +319,9 @@ class _ChecklistRow extends StatelessWidget {
                       ),
                       onPressed: onDetails,
                       child: Text(
-                        'Ver detalhes →',
+                        entry.question.startsWith('Apps fora')
+                            ? 'Ajustar em Configurações →'
+                            : 'Ver detalhes →',
                         style: DashboardTypography.emphasis(
                           context,
                           color: AppColors.primary,

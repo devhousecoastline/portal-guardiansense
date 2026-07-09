@@ -48,6 +48,16 @@ class _ProtectedLayerDetailDialogState extends State<_ProtectedLayerDetailDialog
 
   Future<void> _protectApp(ProtectedLayerAppSummary app) async {
     if (widget.muted || !app.canProtectRemotely || _submittingPackage != null) {
+      if (widget.muted && mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text(
+              'Aparelho offline. Conecte o celular para enviar comandos.',
+            ),
+            behavior: SnackBarBehavior.floating,
+          ),
+        );
+      }
       return;
     }
 
@@ -83,6 +93,14 @@ class _ProtectedLayerDetailDialogState extends State<_ProtectedLayerDetailDialog
           content: Text(
             'Comando enviado. ${app.label} será protegido quando o celular sincronizar.',
           ),
+          behavior: SnackBarBehavior.floating,
+        ),
+      );
+    } on DeviceCommandAlreadyPendingException catch (error) {
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text(error.toString()),
           behavior: SnackBarBehavior.floating,
         ),
       );

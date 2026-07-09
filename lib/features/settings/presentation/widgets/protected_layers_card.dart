@@ -1,12 +1,15 @@
+import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import 'package:guardian_portal/core/layout/app_layout.dart';
 import 'package:guardian_portal/core/theme/app_colors.dart';
+import 'package:guardian_portal/core/widgets/guardian_confirm_dialog.dart';
 import 'package:guardian_portal/core/widgets/section_card.dart';
+import 'package:guardian_portal/features/containment/data/device_commands_repository.dart';
 import 'package:guardian_portal/features/dashboard/domain/device_status.dart';
 import 'package:guardian_portal/features/dashboard/domain/protected_layer_summary.dart';
 import 'package:guardian_portal/features/settings/presentation/widgets/protected_layer_detail_dialog.dart';
 
-class ProtectedLayersCard extends StatelessWidget {
+class ProtectedLayersCard extends StatefulWidget {
   const ProtectedLayersCard({
     super.key,
     required this.uid,
@@ -17,11 +20,103 @@ class ProtectedLayersCard extends StatelessWidget {
   final DeviceStatus status;
 
   @override
+  State<ProtectedLayersCard> createState() => _ProtectedLayersCardState();
+}
+
+class _ProtectedLayersCardState extends State<ProtectedLayersCard> {
+  final _repository = DeviceCommandsRepository();
+  var _submittingAll = false;
+
+  DeviceStatus get status => widget.status;
+
+  Future<void> _protectAll(List<ProtectAppCommandTarget> targets) async {
+    if (_submittingAll || targets.isEmpty || !status.isOnline) {
+      if (!status.isOnline && mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text(
+              'Aparelho offline. Conecte o celular para enviar comandos.',
+            ),
+            behavior: SnackBarBehavior.floating,
+          ),
+        );
+      }
+      return;
+    }
+
+    final count = targets.length;
+    final confirmed = await showGuardianConfirmDialog(
+      context,
+      title: 'Proteger $count apps remotamente?',
+      message:
+          'O aparelho adicionará todos os apps fora da proteção à lista quando receber o comando.',
+      confirmLabel: 'Proteger todos',
+      icon: Icons.verified_user,
+      accentColor: AppColors.trustHigh,
+    );
+
+    if (confirmed != true || !mounted) return;
+
+    setState(() => _submittingAll = true);
+    try {
+      final user = FirebaseAuth.instance.currentUser;
+      if (user == null) return;
+
+      await _repository.requestProtectApps(
+        uid: widget.uid,
+        deviceId: status.deviceId,
+        requestedBy: user.uid,
+        apps: targets,
+      );
+
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text(
+            count == 1
+                ? 'Comando enviado. 1 app será protegido quando o celular sincronizar.'
+                : 'Comando enviado. $count apps serão protegidos quando o celular sincronizar.',
+          ),
+          behavior: SnackBarBehavior.floating,
+        ),
+      );
+    } on DeviceCommandAlreadyPendingException catch (error) {
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text(error.toString()),
+          behavior: SnackBarBehavior.floating,
+        ),
+      );
+    } on DeviceCommandRateLimitException catch (error) {
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text(error.toString()),
+          behavior: SnackBarBehavior.floating,
+        ),
+      );
+    } catch (error) {
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text('Não foi possível enviar o comando: $error'),
+          behavior: SnackBarBehavior.floating,
+        ),
+      );
+    } finally {
+      if (mounted) setState(() => _submittingAll = false);
+    }
+  }
+
+  @override
   Widget build(BuildContext context) {
     final layers = status.protectedLayers;
     final hasSnapshot = status.hasProtectedLayersSnapshot;
     final active = ProtectedLayerSnapshot.visibleSections(layers);
     final muted = !status.isOnline;
+    final protectAllTargets =
+        ProtectedLayerSnapshot.protectableUnprotectedTargets(layers);
 
     return SectionCard(
       child: Column(
@@ -51,6 +146,35 @@ class ProtectedLayersCard extends StatelessWidget {
                   height: 1.35,
                 ),
           ),
+          if (protectAllTargets.isNotEmpty) ...[
+            const SizedBox(height: 10),
+            Align(
+              alignment: Alignment.centerLeft,
+              child: _submittingAll
+                  ? const SizedBox(
+                      width: 22,
+                      height: 22,
+                      child: CircularProgressIndicator(strokeWidth: 2),
+                    )
+                  : OutlinedButton.icon(
+                      onPressed: () => _protectAll(protectAllTargets),
+                      icon: const Icon(Icons.verified_user, size: 18),
+                      label: Text(
+                        protectAllTargets.length == 1
+                            ? 'Proteger 1 app remotamente'
+                            : 'Proteger todos (${protectAllTargets.length})',
+                      ),
+                      style: OutlinedButton.styleFrom(
+                        foregroundColor: AppColors.trustHigh,
+                        side: BorderSide(
+                          color: AppColors.trustHigh.withValues(
+                            alpha: muted ? 0.25 : 0.45,
+                          ),
+                        ),
+                      ),
+                    ),
+            ),
+          ],
           if (!hasSnapshot) ...[
             const SizedBox(height: 12),
             const _AwaitingSyncHint(),
@@ -60,7 +184,7 @@ class ProtectedLayersCard extends StatelessWidget {
           ] else ...[
             const SizedBox(height: 12),
             _LayersGrid(
-              uid: uid,
+              uid: widget.uid,
               deviceId: status.deviceId,
               layers: active,
               muted: muted,
