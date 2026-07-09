@@ -132,10 +132,7 @@ class _SettingsBody extends StatelessWidget {
           ],
         ),
         const SizedBox(height: 16),
-        ProtectedLayersCard(
-          status: status,
-          layersItem: _item('protected_layers'),
-        ),
+        ProtectedLayersCard(status: status),
         const SizedBox(height: 16),
         _SettingsGroup(
           title: 'Recuperação',

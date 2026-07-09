@@ -5,8 +5,18 @@ import 'package:guardian_portal/features/dashboard/domain/protected_layer_summar
 void main() {
   test('fromFirestoreList ordena seções e ignora entradas inválidas', () {
     final layers = ProtectedLayerSummary.fromFirestoreList([
-      {'sectionId': 'outros', 'title': 'Meus apps', 'activeCount': 1},
-      {'sectionId': 'bancos', 'title': 'Bancos', 'activeCount': 3},
+      {
+        'sectionId': 'outros',
+        'title': 'Meus apps',
+        'activeCount': 1,
+        'installedCount': 1,
+      },
+      {
+        'sectionId': 'bancos',
+        'title': 'Bancos',
+        'activeCount': 3,
+        'installedCount': 3,
+      },
       {'title': 'Sem id'},
       {'sectionId': 'carteiras', 'activeCount': 2},
     ]);
@@ -15,12 +25,18 @@ void main() {
     expect(layers[0].sectionId, 'bancos');
     expect(layers[1].sectionId, 'outros');
     expect(layers[0].activeCount, 3);
+    expect(layers[0].installedCount, 3);
   });
 
   test('DeviceStatus lê protectedLayers do Firestore', () {
     final status = DeviceStatus.fromFirestore('dev-1', {
       'protectedLayers': [
-        {'sectionId': 'bancos', 'title': 'Bancos', 'activeCount': 2},
+        {
+          'sectionId': 'bancos',
+          'title': 'Bancos',
+          'activeCount': 2,
+          'installedCount': 3,
+        },
         {'sectionId': 'email', 'title': 'E-mail', 'activeCount': 1},
       ],
     });
@@ -30,20 +46,50 @@ void main() {
     expect(ProtectedLayerSnapshot.totalActiveApps(status.protectedLayers), 3);
     expect(
       ProtectedLayerSnapshot.shortSummary(status.protectedLayers),
-      'Bancos 2 · E-mail 1',
+      'Bancos 2 · E-mails 1',
     );
   });
 
-  test('summarySubtitle descreve totais', () {
+  test('displayTitle usa rótulo curto da home do app', () {
+    const layer = ProtectedLayerSummary(
+      sectionId: 'carteiras',
+      title: 'Carteiras digitais',
+      activeCount: 2,
+      installedCount: 3,
+    );
+    expect(layer.displayTitle, 'Carteiras');
+    expect(layer.unprotectedCount, 1);
+    expect(layer.unprotectedLabel, '1 fora da proteção');
+  });
+
+  test('summarySubtitle descreve protegidos e fora da proteção', () {
     final layers = ProtectedLayerSummary.fromFirestoreList([
-      {'sectionId': 'bancos', 'title': 'Bancos', 'activeCount': 2},
-      {'sectionId': 'carteiras', 'title': 'Carteiras', 'activeCount': 0},
-      {'sectionId': 'email', 'title': 'E-mail', 'activeCount': 1},
+      {
+        'sectionId': 'bancos',
+        'title': 'Bancos',
+        'activeCount': 2,
+        'installedCount': 3,
+      },
+      {
+        'sectionId': 'email',
+        'title': 'E-mail',
+        'activeCount': 1,
+        'installedCount': 1,
+      },
     ]);
 
     expect(
       ProtectedLayerSnapshot.summarySubtitle(layers),
-      '3 apps em 2 categorias',
+      '3 protegidos · 1 fora da proteção · 2 categorias',
     );
+  });
+
+  test('sem installedCount assume todos protegidos (legado)', () {
+    final layers = ProtectedLayerSummary.fromFirestoreList([
+      {'sectionId': 'bancos', 'title': 'Bancos', 'activeCount': 3},
+    ]);
+
+    expect(layers.single.installedCount, 3);
+    expect(layers.single.unprotectedCount, 0);
   });
 }
