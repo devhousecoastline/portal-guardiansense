@@ -13,6 +13,7 @@ import 'package:guardian_portal/features/dashboard/domain/protection_snapshot.da
 import 'package:guardian_portal/features/dashboard/presentation/widgets/empty_devices_card.dart';
 import 'package:guardian_portal/features/dashboard/presentation/widgets/protection_setup_card.dart';
 import 'package:guardian_portal/features/devices/domain/guardian_device.dart';
+import 'package:guardian_portal/features/settings/presentation/widgets/protected_layers_card.dart';
 
 class SettingsPage extends StatefulWidget {
   const SettingsPage({super.key});
@@ -118,12 +119,6 @@ class _SettingsBody extends StatelessWidget {
               hasChecklist: hasChecklist,
             ),
             _SyncedSettingRow(
-              icon: Icons.layers_outlined,
-              title: 'Camadas',
-              item: _item('protected_layers'),
-              hasChecklist: hasChecklist,
-            ),
-            _SyncedSettingRow(
               icon: Icons.battery_charging_full_outlined,
               title: 'Bateria sem otimização',
               item: _item('battery'),
@@ -135,6 +130,11 @@ class _SettingsBody extends StatelessWidget {
               subtitle: 'Em breve — ajuste remoto via comandos',
             ),
           ],
+        ),
+        const SizedBox(height: 16),
+        ProtectedLayersCard(
+          status: status,
+          layersItem: _item('protected_layers'),
         ),
         const SizedBox(height: 16),
         _SettingsGroup(

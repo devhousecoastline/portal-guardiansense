@@ -1,6 +1,7 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:guardian_portal/app/constants.dart';
 import 'package:guardian_portal/features/dashboard/domain/device_location.dart';
+import 'package:guardian_portal/features/dashboard/domain/protected_layer_summary.dart';
 import 'package:guardian_portal/features/dashboard/domain/protection_setup_item.dart';
 
 /// Estado de proteção sincronizado pelo app mobile (read-only no portal).
@@ -24,6 +25,7 @@ class DeviceStatus {
     required this.location,
     required this.fingerprint,
     required this.protectionSetupItems,
+    required this.protectedLayers,
   });
 
   final String deviceId;
@@ -42,8 +44,11 @@ class DeviceStatus {
   final DeviceLocation? location;
   final String? fingerprint;
   final List<ProtectionSetupItem> protectionSetupItems;
+  final List<ProtectedLayerSummary> protectedLayers;
 
   bool get hasSetupChecklist => protectionSetupItems.isNotEmpty;
+
+  bool get hasProtectedLayersSnapshot => protectedLayers.isNotEmpty;
 
   List<ProtectionSetupItem> get configuredSetupItems =>
       protectionSetupItems.where((i) => i.done).toList(growable: false);
@@ -98,6 +103,8 @@ class DeviceStatus {
       fingerprint: data['fingerprint'] as String?,
       protectionSetupItems:
           ProtectionSetupItem.fromFirestoreList(data['protectionChecklist']),
+      protectedLayers:
+          ProtectedLayerSummary.fromFirestoreList(data['protectedLayers']),
     );
   }
 

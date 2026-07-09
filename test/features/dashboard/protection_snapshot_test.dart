@@ -21,6 +21,7 @@ void main() {
       location: null,
       fingerprint: null,
       protectionSetupItems: const [],
+      protectedLayers: const [],
     );
 
     final entries = ProtectionSnapshot.checklist(status);
@@ -50,6 +51,7 @@ void main() {
       location: null,
       fingerprint: null,
       protectionSetupItems: const [],
+      protectedLayers: const [],
     );
 
     final entries = ProtectionSnapshot.checklist(status);
@@ -78,6 +80,7 @@ void main() {
       location: null,
       fingerprint: null,
       protectionSetupItems: const [],
+      protectedLayers: const [],
     );
 
     final entries = ProtectionSnapshot.checklist(status);

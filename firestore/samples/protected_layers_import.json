@@ -1,0 +1,49 @@
+{
+  "users": {
+    "3vrNwgC7WnXsy5dnJO1SEXvtE4w1": {
+      "__collections__": {
+        "devices": {
+          "SUBSTITUA_PELO_DEVICE_ID": {
+            "protectedLayers": [
+              {
+                "sectionId": "bancos",
+                "title": "Bancos",
+                "activeCount": 3
+              },
+              {
+                "sectionId": "carteiras",
+                "title": "Carteiras",
+                "activeCount": 2
+              },
+              {
+                "sectionId": "email",
+                "title": "E-mail",
+                "activeCount": 1
+              },
+              {
+                "sectionId": "contas",
+                "title": "Contas",
+                "activeCount": 5
+              },
+              {
+                "sectionId": "contatos",
+                "title": "Contatos",
+                "activeCount": 2
+              },
+              {
+                "sectionId": "redesSociais",
+                "title": "Redes sociais",
+                "activeCount": 3
+              },
+              {
+                "sectionId": "outros",
+                "title": "Meus apps",
+                "activeCount": 1
+              }
+            ]
+          }
+        }
+      }
+    }
+  }
+}

@@ -20,6 +20,7 @@ DeviceStatus _status({DateTime? lastSeen}) {
     location: null,
     fingerprint: 'fp',
     protectionSetupItems: const [],
+    protectedLayers: const [],
   );
 }
 
