@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import 'package:guardian_portal/core/layout/app_layout.dart';
 import 'package:guardian_portal/core/theme/app_colors.dart';
 import 'package:guardian_portal/core/widgets/guardian_confirm_dialog.dart';
+import 'package:guardian_portal/core/widgets/live_status_tile.dart';
 import 'package:guardian_portal/core/widgets/section_card.dart';
 import 'package:guardian_portal/features/containment/data/device_commands_repository.dart';
 import 'package:guardian_portal/features/dashboard/domain/device_status.dart';
@@ -230,9 +231,9 @@ class _LayersGrid extends StatelessWidget {
           physics: const NeverScrollableScrollPhysics(),
           gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
             crossAxisCount: columns,
-            mainAxisSpacing: 6,
-            crossAxisSpacing: 6,
-            mainAxisExtent: 52,
+            mainAxisSpacing: 8,
+            crossAxisSpacing: 8,
+            mainAxisExtent: 56,
           ),
           itemCount: layers.length,
           itemBuilder: (context, index) => _LayerTile(
@@ -268,112 +269,31 @@ class _LayerTile extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final muted = this.muted;
-    final accent = muted
-        ? AppColors.textMuted
-        : (layer.activeCount > 0
-            ? AppColors.trustHigh
-            : AppColors.trustMedium);
-    final warn = muted ? AppColors.textMuted : AppColors.trustMedium;
-
-    return Material(
-      color: AppColors.surface,
-      borderRadius: BorderRadius.circular(10),
-      child: InkWell(
-        onTap: () {
-          showProtectedLayerDetailDialog(
-            context,
-            layer: layer,
-            uid: uid,
-            deviceId: deviceId,
-            muted: muted,
-          );
-        },
-        borderRadius: BorderRadius.circular(10),
-        child: DecoratedBox(
-          decoration: BoxDecoration(
-            borderRadius: BorderRadius.circular(10),
-            border: Border.all(color: AppColors.divider.withValues(alpha: 0.85)),
-          ),
-          child: Padding(
-            padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
-            child: Row(
-              children: [
-                DecoratedBox(
-                  decoration: BoxDecoration(
-                    color: accent.withValues(alpha: 0.1),
-                    borderRadius: BorderRadius.circular(8),
-                  ),
-                  child: Padding(
-                    padding: const EdgeInsets.all(5),
-                    child: Icon(layer.icon, color: accent, size: 14),
-                  ),
-                ),
-                const SizedBox(width: 8),
-                Expanded(
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    mainAxisAlignment: MainAxisAlignment.center,
-                    children: [
-                      Text(
-                        layer.displayTitle,
-                        maxLines: 1,
-                        overflow: TextOverflow.ellipsis,
-                        style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                              fontWeight: FontWeight.w600,
-                              fontSize: 12,
-                              height: 1.1,
-                            ),
-                      ),
-                      Text.rich(
-                        TextSpan(
-                          style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                                fontSize: 10,
-                                height: 1.15,
-                              ),
-                          children: _statusSpans(accent: accent, warn: warn),
-                        ),
-                        maxLines: 2,
-                        overflow: TextOverflow.ellipsis,
-                      ),
-                    ],
-                  ),
-                ),
-              ],
-            ),
-          ),
-        ),
-      ),
+    final accent = liveStatusAccent(
+      muted: muted,
+      ok: layer.isFullyProtected || layer.activeCount > 0,
+      warn: !muted && layer.unprotectedCount > 0,
     );
-  }
+    final value = layer.unprotectedCount == 0
+        ? layer.protectedLabel
+        : '${layer.activeCount} de ${layer.installedCount} protegidos';
 
-  List<InlineSpan> _statusSpans({
-    required Color accent,
-    required Color warn,
-  }) {
-    if (layer.unprotectedCount == 0) {
-      return [
-        TextSpan(
-          text: layer.protectedLabel,
-          style: TextStyle(color: accent, fontWeight: FontWeight.w600),
-        ),
-      ];
-    }
-
-    return [
-      TextSpan(
-        text: layer.protectedLabel,
-        style: TextStyle(color: accent, fontWeight: FontWeight.w600),
-      ),
-      const TextSpan(
-        text: ' · ',
-        style: TextStyle(color: AppColors.textMuted),
-      ),
-      TextSpan(
-        text: layer.unprotectedLabel,
-        style: TextStyle(color: warn, fontWeight: FontWeight.w500),
-      ),
-    ];
+    return LiveStatusTile(
+      icon: layer.icon,
+      label: layer.displayTitle,
+      value: value,
+      accent: accent,
+      compact: true,
+      onTap: () {
+        showProtectedLayerDetailDialog(
+          context,
+          layer: layer,
+          uid: uid,
+          deviceId: deviceId,
+          muted: muted,
+        );
+      },
+    );
   }
 }
 

@@ -1,11 +1,15 @@
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
+import 'package:guardian_portal/core/layout/app_layout.dart';
 import 'package:guardian_portal/core/theme/app_colors.dart';
+import 'package:guardian_portal/core/theme/dashboard_typography.dart';
 import 'package:guardian_portal/core/widgets/device_online_chip.dart';
 import 'package:guardian_portal/core/widgets/guardian_scaffold.dart';
 import 'package:guardian_portal/core/widgets/online_refresh.dart';
+import 'package:guardian_portal/core/widgets/live_status_tile.dart';
 import 'package:guardian_portal/core/widgets/relative_time.dart';
 import 'package:guardian_portal/core/widgets/section_card.dart';
+import 'package:guardian_portal/core/widgets/status_badge.dart';
 import 'package:guardian_portal/features/dashboard/application/dashboard_service.dart';
 import 'package:guardian_portal/features/dashboard/domain/device_status.dart';
 import 'package:guardian_portal/features/dashboard/domain/protection_setup_item.dart';
@@ -126,8 +130,6 @@ class _SettingsBody extends StatelessWidget {
           ],
         ),
         const SizedBox(height: 16),
-        _RuntimeCard(status: status),
-        const SizedBox(height: 16),
         SectionCard(
           child: Row(
             crossAxisAlignment: CrossAxisAlignment.start,
@@ -158,109 +160,144 @@ class _DeviceInfoCard extends StatelessWidget {
 
   final DeviceStatus status;
 
+  String get _platformLabel {
+    final raw = status.platform.trim().toLowerCase();
+    return switch (raw) {
+      'android' => 'Android',
+      'ios' => 'iOS',
+      _ when raw.isEmpty => '—',
+      _ => status.platform,
+    };
+  }
+
   @override
   Widget build(BuildContext context) {
+    final checklist = ProtectionSnapshot.checklist(status);
+    final runtime = checklist.firstWhere(
+      (e) => e.question.startsWith('O Runtime'),
+    );
+    final oyster = checklist.firstWhere(
+      (e) => e.question.startsWith('A Ostra'),
+    );
+    final wide =
+        AppLayout.mainAreaWidth(MediaQuery.sizeOf(context).width) >= 520;
+
     return SectionCard(
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
+          Row(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Icon(
+                status.platform.toLowerCase() == 'ios'
+                    ? Icons.phone_iphone_outlined
+                    : Icons.smartphone_outlined,
+                color: AppColors.primary.withValues(alpha: 0.9),
+                size: 28,
+              ),
+              const SizedBox(width: 14),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      'APARELHO VINCULADO',
+                      style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                            letterSpacing: 0.8,
+                            fontWeight: FontWeight.w600,
+                            color: AppColors.textMuted,
+                          ),
+                    ),
+                    const SizedBox(height: 6),
+                    Text(
+                      status.modelLabel,
+                      style: Theme.of(context).textTheme.titleMedium?.copyWith(
+                            fontWeight: FontWeight.w600,
+                          ),
+                    ),
+                    const SizedBox(height: 6),
+                    Text(
+                      '$_platformLabel · v${status.appVersion} · '
+                      'sync ${formatRelativeTime(status.lastSeen)}',
+                      style: DashboardTypography.cardSubtitle(context),
+                    ),
+                  ],
+                ),
+              ),
+              if (status.hasSetupChecklist) ...[
+                const SizedBox(width: 12),
+                StatusBadge(
+                  label: '${status.protectionIndex}%',
+                  tone: status.protectionIndex >= 90
+                      ? StatusTone.protected
+                      : status.protectionIndex >= 50
+                          ? StatusTone.warning
+                          : StatusTone.critical,
+                ),
+              ],
+            ],
+          ),
+          const SizedBox(height: 18),
+          const Divider(height: 1, color: AppColors.divider),
+          const SizedBox(height: 14),
           Text(
-            'Aparelho vinculado',
-            style: Theme.of(context).textTheme.titleMedium?.copyWith(
+            'ESTADO EM TEMPO REAL',
+            style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                  letterSpacing: 0.8,
                   fontWeight: FontWeight.w600,
+                  color: AppColors.textMuted,
                 ),
           ),
-          const SizedBox(height: 12),
-          _InfoLine(label: 'Modelo', value: status.modelLabel),
-          _InfoLine(label: 'Plataforma', value: status.platform),
-          _InfoLine(label: 'Versão do app', value: status.appVersion),
-          _InfoLine(
-            label: 'Última sincronização',
-            value: formatRelativeTime(status.lastSeen),
-          ),
-          if (status.hasSetupChecklist) ...[
-            const SizedBox(height: 4),
-            _InfoLine(
-              label: 'Índice de proteção',
-              value: '${status.protectionIndex}%',
+          const SizedBox(height: 10),
+          if (wide)
+            Row(
+              children: [
+                Expanded(
+                  child: LiveStatusTile(
+                    icon: Icons.memory_rounded,
+                    label: 'Runtime',
+                    value: runtime.answer,
+                    accent: _signalColor(runtime.signal),
+                  ),
+                ),
+                const SizedBox(width: 12),
+                Expanded(
+                  child: LiveStatusTile(
+                    icon: Icons.lock_outline_rounded,
+                    label: 'Ostra',
+                    value: oyster.answer,
+                    accent: _signalColor(oyster.signal),
+                  ),
+                ),
+              ],
+            )
+          else ...[
+            LiveStatusTile(
+              icon: Icons.memory_rounded,
+              label: 'Runtime',
+              value: runtime.answer,
+              accent: _signalColor(runtime.signal),
+            ),
+            const SizedBox(height: 10),
+            LiveStatusTile(
+              icon: Icons.lock_outline_rounded,
+              label: 'Ostra',
+              value: oyster.answer,
+              accent: _signalColor(oyster.signal),
             ),
           ],
         ],
       ),
     );
   }
-}
 
-class _InfoLine extends StatelessWidget {
-  const _InfoLine({required this.label, required this.value});
-
-  final String label;
-  final String value;
-
-  @override
-  Widget build(BuildContext context) {
-    return Padding(
-      padding: const EdgeInsets.symmetric(vertical: 4),
-      child: Row(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          SizedBox(
-            width: 148,
-            child: Text(
-              label,
-              style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                    color: AppColors.textMuted,
-                  ),
-            ),
-          ),
-          Expanded(
-            child: Text(
-              value,
-              style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                    fontWeight: FontWeight.w500,
-                  ),
-            ),
-          ),
-        ],
-      ),
-    );
-  }
-}
-
-class _RuntimeCard extends StatelessWidget {
-  const _RuntimeCard({required this.status});
-
-  final DeviceStatus status;
-
-  @override
-  Widget build(BuildContext context) {
-    return SectionCard(
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Text(
-            'Estado em tempo real',
-            style: Theme.of(context).textTheme.titleMedium?.copyWith(
-                  fontWeight: FontWeight.w600,
-                ),
-          ),
-          const SizedBox(height: 12),
-          _InfoLine(
-            label: 'Runtime',
-            value: ProtectionSnapshot.checklist(status)
-                .firstWhere((e) => e.question.startsWith('O Runtime'))
-                .answer,
-          ),
-          _InfoLine(
-            label: 'Ostra',
-            value: ProtectionSnapshot.checklist(status)
-                .firstWhere((e) => e.question.startsWith('A Ostra'))
-                .answer,
-          ),
-        ],
-      ),
-    );
-  }
+  static Color _signalColor(ChecklistSignal signal) => switch (signal) {
+        ChecklistSignal.ok => AppColors.trustHigh,
+        ChecklistSignal.warn => AppColors.trustMedium,
+        ChecklistSignal.alert => AppColors.riskCritical,
+        ChecklistSignal.muted => AppColors.textMuted,
+      };
 }
 
 class _SettingsGroup extends StatelessWidget {
