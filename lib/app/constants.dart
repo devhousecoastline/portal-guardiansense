@@ -27,8 +27,11 @@ abstract final class AppConstants {
   /// Largura máxima do layout desktop da login.
   static const double loginMaxWidth = 1180;
 
-  /// Dispositivo online se `lastSeen` for mais recente que isso (~3× o ciclo do app).
-  static const Duration deviceOnlineThreshold = Duration(seconds: 90);
+  /// Dispositivo online se `lastSeen` for mais recente que isso.
+  ///
+  /// Alinhado à presença do FGS no app (`ProtectionStateFirestoreSync` ~180s):
+  /// limiar ≈ 1,5–2× o ciclo de `lastSeen`, para o chip não piscar Offline.
+  static const Duration deviceOnlineThreshold = Duration(minutes: 5);
 
   /// Programa Nacional Celular Seguro (MJSP) — bloqueio de IMEI/linha na operadora.
   static const String celularSeguroUrl = 'https://celularseguro.mj.gov.br/';
