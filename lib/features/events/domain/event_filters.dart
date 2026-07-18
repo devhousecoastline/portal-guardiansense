@@ -128,36 +128,41 @@ abstract final class EventFilters {
     final groups = <String, List<SecurityEvent>>{};
 
     for (final event in events) {
-      final key = _dayKey(event.occurredAt, reference);
+      final key = dayLabelFor(event.occurredAt, now: reference);
       groups.putIfAbsent(key, () => []).add(event);
     }
     return groups;
   }
 
+  /// Dia civil local (meia-noite) para ordenar/agrupar a linha do tempo.
+  static DateTime calendarDay(DateTime at) {
+    final local = at.toLocal();
+    return DateTime(local.year, local.month, local.day);
+  }
+
   static String dayLabel(String key) => key;
 
-  static String _dayKey(DateTime at, DateTime now) {
-    final local = DateTime(at.year, at.month, at.day);
-    final today = DateTime(now.year, now.month, now.day);
-    final diff = today.difference(local).inDays;
-    if (diff == 0) return 'Hoje';
-    if (diff == 1) return 'Ontem';
-    final months = [
-      'jan',
-      'fev',
-      'mar',
-      'abr',
-      'mai',
-      'jun',
-      'jul',
-      'ago',
-      'set',
-      'out',
-      'nov',
-      'dez',
-    ];
-    return '${at.day.toString().padLeft(2, '0')} ${months[at.month - 1]} ${at.year}';
+  /// Rótulo do cabeçalho: Hoje · dd/MM/yyyy / Ontem · dd/MM/yyyy / dd/MM/yyyy.
+  static String dayLabelFor(DateTime at, {DateTime? now}) {
+    final reference = (now ?? DateTime.now()).toLocal();
+    final day = calendarDay(at);
+    final today = calendarDay(reference);
+    final diff = today.difference(day).inDays;
+    final date = formatCalendarDay(day);
+    if (diff == 0) return 'Hoje · $date';
+    if (diff == 1) return 'Ontem · $date';
+    return date;
   }
+
+  static String formatCalendarDay(DateTime day) {
+    final d = calendarDay(day);
+    final dd = d.day.toString().padLeft(2, '0');
+    final mm = d.month.toString().padLeft(2, '0');
+    return '$dd/$mm/${d.year}';
+  }
+
+  static bool isSameCalendarDay(DateTime a, DateTime b) =>
+      calendarDay(a) == calendarDay(b);
 
   static bool _matchesPeriod(
     DateTime at,
@@ -183,8 +188,7 @@ abstract final class EventFilters {
     return !day.isBefore(start) && !day.isAfter(end);
   }
 
-  static bool _isSameDay(DateTime a, DateTime b) =>
-      a.year == b.year && a.month == b.month && a.day == b.day;
+  static bool _isSameDay(DateTime a, DateTime b) => isSameCalendarDay(a, b);
 
   static EventCategory _categoryFromFilter(EventCategoryFilter filter) =>
       switch (filter) {

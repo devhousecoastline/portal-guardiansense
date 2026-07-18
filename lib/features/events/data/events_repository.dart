@@ -14,7 +14,8 @@ class EventsRepository {
   final FirebaseFirestore _firestore;
   final DeviceRepository _devices;
 
-  static const eventsListenLimit = 40;
+  /// Histórico suficiente para filtros de 7/30 dias com quebra por data.
+  static const eventsListenLimit = 120;
 
   /// Eventos de um aparelho específico (1 leitura por snapshot).
   Stream<List<SecurityEvent>> watchForDevice(String uid, String deviceId) {

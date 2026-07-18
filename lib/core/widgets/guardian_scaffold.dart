@@ -17,6 +17,7 @@ class GuardianScaffold extends StatelessWidget {
     required this.child,
     this.subtitle,
     this.subtitleTrailing,
+    this.onBack,
     this.onRefresh,
     this.fitViewport = false,
   });
@@ -24,6 +25,7 @@ class GuardianScaffold extends StatelessWidget {
   final String title;
   final String? subtitle;
   final Widget? subtitleTrailing;
+  final VoidCallback? onBack;
   final Widget child;
   final Future<void> Function()? onRefresh;
 
@@ -60,6 +62,7 @@ class GuardianScaffold extends StatelessWidget {
                             title: title,
                             subtitle: subtitle,
                             subtitleTrailing: subtitleTrailing,
+                            onBack: onBack,
                             showMenu: !wide,
                             current: location,
                           ),
@@ -190,11 +193,13 @@ class _TopBar extends StatelessWidget {
     required this.current,
     this.subtitle,
     this.subtitleTrailing,
+    this.onBack,
   });
 
   final String title;
   final String? subtitle;
   final Widget? subtitleTrailing;
+  final VoidCallback? onBack;
   final bool showMenu;
   final String current;
 
@@ -208,7 +213,13 @@ class _TopBar extends StatelessWidget {
       child: Row(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          if (showMenu)
+          if (onBack != null)
+            IconButton(
+              icon: const Icon(Icons.arrow_back_rounded),
+              tooltip: 'Voltar',
+              onPressed: onBack,
+            )
+          else if (showMenu)
             IconButton(
               icon: const Icon(Icons.menu_rounded),
               onPressed: () => _openDrawer(context, current),
@@ -352,7 +363,7 @@ class _NavList extends StatelessWidget {
         for (final item in _navItems)
           _NavTile(
             item: item,
-            selected: current == item.route,
+            selected: _isNavSelected(current, item.route),
             onTap: () {
               onTap?.call();
               if (current != item.route) {
@@ -380,6 +391,16 @@ const _navItems = [
   _NavItem('Dispositivos', Icons.smartphone_outlined, AppRoutes.devices),
   _NavItem('Configurações', Icons.tune_outlined, AppRoutes.settings),
 ];
+
+bool _isNavSelected(String current, String route) {
+  if (current == route) return true;
+  if (route == AppRoutes.events &&
+      (current == AppRoutes.eventsDetails ||
+          current.startsWith('${AppRoutes.eventsDetails}/'))) {
+    return true;
+  }
+  return false;
+}
 
 class _NavTile extends StatelessWidget {
   const _NavTile({

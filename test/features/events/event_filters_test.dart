@@ -150,11 +150,21 @@ void main() {
         severity: SecurityEventSeverity.info,
         occurredAt: now.subtract(const Duration(days: 1)),
       ),
+      _event(
+        title: 'C',
+        summary: '',
+        severity: SecurityEventSeverity.info,
+        occurredAt: now.subtract(const Duration(days: 3)),
+      ),
     ];
 
     final groups = EventFilters.groupByDay(events, now: now);
 
-    expect(groups.keys, ['Hoje', 'Ontem']);
-    expect(groups['Hoje'], hasLength(1));
+    expect(groups.keys, ['Hoje · 07/07/2026', 'Ontem · 06/07/2026', '04/07/2026']);
+    expect(groups['Hoje · 07/07/2026'], hasLength(1));
+    expect(
+      EventFilters.dayLabelFor(now.subtract(const Duration(days: 3)), now: now),
+      '04/07/2026',
+    );
   });
 }

@@ -11,12 +11,21 @@ class EventTile extends StatelessWidget {
     super.key,
     required this.event,
     this.detailCount,
+    this.showDate = false,
     this.onTap,
   });
 
   final SecurityEvent event;
   final int? detailCount;
+
+  /// Quando true (filtros multi-dia), mostra dd/MM junto da hora.
+  final bool showDate;
   final VoidCallback? onTap;
+
+  static String formatOccurredAt(DateTime at, {required bool showDate}) {
+    final local = at.toLocal();
+    return DateFormat(showDate ? 'dd/MM HH:mm:ss' : 'HH:mm:ss').format(local);
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -28,6 +37,7 @@ class EventTile extends StatelessWidget {
     final subtitle = EventDisplay.subtitle(event);
     final status = EventDisplay.statusLabel(event);
     final showDetails = (detailCount ?? 0) > 1;
+    final occurredLabel = formatOccurredAt(event.occurredAt, showDate: showDate);
 
     return SectionCard(
       padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
@@ -59,7 +69,7 @@ class EventTile extends StatelessWidget {
                       Row(
                         children: [
                           Text(
-                            DateFormat('HH:mm:ss').format(event.occurredAt),
+                            occurredLabel,
                             style:
                                 Theme.of(context).textTheme.bodySmall?.copyWith(
                                       color: AppColors.textMuted,

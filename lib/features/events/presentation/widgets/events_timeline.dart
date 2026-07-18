@@ -1,8 +1,9 @@
 import 'package:flutter/material.dart';
+import 'package:go_router/go_router.dart';
+import 'package:guardian_portal/core/routing/app_routes.dart';
 import 'package:guardian_portal/core/theme/app_colors.dart';
 import 'package:guardian_portal/features/events/domain/event_filters.dart';
 import 'package:guardian_portal/features/events/domain/event_timeline_entry.dart';
-import 'package:guardian_portal/features/events/presentation/widgets/event_session_sheet.dart';
 import 'package:guardian_portal/features/events/presentation/widgets/event_tile.dart';
 
 class EventsStatsBar extends StatelessWidget {
@@ -42,33 +43,34 @@ class EventsStatsBar extends StatelessWidget {
 }
 
 class EventsTimeline extends StatelessWidget {
-  const EventsTimeline({super.key, required this.entries});
+  const EventsTimeline({
+    super.key,
+    required this.entries,
+  });
 
   final List<EventTimelineEntry> entries;
 
   @override
   Widget build(BuildContext context) {
-    final groups = <String, List<EventTimelineEntry>>{};
-    for (final entry in entries) {
-      final dayKey = EventFilters.groupByDay([entry.summary]).keys.first;
-      groups.putIfAbsent(dayKey, () => []).add(entry);
-    }
+    final now = DateTime.now();
 
     return Column(
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
-        for (final dayKey in groups.keys) ...[
-          _DayHeader(label: dayKey),
+        for (final entry in entries) ...[
+          _DayHeader(
+            label: EventFilters.dayLabelFor(entry.summary.occurredAt, now: now),
+          ),
           const SizedBox(height: 8),
-          for (final entry in groups[dayKey]!) ...[
-            EventTile(
-              event: entry.summary,
-              detailCount: entry.sessionEvents.length,
-              onTap: () => showEventSessionSheet(context, entry),
+          EventTile(
+            event: entry.summary,
+            detailCount: entry.dayEvents.length,
+            showDate: true,
+            onTap: () => context.go(
+              AppRoutes.eventsDetailsFor(entry.summary.occurredAt),
             ),
-            const SizedBox(height: 8),
-          ],
-          const SizedBox(height: 8),
+          ),
+          const SizedBox(height: 16),
         ],
       ],
     );
@@ -84,7 +86,7 @@ class _DayHeader extends StatelessWidget {
   Widget build(BuildContext context) {
     return Row(
       children: [
-        Expanded(child: Divider(color: AppColors.divider)),
+        const Expanded(child: Divider(color: AppColors.divider)),
         Padding(
           padding: const EdgeInsets.symmetric(horizontal: 12),
           child: Text(

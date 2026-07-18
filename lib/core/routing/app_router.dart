@@ -7,6 +7,7 @@ import 'package:guardian_portal/features/account/presentation/account_page.dart'
 import 'package:guardian_portal/features/auth/presentation/login_page.dart';
 import 'package:guardian_portal/features/dashboard/presentation/dashboard_page.dart';
 import 'package:guardian_portal/features/devices/presentation/devices_page.dart';
+import 'package:guardian_portal/features/events/presentation/events_details_page.dart';
 import 'package:guardian_portal/features/events/presentation/events_page.dart';
 import 'package:guardian_portal/features/locate/presentation/locate_page.dart';
 import 'package:guardian_portal/features/settings/presentation/settings_page.dart';
@@ -53,6 +54,27 @@ GoRouter createAppRouter({required Listenable authListenable}) {
           GoRoute(
             path: AppRoutes.events,
             builder: (context, state) => const EventsPage(),
+          ),
+          GoRoute(
+            path: '${AppRoutes.eventsDetails}/:day',
+            redirect: (context, state) {
+              final day = AppRoutes.parseEventsDay(
+                state.pathParameters['day'],
+              );
+              if (day == null) return AppRoutes.events;
+              return null;
+            },
+            builder: (context, state) {
+              final day = AppRoutes.parseEventsDay(
+                state.pathParameters['day'],
+              )!;
+              return EventsDetailsPage(day: day);
+            },
+          ),
+          GoRoute(
+            // Compat: `#/events-details` sem data → lista
+            path: AppRoutes.eventsDetails,
+            redirect: (context, state) => AppRoutes.events,
           ),
           GoRoute(
             path: AppRoutes.locate,

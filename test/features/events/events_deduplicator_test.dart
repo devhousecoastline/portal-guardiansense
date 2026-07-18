@@ -67,7 +67,7 @@ void main() {
     expect(collapsed.first.id, '2');
   });
 
-  test('monta cards por sessão como no app', () {
+  test('monta um card por dia com o último evento', () {
     final events = [
       _event(
         id: '1',
@@ -85,20 +85,32 @@ void main() {
       ),
       _event(
         id: '3',
-        title: 'Risco elevado',
-        summary: 'risco attention → elevated',
+        title: 'Ostra reaberta',
+        summary: 'ok',
         occurredAt: DateTime(2026, 7, 7, 19, 34, 40),
+        severity: SecurityEventSeverity.info,
         sessionId: 12,
+      ),
+      _event(
+        id: '4',
+        title: 'Risco crítico confirmado',
+        summary: 'critical',
+        occurredAt: DateTime(2026, 7, 6, 10, 0),
+        severity: SecurityEventSeverity.critical,
+        sessionId: 13,
       ),
     ];
 
     final timeline = EventsTimelineBuilder.build(events);
 
-    expect(timeline, hasLength(3));
-    expect(timeline.every((e) => e.sessionEvents.isNotEmpty), isTrue);
+    expect(timeline, hasLength(2));
+    expect(timeline.first.summary.id, '3');
+    expect(timeline.first.dayEvents, hasLength(3));
+    expect(timeline.last.summary.id, '4');
+    expect(timeline.last.dayEvents, hasLength(1));
   });
 
-  test('agrupa por sessionId do Firestore', () {
+  test('agrupa todos os registros do mesmo dia no detalhe', () {
     final events = [
       _event(
         id: '1',
@@ -126,7 +138,8 @@ void main() {
 
     final timeline = EventsTimelineBuilder.build(events);
 
-    expect(timeline.first.sessionEvents, hasLength(3));
-    expect(timeline.map((e) => e.sessionEvents.first.sessionId).toSet(), {5});
+    expect(timeline, hasLength(1));
+    expect(timeline.first.dayEvents, hasLength(3));
+    expect(timeline.first.summary.id, '3');
   });
 }

@@ -117,9 +117,15 @@ class _EventsBody extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final timeline = EventsTimelineBuilder.build(rawEvents);
+    final baseFilters = EventFilterState(
+      period: filters.period,
+      customRange: filters.customRange,
+    );
+    final inPeriod = EventFilters.apply(rawEvents, baseFilters);
+    final filteredEvents = EventFilters.apply(rawEvents, filters);
+    final timeline = EventsTimelineBuilder.build(filteredEvents);
 
-    if (timeline.isEmpty) {
+    if (rawEvents.isEmpty) {
       return const SectionCard(
         child: Column(
           children: [
@@ -135,12 +141,7 @@ class _EventsBody extends StatelessWidget {
       );
     }
 
-    final summaries = timeline.map((e) => e.summary).toList();
-    final filteredSummaries = EventFilters.apply(summaries, filters);
-    final filteredIds = filteredSummaries.map((e) => e.id).toSet();
-    final filtered =
-        timeline.where((e) => filteredIds.contains(e.summary.id)).toList();
-    final stats = EventFilters.stats(summaries, filteredSummaries);
+    final stats = EventFilters.stats(inPeriod, filteredEvents);
 
     return Column(
       crossAxisAlignment: CrossAxisAlignment.stretch,
@@ -151,22 +152,22 @@ class _EventsBody extends StatelessWidget {
             filters: filters,
             onChanged: onFiltersChanged,
             onClear: onClearFilters,
-            severityCounts: EventFilters.severityCounts(summaries),
-            categoryCounts: EventFilters.categoryCounts(summaries),
+            severityCounts: EventFilters.severityCounts(inPeriod),
+            categoryCounts: EventFilters.categoryCounts(inPeriod),
           ),
         ),
         const SizedBox(height: 8),
         Padding(
           padding: const EdgeInsets.symmetric(horizontal: 4),
           child: Text(
-            'Toque em um card para ver todos os registros da sessão.',
+            'Um card por dia — toque para abrir os eventos daquela data.',
             style: Theme.of(context).textTheme.bodySmall?.copyWith(
                   color: AppColors.textMuted,
                 ),
           ),
         ),
         const SizedBox(height: 12),
-        if (filtered.isEmpty)
+        if (timeline.isEmpty)
           SectionCard(
             child: Column(
               children: [
@@ -199,7 +200,7 @@ class _EventsBody extends StatelessWidget {
           )
         else ...[
           EventsStatsBar(stats: stats),
-          EventsTimeline(entries: filtered),
+          EventsTimeline(entries: timeline),
         ],
       ],
     );
