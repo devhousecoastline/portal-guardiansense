@@ -206,8 +206,8 @@ class _TopBar extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Container(
-      padding: const EdgeInsets.fromLTRB(16, 20, 24, 12),
-      decoration: const BoxDecoration(
+      padding:  EdgeInsets.fromLTRB(16, 20, 24, 12),
+      decoration:  BoxDecoration(
         border: Border(bottom: BorderSide(color: AppColors.divider)),
       ),
       child: Row(
@@ -297,7 +297,7 @@ class _SideNav extends StatelessWidget {
   Widget build(BuildContext context) {
     return Container(
       width: AppLayout.sideNavWidth,
-      decoration: const BoxDecoration(
+      decoration:  BoxDecoration(
         color: AppColors.surface,
         border: Border(right: BorderSide(color: AppColors.divider)),
       ),
@@ -429,11 +429,11 @@ class _NavTile extends StatelessWidget {
           onTap: onTap,
           borderRadius: BorderRadius.circular(10),
           child: Padding(
-            padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
+            padding:  EdgeInsets.symmetric(horizontal: 14, vertical: 12),
             child: Row(
               children: [
                 Icon(item.icon, size: 20, color: fg),
-                const SizedBox(width: 12),
+                 SizedBox(width: 12),
                 Text(
                   item.label,
                   style: TextStyle(

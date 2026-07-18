@@ -238,7 +238,7 @@ class _LocationInfoCardState extends State<_LocationInfoCard> {
               Row(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  const Padding(
+                   Padding(
                     padding: EdgeInsets.only(top: 2),
                     child: Icon(
                       Icons.place_outlined,
@@ -309,7 +309,7 @@ class _StaleLocationBanner extends StatelessWidget {
       color: AppColors.riskElevated.withValues(alpha: 0.12),
       borderRadius: BorderRadius.circular(12),
       child: Padding(
-        padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
+        padding:  EdgeInsets.symmetric(horizontal: 14, vertical: 12),
         child: Row(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
@@ -318,7 +318,7 @@ class _StaleLocationBanner extends StatelessWidget {
               size: 20,
               color: AppColors.riskElevated,
             ),
-            const SizedBox(width: 10),
+             SizedBox(width: 10),
             Expanded(
               child: Text(
                 message,
@@ -372,7 +372,7 @@ class _LocationHintCard extends StatelessWidget {
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Icon(Icons.info_outline, color: AppColors.primary, size: 20),
-          const SizedBox(width: 12),
+           SizedBox(width: 12),
           Expanded(
             child: Text(
               'A posição é enviada enquanto o app está em uso (permissão '

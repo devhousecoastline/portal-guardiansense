@@ -86,7 +86,7 @@ class _EventDateRangeDialogState extends State<_EventDateRangeDialog>
     return Theme(
       data: theme,
       child: Dialog(
-        insetPadding: const EdgeInsets.symmetric(horizontal: 20, vertical: 24),
+        insetPadding:  EdgeInsets.symmetric(horizontal: 20, vertical: 24),
         backgroundColor: AppColors.card,
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
         child: ConstrainedBox(
@@ -109,7 +109,7 @@ class _EventDateRangeDialogState extends State<_EventDateRangeDialog>
                                 .titleMedium
                                 ?.copyWith(fontWeight: FontWeight.w700),
                           ),
-                          const SizedBox(height: 4),
+                           SizedBox(height: 4),
                           Text(
                             '${_fmt.format(_start)} — ${_fmt.format(_end)}',
                             style: Theme.of(context)
@@ -123,7 +123,7 @@ class _EventDateRangeDialogState extends State<_EventDateRangeDialog>
                     IconButton(
                       tooltip: 'Fechar',
                       onPressed: () => Navigator.of(context).pop(),
-                      icon: const Icon(Icons.close_rounded),
+                      icon:  Icon(Icons.close_rounded),
                     ),
                   ],
                 ),
@@ -193,10 +193,11 @@ class _EventDateRangeDialogState extends State<_EventDateRangeDialog>
 }
 
 ThemeData _pickerTheme(BuildContext context) {
+  final brightness = Theme.of(context).brightness;
   return Theme.of(context).copyWith(
     colorScheme: ColorScheme.fromSeed(
       seedColor: AppColors.primary,
-      brightness: Brightness.dark,
+      brightness: brightness,
       surface: AppColors.card,
     ),
     datePickerTheme: DatePickerThemeData(

@@ -1,101 +1,113 @@
 import 'package:flutter/material.dart';
-import 'package:guardian_portal/core/theme/app_colors.dart';
+import 'package:guardian_portal/core/theme/app_palette.dart';
+import 'package:guardian_portal/core/theme/portal_theme_mode.dart';
 
 abstract final class AppTheme {
-  static ThemeData get dark {
+  static ThemeData forMode(PortalThemeMode mode) {
+    final palette = switch (mode) {
+      PortalThemeMode.dark => AppPalette.dark,
+      PortalThemeMode.light => AppPalette.light,
+    };
+    final isDark = mode == PortalThemeMode.dark;
+
     return ThemeData(
       useMaterial3: true,
-      brightness: Brightness.dark,
-      scaffoldBackgroundColor: AppColors.background,
-      colorScheme: const ColorScheme.dark(
-        surface: AppColors.surface,
-        primary: AppColors.primary,
-        onSurface: AppColors.textPrimary,
+      brightness: isDark ? Brightness.dark : Brightness.light,
+      scaffoldBackgroundColor: palette.background,
+      colorScheme: ColorScheme(
+        brightness: isDark ? Brightness.dark : Brightness.light,
+        primary: palette.primary,
         onPrimary: Colors.white,
+        secondary: palette.trustHigh,
+        onSecondary: Colors.white,
+        error: palette.riskCritical,
+        onError: Colors.white,
+        surface: palette.surface,
+        onSurface: palette.textPrimary,
       ),
-      dividerColor: AppColors.divider,
+      dividerColor: palette.divider,
       fontFamily: 'Segoe UI',
-      textTheme: const TextTheme(
+      textTheme: TextTheme(
         headlineLarge: TextStyle(
           fontSize: 28,
           fontWeight: FontWeight.w600,
           letterSpacing: -0.5,
-          color: AppColors.textPrimary,
+          color: palette.textPrimary,
         ),
         headlineMedium: TextStyle(
           fontSize: 22,
           fontWeight: FontWeight.w600,
-          color: AppColors.textPrimary,
+          color: palette.textPrimary,
         ),
         titleLarge: TextStyle(
           fontSize: 18,
           fontWeight: FontWeight.w600,
-          color: AppColors.textPrimary,
+          color: palette.textPrimary,
         ),
         titleMedium: TextStyle(
           fontSize: 15,
           fontWeight: FontWeight.w500,
-          color: AppColors.textPrimary,
+          color: palette.textPrimary,
         ),
         titleSmall: TextStyle(
           fontSize: 13,
           fontWeight: FontWeight.w600,
-          color: AppColors.textPrimary,
+          color: palette.textPrimary,
         ),
         bodyLarge: TextStyle(
           fontSize: 15,
-          color: AppColors.textPrimary,
+          color: palette.textPrimary,
         ),
         bodyMedium: TextStyle(
           fontSize: 14,
-          color: AppColors.textMuted,
+          color: palette.textMuted,
         ),
         bodySmall: TextStyle(
           fontSize: 12,
-          color: AppColors.textMuted,
+          color: palette.textMuted,
           height: 1.25,
         ),
         labelLarge: TextStyle(
           fontSize: 14,
           fontWeight: FontWeight.w600,
-          color: AppColors.textPrimary,
+          color: palette.textPrimary,
         ),
       ),
-      appBarTheme: const AppBarTheme(
-        backgroundColor: AppColors.background,
-        foregroundColor: AppColors.textPrimary,
+      appBarTheme: AppBarTheme(
+        backgroundColor: palette.background,
+        foregroundColor: palette.textPrimary,
         elevation: 0,
         centerTitle: false,
       ),
-      cardTheme: const CardThemeData(
-        color: AppColors.card,
+      cardTheme: CardThemeData(
+        color: palette.card,
         elevation: 0,
         shape: RoundedRectangleBorder(
-          borderRadius: BorderRadius.all(Radius.circular(16)),
-          side: BorderSide(color: AppColors.divider),
+          borderRadius: const BorderRadius.all(Radius.circular(16)),
+          side: BorderSide(color: palette.divider),
         ),
       ),
       inputDecorationTheme: InputDecorationTheme(
         filled: true,
-        fillColor: AppColors.surface,
+        fillColor: palette.surface,
         border: OutlineInputBorder(
           borderRadius: BorderRadius.circular(12),
-          borderSide: const BorderSide(color: AppColors.divider),
+          borderSide: BorderSide(color: palette.divider),
         ),
         enabledBorder: OutlineInputBorder(
           borderRadius: BorderRadius.circular(12),
-          borderSide: const BorderSide(color: AppColors.divider),
+          borderSide: BorderSide(color: palette.divider),
         ),
         focusedBorder: OutlineInputBorder(
           borderRadius: BorderRadius.circular(12),
-          borderSide: const BorderSide(color: AppColors.primary, width: 1.5),
+          borderSide: BorderSide(color: palette.primary, width: 1.5),
         ),
-        labelStyle: const TextStyle(color: AppColors.textMuted),
-        hintStyle: const TextStyle(color: AppColors.textMuted),
+        labelStyle: TextStyle(color: palette.textMuted),
+        hintStyle: TextStyle(color: palette.textMuted),
       ),
       filledButtonTheme: FilledButtonThemeData(
         style: FilledButton.styleFrom(
-          backgroundColor: AppColors.primary,
+          backgroundColor: palette.primary,
           foregroundColor: Colors.white,
           padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 14),
           shape: RoundedRectangleBorder(
@@ -105,19 +117,30 @@ abstract final class AppTheme {
       ),
       outlinedButtonTheme: OutlinedButtonThemeData(
         style: OutlinedButton.styleFrom(
-          foregroundColor: AppColors.textPrimary,
-          side: const BorderSide(color: AppColors.divider),
+          foregroundColor: palette.textPrimary,
+          side: BorderSide(color: palette.divider),
           padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 14),
           shape: RoundedRectangleBorder(
             borderRadius: BorderRadius.circular(12),
           ),
         ),
       ),
-      snackBarTheme: const SnackBarThemeData(
-        backgroundColor: AppColors.surface,
-        contentTextStyle: TextStyle(color: AppColors.textPrimary),
+      snackBarTheme: SnackBarThemeData(
+        backgroundColor: palette.surface,
+        contentTextStyle: TextStyle(color: palette.textPrimary),
         behavior: SnackBarBehavior.floating,
+      ),
+      dialogTheme: DialogThemeData(
+        backgroundColor: palette.card,
+        surfaceTintColor: Colors.transparent,
+      ),
+      bottomSheetTheme: BottomSheetThemeData(
+        backgroundColor: palette.card,
+        surfaceTintColor: Colors.transparent,
       ),
     );
   }
+
+  static ThemeData get dark => forMode(PortalThemeMode.dark);
+  static ThemeData get light => forMode(PortalThemeMode.light);
 }

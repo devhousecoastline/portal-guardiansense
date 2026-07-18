@@ -17,7 +17,7 @@ class AuthAppBar extends StatelessWidget implements PreferredSizeWidget {
       elevation: 0,
       scrolledUnderElevation: 0,
       automaticallyImplyLeading: false,
-      bottom: const PreferredSize(
+      bottom:  PreferredSize(
         preferredSize: Size.fromHeight(1),
         child: Divider(height: 1, color: AppColors.divider),
       ),

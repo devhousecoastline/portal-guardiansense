@@ -93,7 +93,7 @@ class _GuardianPillButtonState extends State<GuardianPillButton> {
       onEnter: (_) => setState(() => _hovered = true),
       onExit: (_) => setState(() => _hovered = false),
       child: AnimatedContainer(
-        duration: const Duration(milliseconds: 160),
+        duration:  Duration(milliseconds: 160),
         curve: Curves.easeOutCubic,
         transform: Matrix4.translationValues(0, _hovered ? -2 : 0, 0),
         decoration: BoxDecoration(

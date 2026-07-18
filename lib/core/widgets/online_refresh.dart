@@ -29,7 +29,7 @@ class OnlineRefresh extends StatefulWidget {
     super.key,
     required this.builder,
     this.controller,
-    this.interval = const Duration(seconds: 30),
+    this.interval = const Duration(seconds: 15),
     this.tickVisibleFor = const Duration(milliseconds: 850),
   });
 

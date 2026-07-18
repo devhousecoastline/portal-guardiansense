@@ -126,7 +126,7 @@ class _EventsBody extends StatelessWidget {
     final timeline = EventsTimelineBuilder.build(filteredEvents);
 
     if (rawEvents.isEmpty) {
-      return const SectionCard(
+      return  SectionCard(
         child: Column(
           children: [
             Icon(Icons.timeline_outlined, size: 40, color: AppColors.textMuted),
@@ -156,9 +156,9 @@ class _EventsBody extends StatelessWidget {
             categoryCounts: EventFilters.categoryCounts(inPeriod),
           ),
         ),
-        const SizedBox(height: 8),
+         SizedBox(height: 8),
         Padding(
-          padding: const EdgeInsets.symmetric(horizontal: 4),
+          padding:  EdgeInsets.symmetric(horizontal: 4),
           child: Text(
             'Um card por dia — toque para abrir os eventos daquela data.',
             style: Theme.of(context).textTheme.bodySmall?.copyWith(
@@ -166,23 +166,23 @@ class _EventsBody extends StatelessWidget {
                 ),
           ),
         ),
-        const SizedBox(height: 12),
+         SizedBox(height: 12),
         if (timeline.isEmpty)
           SectionCard(
             child: Column(
               children: [
-                const Icon(
+                 Icon(
                   Icons.filter_list_off_outlined,
                   size: 36,
                   color: AppColors.textMuted,
                 ),
-                const SizedBox(height: 12),
+                 SizedBox(height: 12),
                 Text(
                   'Nenhum evento com esses filtros.',
                   style: Theme.of(context).textTheme.titleMedium,
                   textAlign: TextAlign.center,
                 ),
-                const SizedBox(height: 6),
+                 SizedBox(height: 6),
                 Text(
                   'Tente ampliar o período ou limpar os filtros.',
                   style: Theme.of(context).textTheme.bodyMedium?.copyWith(

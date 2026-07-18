@@ -30,8 +30,9 @@ abstract final class AppConstants {
   /// Dispositivo online se `lastSeen` for mais recente que isso.
   ///
   /// Alinhado à presença do FGS no app (`ProtectionStateFirestoreSync` ~180s):
-  /// limiar ≈ 1,5–2× o ciclo de `lastSeen`, para o chip não piscar Offline.
-  static const Duration deviceOnlineThreshold = Duration(minutes: 5);
+  /// limiar ≈ 2× o ciclo. Após desinstalar o app, o portal só marca offline
+  /// quando este prazo passa (não há sinal de “aparelho sumiu”).
+  static const Duration deviceOnlineThreshold = Duration(minutes: 4);
 
   /// Programa Nacional Celular Seguro (MJSP) — bloqueio de IMEI/linha na operadora.
   static const String celularSeguroUrl = 'https://celularseguro.mj.gov.br/';

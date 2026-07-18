@@ -69,7 +69,7 @@ class EventsFilterBar extends StatelessWidget {
           ],
         ),
         if (filters.customRange != null) ...[
-          const SizedBox(height: 6),
+           SizedBox(height: 6),
           Text(
             'Período personalizado: ${EventFilters.formatCustomRange(filters.customRange!)}',
             style: Theme.of(context).textTheme.bodySmall?.copyWith(
@@ -241,7 +241,7 @@ class _FilterChip extends StatelessWidget {
     final accent = color ?? AppColors.primary;
 
     return Padding(
-      padding: const EdgeInsets.only(right: 8),
+      padding:  EdgeInsets.only(right: 8),
       child: FilterChip(
         avatar: icon != null
             ? Icon(

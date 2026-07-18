@@ -13,7 +13,7 @@ Future<bool> showGuardianConfirmDialog(
   String? callout,
   required String confirmLabel,
   IconData icon = Icons.warning_amber_rounded,
-  Color accentColor = AppColors.riskCritical,
+  Color? accentColor,
   Future<bool> Function()? onConfirm,
 }) async {
   final result = await showDialog<bool>(
@@ -25,7 +25,7 @@ Future<bool> showGuardianConfirmDialog(
       callout: callout,
       confirmLabel: confirmLabel,
       icon: icon,
-      accentColor: accentColor,
+      accentColor: accentColor ?? AppColors.riskCritical,
       onConfirm: onConfirm,
     ),
   );
@@ -99,11 +99,11 @@ class _GuardianConfirmDialogState extends State<_GuardianConfirmDialog> {
     return PopScope(
       canPop: !_loading,
       child: Dialog(
-        insetPadding: const EdgeInsets.symmetric(horizontal: 20, vertical: 24),
+        insetPadding:  EdgeInsets.symmetric(horizontal: 20, vertical: 24),
         backgroundColor: AppColors.card,
         shape: RoundedRectangleBorder(
           borderRadius: BorderRadius.circular(16),
-          side: const BorderSide(color: AppColors.divider),
+          side:  BorderSide(color: AppColors.divider),
         ),
         child: ConstrainedBox(
           constraints: const BoxConstraints(maxWidth: 440),
@@ -141,19 +141,19 @@ class _GuardianConfirmDialogState extends State<_GuardianConfirmDialog> {
                       tooltip: 'Fechar',
                       visualDensity: VisualDensity.compact,
                       padding: EdgeInsets.zero,
-                      constraints: const BoxConstraints(
+                      constraints:  BoxConstraints(
                         minWidth: 36,
                         minHeight: 36,
                       ),
                       onPressed: _loading ? null : _handleCancel,
-                      icon: const Icon(
+                      icon:  Icon(
                         Icons.close_rounded,
                         color: AppColors.textMuted,
                       ),
                     ),
                   ],
                 ),
-                const SizedBox(height: 18),
+                 SizedBox(height: 18),
                 Text(
                   widget.message,
                   style: theme.textTheme.bodyMedium?.copyWith(
@@ -162,10 +162,10 @@ class _GuardianConfirmDialogState extends State<_GuardianConfirmDialog> {
                   ),
                 ),
                 if (widget.callout != null) ...[
-                  const SizedBox(height: 14),
+                   SizedBox(height: 14),
                   Container(
                     width: double.infinity,
-                    padding: const EdgeInsets.symmetric(
+                    padding:  EdgeInsets.symmetric(
                       horizontal: 14,
                       vertical: 14,
                     ),

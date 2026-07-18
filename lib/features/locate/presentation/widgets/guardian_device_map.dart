@@ -56,7 +56,7 @@ class _GuardianDeviceMapState extends State<GuardianDeviceMap> {
                 TileLayer(
                   urlTemplate:
                       'https://{s}.basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}{r}.png',
-                  subdomains: const ['a', 'b', 'c', 'd'],
+                  subdomains:  ['a', 'b', 'c', 'd'],
                   userAgentPackageName: 'guardian_portal',
                 ),
                 CircleLayer(
@@ -100,7 +100,7 @@ class _GuardianDeviceMapState extends State<GuardianDeviceMap> {
                 borderRadius: BorderRadius.circular(8),
                 child: Padding(
                   padding:
-                      const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+                       EdgeInsets.symmetric(horizontal: 10, vertical: 6),
                   child: Text(
                     'Círculo: margem de precisão GPS',
                     style: Theme.of(context).textTheme.bodySmall?.copyWith(
@@ -120,7 +120,7 @@ class _GuardianDeviceMapState extends State<GuardianDeviceMap> {
                 child: IconButton(
                   tooltip: 'Centralizar',
                   onPressed: () => _controller.move(_point, 15),
-                  icon: const Icon(
+                  icon:  Icon(
                     Icons.my_location,
                     color: AppColors.trustHigh,
                   ),
@@ -157,7 +157,7 @@ class _ShieldPin extends StatelessWidget {
               ),
             ],
           ),
-          padding: const EdgeInsets.all(6),
+          padding:  EdgeInsets.all(6),
           child: Image.asset(
             'assets/images/shield_transparent.png',
             fit: BoxFit.contain,

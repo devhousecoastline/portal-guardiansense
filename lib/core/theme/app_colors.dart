@@ -1,19 +1,22 @@
 import 'package:flutter/material.dart';
+import 'package:guardian_portal/core/theme/app_palette.dart';
 
-/// Tokens de cor — alinhados ao app mobile (dark-first).
+/// Cores do portal — leem a paleta ativa ([AppColorScope]).
 abstract final class AppColors {
-  static const background = Color(0xFF0B0F14);
-  static const loginBackgroundCenter = Color(0xFF10151C);
-  static const loginBackgroundMid = Color(0xFF0C1016);
-  static const loginBackgroundEdge = Color(0xFF080B10);
-  static const surface = Color(0xFF141A22);
-  static const card = Color(0xFF161B22);
-  static const primary = Color(0xFF3D8BFF);
-  static const trustHigh = Color(0xFF2ECC71);
-  static const trustMedium = Color(0xFFF1C40F);
-  static const riskElevated = Color(0xFFE67E22);
-  static const riskCritical = Color(0xFFE74C3C);
-  static const textPrimary = Color(0xFFF4F7FB);
-  static const textMuted = Color(0xFF8B98A8);
-  static const divider = Color(0xFF2A3441);
+  static Color get background => _p.background;
+  static Color get loginBackgroundCenter => _p.loginBackgroundCenter;
+  static Color get loginBackgroundMid => _p.loginBackgroundMid;
+  static Color get loginBackgroundEdge => _p.loginBackgroundEdge;
+  static Color get surface => _p.surface;
+  static Color get card => _p.card;
+  static Color get primary => _p.primary;
+  static Color get trustHigh => _p.trustHigh;
+  static Color get trustMedium => _p.trustMedium;
+  static Color get riskElevated => _p.riskElevated;
+  static Color get riskCritical => _p.riskCritical;
+  static Color get textPrimary => _p.textPrimary;
+  static Color get textMuted => _p.textMuted;
+  static Color get divider => _p.divider;
+
+  static AppPalette get _p => AppColorScope.current;
 }

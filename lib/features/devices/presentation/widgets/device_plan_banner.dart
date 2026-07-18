@@ -16,12 +16,12 @@ class DevicePlanBanner extends StatelessWidget {
     final limit = snapshot.plan.deviceLimit;
 
     return Padding(
-      padding: const EdgeInsets.only(bottom: 16),
+      padding:  EdgeInsets.only(bottom: 16),
       child: SectionCard(
         child: Row(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            const Icon(Icons.info_outline, color: AppColors.trustMedium, size: 22),
+             Icon(Icons.info_outline, color: AppColors.trustMedium, size: 22),
             const SizedBox(width: 12),
             Expanded(
               child: Text(

@@ -8,7 +8,7 @@ class DrawerPremiumTeaser extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Padding(
-      padding: const EdgeInsets.fromLTRB(12, 8, 12, 4),
+      padding:  EdgeInsets.fromLTRB(12, 8, 12, 4),
       child: Material(
         color: AppColors.card,
         borderRadius: BorderRadius.circular(12),
@@ -16,14 +16,14 @@ class DrawerPremiumTeaser extends StatelessWidget {
           borderRadius: BorderRadius.circular(12),
           onTap: () {
             ScaffoldMessenger.of(context).showSnackBar(
-              const SnackBar(
+               SnackBar(
                 content: Text('Guardian Premium — em breve.'),
                 behavior: SnackBarBehavior.floating,
               ),
             );
           },
           child: Padding(
-            padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
+            padding:  EdgeInsets.symmetric(horizontal: 12, vertical: 10),
             child: Row(
               children: [
                 Icon(

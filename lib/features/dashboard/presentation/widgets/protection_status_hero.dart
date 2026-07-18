@@ -84,7 +84,7 @@ class ProtectionStatusHero extends StatelessWidget {
               overflow: compact ? TextOverflow.ellipsis : null,
             ),
             if (!compact) ...[
-              const SizedBox(height: 8),
+               SizedBox(height: 8),
               Text(
                 headline,
                 style: Theme.of(context).textTheme.bodyLarge?.copyWith(
@@ -239,7 +239,7 @@ class _OfflineBanner extends StatelessWidget {
       ),
       child: Row(
         children: [
-          const Icon(
+           Icon(
             Icons.cloud_off_outlined,
             size: 18,
             color: AppColors.textMuted,

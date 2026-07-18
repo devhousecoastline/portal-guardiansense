@@ -130,7 +130,7 @@ class _DayDetailsBody extends StatelessWidget {
       return SectionCard(
         child: Column(
           children: [
-            const Icon(
+             Icon(
               Icons.event_busy_outlined,
               size: 36,
               color: AppColors.textMuted,
@@ -160,7 +160,7 @@ class _DayDetailsBody extends StatelessWidget {
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
         SectionCard(
-          padding: const EdgeInsets.fromLTRB(16, 14, 16, 14),
+          padding:  EdgeInsets.fromLTRB(16, 14, 16, 14),
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
@@ -172,21 +172,21 @@ class _DayDetailsBody extends StatelessWidget {
                       letterSpacing: 0.3,
                     ),
               ),
-              const SizedBox(height: 6),
+               SizedBox(height: 6),
               Text(
                 '$time · $status',
                 style: Theme.of(context).textTheme.bodyMedium?.copyWith(
                       color: AppColors.textMuted,
                     ),
               ),
-              const SizedBox(height: 4),
+               SizedBox(height: 4),
               Text(
                 EventDisplay.title(summary),
                 style: Theme.of(context).textTheme.titleMedium?.copyWith(
                       fontWeight: FontWeight.w700,
                     ),
               ),
-              const SizedBox(height: 8),
+               SizedBox(height: 8),
               Text(
                 '${dayEvents.length} registro(s) neste dia',
                 style: Theme.of(context).textTheme.bodySmall?.copyWith(
@@ -223,7 +223,7 @@ class _EventDetailRow extends StatelessWidget {
         : EventTile.severityColor(event.severity);
 
     return SectionCard(
-      padding: const EdgeInsets.fromLTRB(16, 12, 16, 12),
+      padding:  EdgeInsets.fromLTRB(16, 12, 16, 12),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
@@ -250,7 +250,7 @@ class _EventDetailRow extends StatelessWidget {
               _SeverityPill(label: event.severityLabel, color: color),
             ],
           ),
-          const SizedBox(height: 6),
+           SizedBox(height: 6),
           Text(
             title,
             style: Theme.of(context).textTheme.titleSmall?.copyWith(
@@ -258,7 +258,7 @@ class _EventDetailRow extends StatelessWidget {
                 ),
           ),
           if (subtitle != null) ...[
-            const SizedBox(height: 4),
+             SizedBox(height: 4),
             Text(
               subtitle,
               style: Theme.of(context).textTheme.bodyMedium?.copyWith(

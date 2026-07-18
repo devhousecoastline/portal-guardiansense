@@ -23,20 +23,20 @@ class AuthPageShell extends StatelessWidget {
       appBar: appBar,
       body: Stack(
         children: [
-          const DecoratedBox(
+          DecoratedBox(
             decoration: BoxDecoration(
               gradient: RadialGradient(
-                center: Alignment(0, -0.15),
+                center:  Alignment(0, -0.15),
                 radius: 0.95,
                 colors: [
                   AppColors.loginBackgroundCenter,
                   AppColors.loginBackgroundMid,
                   AppColors.loginBackgroundEdge,
                 ],
-                stops: [0.0, 0.55, 1.0],
+                stops: const [0.0, 0.55, 1.0],
               ),
             ),
-            child: SizedBox.expand(),
+            child: const SizedBox.expand(),
           ),
           LayoutBuilder(
             builder: (context, constraints) {

@@ -17,7 +17,7 @@ class DeviceOnlineChip extends StatelessWidget {
   Widget build(BuildContext context) {
     final color = isOnline ? AppColors.trustHigh : AppColors.textMuted;
     final label = isOnline
-        ? 'Online · agora'
+        ? 'Online · ${formatRelativeTime(lastSeen)}'
         : 'Offline · ${formatRelativeTime(lastSeen)}';
 
     return Container(

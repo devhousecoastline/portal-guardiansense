@@ -276,7 +276,7 @@ class _OysterClosedPanel extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    const color = AppColors.trustHigh;
+    final color = AppColors.trustHigh;
     final subtitle = status.isOnline
         ? 'Só reabre no app ${AppConstants.appName}.'
         : 'Contenção ativa. Última sync ${formatRelativeTime(status.lastSeen)}.';
@@ -551,7 +551,7 @@ class _ContainmentActionButton extends StatelessWidget {
           color: AppColors.riskCritical.withValues(alpha: loading ? 0.25 : 0.55),
         ),
         backgroundColor: AppColors.riskCritical.withValues(alpha: 0.08),
-        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
+        padding:  EdgeInsets.symmetric(horizontal: 16, vertical: 10),
         visualDensity: VisualDensity.compact,
       ),
       icon: loading

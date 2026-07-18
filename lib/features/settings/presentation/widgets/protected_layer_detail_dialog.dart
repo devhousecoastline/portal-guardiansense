@@ -132,16 +132,16 @@ class _ProtectedLayerDetailDialogState extends State<_ProtectedLayerDetailDialog
     final hasRemoteActions = widget.layer.apps.any((app) => app.canProtectRemotely);
 
     return Dialog(
-      insetPadding: const EdgeInsets.symmetric(horizontal: 20, vertical: 24),
+      insetPadding:  EdgeInsets.symmetric(horizontal: 20, vertical: 24),
       backgroundColor: AppColors.card,
       shape: RoundedRectangleBorder(
         borderRadius: BorderRadius.circular(16),
-        side: const BorderSide(color: AppColors.divider),
+        side:  BorderSide(color: AppColors.divider),
       ),
       child: ConstrainedBox(
-        constraints: const BoxConstraints(maxWidth: 440),
+        constraints:  BoxConstraints(maxWidth: 440),
         child: Padding(
-          padding: const EdgeInsets.fromLTRB(24, 22, 24, 20),
+          padding:  EdgeInsets.fromLTRB(24, 22, 24, 20),
           child: Column(
             mainAxisSize: MainAxisSize.min,
             crossAxisAlignment: CrossAxisAlignment.stretch,
@@ -166,7 +166,7 @@ class _ProtectedLayerDetailDialogState extends State<_ProtectedLayerDetailDialog
                               height: 1.25,
                             ),
                           ),
-                          const SizedBox(height: 4),
+                           SizedBox(height: 4),
                           Text(
                             _headerSubtitle(widget.layer),
                             style: theme.textTheme.bodySmall?.copyWith(
@@ -181,12 +181,12 @@ class _ProtectedLayerDetailDialogState extends State<_ProtectedLayerDetailDialog
                     tooltip: 'Fechar',
                     visualDensity: VisualDensity.compact,
                     padding: EdgeInsets.zero,
-                    constraints: const BoxConstraints(
+                    constraints:  BoxConstraints(
                       minWidth: 36,
                       minHeight: 36,
                     ),
                     onPressed: () => Navigator.of(context).pop(),
-                    icon: const Icon(
+                    icon:  Icon(
                       Icons.close_rounded,
                       color: AppColors.textMuted,
                     ),
@@ -216,7 +216,7 @@ class _ProtectedLayerDetailDialogState extends State<_ProtectedLayerDetailDialog
                     },
                   ),
                 ),
-              const SizedBox(height: 16),
+               SizedBox(height: 16),
               Text(
                 hasRemoteActions
                     ? 'Apps fora da proteção podem ser reforçados remotamente. '
@@ -329,9 +329,9 @@ class _AppRow extends StatelessWidget {
               ),
             ),
             if (canProtect) ...[
-              const SizedBox(width: 8),
+               SizedBox(width: 8),
               submitting
-                  ? const SizedBox(
+                  ?  SizedBox(
                       width: 22,
                       height: 22,
                       child: CircularProgressIndicator(strokeWidth: 2),
@@ -360,7 +360,7 @@ class _AppsUnavailableHint extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 14),
+      padding:  EdgeInsets.symmetric(horizontal: 14, vertical: 14),
       decoration: BoxDecoration(
         color: AppColors.surface,
         borderRadius: BorderRadius.circular(10),
@@ -369,8 +369,8 @@ class _AppsUnavailableHint extends StatelessWidget {
       child: Row(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          const Icon(Icons.sync, size: 18, color: AppColors.textMuted),
-          const SizedBox(width: 8),
+           Icon(Icons.sync, size: 18, color: AppColors.textMuted),
+           SizedBox(width: 8),
           Expanded(
             child: Text(
               'Lista de apps ainda não sincronizada. Abra o Guardian Sense no celular para atualizar.',

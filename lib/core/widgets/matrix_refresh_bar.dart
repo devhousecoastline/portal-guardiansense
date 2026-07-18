@@ -83,7 +83,7 @@ class _MatrixRefreshBarState extends State<MatrixRefreshBar>
     final bgAlpha = active ? 0.96 : 0.9;
 
     return AnimatedContainer(
-      duration: const Duration(milliseconds: 320),
+      duration:  Duration(milliseconds: 320),
       curve: Curves.easeOutCubic,
       child: ClipRRect(
         borderRadius: BorderRadius.circular(4),
@@ -183,7 +183,7 @@ class _EcgPulsePainter extends CustomPainter {
         ..strokeWidth = strokeWidth + 3
         ..style = PaintingStyle.stroke
         ..strokeCap = StrokeCap.round
-        ..maskFilter = const MaskFilter.blur(BlurStyle.normal, 2.5);
+        ..maskFilter =  MaskFilter.blur(BlurStyle.normal, 2.5);
       canvas.drawPath(path, glowPaint);
     }
 

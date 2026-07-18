@@ -23,11 +23,11 @@ class EventsStatsBar extends StatelessWidget {
     ];
 
     return Padding(
-      padding: const EdgeInsets.only(bottom: 12),
+      padding:  EdgeInsets.only(bottom: 12),
       child: Row(
         children: [
-          const Icon(Icons.insights_outlined, size: 18, color: AppColors.primary),
-          const SizedBox(width: 10),
+           Icon(Icons.insights_outlined, size: 18, color: AppColors.primary),
+           SizedBox(width: 10),
           Expanded(
             child: Text(
               parts.join(' · '),
@@ -86,9 +86,9 @@ class _DayHeader extends StatelessWidget {
   Widget build(BuildContext context) {
     return Row(
       children: [
-        const Expanded(child: Divider(color: AppColors.divider)),
+         Expanded(child: Divider(color: AppColors.divider)),
         Padding(
-          padding: const EdgeInsets.symmetric(horizontal: 12),
+          padding:  EdgeInsets.symmetric(horizontal: 12),
           child: Text(
             label,
             style: Theme.of(context).textTheme.bodySmall?.copyWith(
@@ -98,7 +98,7 @@ class _DayHeader extends StatelessWidget {
                 ),
           ),
         ),
-        const Expanded(child: Divider(color: AppColors.divider)),
+         Expanded(child: Divider(color: AppColors.divider)),
       ],
     );
   }

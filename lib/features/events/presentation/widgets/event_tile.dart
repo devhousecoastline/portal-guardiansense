@@ -61,7 +61,7 @@ class EventTile extends StatelessWidget {
                   ),
                   child: Icon(icon, size: 20, color: color),
                 ),
-                const SizedBox(width: 12),
+                 SizedBox(width: 12),
                 Expanded(
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
@@ -88,7 +88,7 @@ class EventTile extends StatelessWidget {
                                       letterSpacing: 0.4,
                                     ),
                           ),
-                          const Spacer(),
+                           Spacer(),
                           if (onTap != null)
                             Icon(
                               Icons.chevron_right_rounded,
@@ -114,11 +114,11 @@ class EventTile extends StatelessWidget {
                               ),
                         ),
                       ],
-                      const SizedBox(height: 8),
+                       SizedBox(height: 8),
                       Row(
                         children: [
                           _SeverityPill(label: event.severityLabel, color: color),
-                          const SizedBox(width: 8),
+                           SizedBox(width: 8),
                           Text(
                             formatRelativeTime(event.occurredAt),
                             style:
@@ -127,7 +127,7 @@ class EventTile extends StatelessWidget {
                                     ),
                           ),
                           if (showDetails) ...[
-                            const SizedBox(width: 8),
+                             SizedBox(width: 8),
                             Text(
                               '$detailCount registros',
                               style:

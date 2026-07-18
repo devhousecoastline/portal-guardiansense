@@ -216,7 +216,7 @@ class _ProgressSummary extends StatelessWidget {
           )
         else
           Text(label, style: DashboardTypography.highlightCaption(context)),
-        const SizedBox(height: 10),
+         SizedBox(height: 10),
         ClipRRect(
           borderRadius: BorderRadius.circular(6),
           child: LinearProgressIndicator(
@@ -306,7 +306,7 @@ class _SetupChip extends StatelessWidget {
             size: 16,
             color: accent,
           ),
-          const SizedBox(width: 8),
+           SizedBox(width: 8),
           Expanded(
             child: Text(
               item.label,
@@ -332,8 +332,8 @@ class _PendingRow extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Container(
-      margin: const EdgeInsets.only(bottom: 8),
-      padding: const EdgeInsets.all(12),
+      margin:  EdgeInsets.only(bottom: 8),
+      padding:  EdgeInsets.all(12),
       decoration: BoxDecoration(
         color: AppColors.trustMedium.withValues(alpha: 0.08),
         borderRadius: BorderRadius.circular(12),
@@ -344,7 +344,7 @@ class _PendingRow extends StatelessWidget {
       child: Row(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          const Icon(
+           Icon(
             Icons.error_outline_rounded,
             size: 20,
             color: AppColors.trustMedium,
@@ -358,7 +358,7 @@ class _PendingRow extends StatelessWidget {
                   item.label,
                   style: DashboardTypography.emphasis(context),
                 ),
-                const SizedBox(height: 2),
+                 SizedBox(height: 2),
                 Text(
                   'Pendente no app',
                   style: DashboardTypography.emphasis(
@@ -392,14 +392,14 @@ class _ConfiguredList extends StatelessWidget {
           'Já ajustado no app (${items.length})',
           style: DashboardTypography.highlightCaption(context, color: accent),
         ),
-        const SizedBox(height: 6),
+         SizedBox(height: 6),
         ...items.map(
           (item) => Padding(
-            padding: const EdgeInsets.symmetric(vertical: 3),
+            padding:  EdgeInsets.symmetric(vertical: 3),
             child: Row(
               children: [
                 Icon(Icons.check_circle_rounded, size: 16, color: accent),
-                const SizedBox(width: 8),
+                 SizedBox(width: 8),
                 Expanded(
                   child: Text(
                     item.label,

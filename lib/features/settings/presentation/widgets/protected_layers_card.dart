@@ -125,7 +125,7 @@ class _ProtectedLayersCardState extends State<ProtectedLayersCard> {
         children: [
           Row(
             children: [
-              const Icon(Icons.layers_outlined, color: AppColors.primary, size: 22),
+               Icon(Icons.layers_outlined, color: AppColors.primary, size: 22),
               const SizedBox(width: 10),
               Expanded(
                 child: Text(
@@ -139,7 +139,7 @@ class _ProtectedLayersCardState extends State<ProtectedLayersCard> {
                 _CountBadge(count: ProtectedLayerSnapshot.totalActiveApps(layers)),
             ],
           ),
-          const SizedBox(height: 6),
+           SizedBox(height: 6),
           Text(
             _subtitle(hasSnapshot: hasSnapshot, active: active),
             style: Theme.of(context).textTheme.bodySmall?.copyWith(
@@ -159,7 +159,7 @@ class _ProtectedLayersCardState extends State<ProtectedLayersCard> {
                     )
                   : OutlinedButton.icon(
                       onPressed: () => _protectAll(protectAllTargets),
-                      icon: const Icon(Icons.verified_user, size: 18),
+                      icon:  Icon(Icons.verified_user, size: 18),
                       label: Text(
                         protectAllTargets.length == 1
                             ? 'Proteger 1 app remotamente'
@@ -305,7 +305,7 @@ class _CountBadge extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+      padding:  EdgeInsets.symmetric(horizontal: 10, vertical: 4),
       decoration: BoxDecoration(
         color: AppColors.trustHigh.withValues(alpha: 0.12),
         borderRadius: BorderRadius.circular(99),
@@ -329,8 +329,8 @@ class _AwaitingSyncHint extends StatelessWidget {
     return Row(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        const Icon(Icons.hourglass_empty, size: 18, color: AppColors.textMuted),
-        const SizedBox(width: 8),
+         Icon(Icons.hourglass_empty, size: 18, color: AppColors.textMuted),
+         SizedBox(width: 8),
         Expanded(
           child: Text(
             'Abra o Guardian Sense no celular para sincronizar as camadas.',
@@ -353,8 +353,8 @@ class _EmptyLayersHint extends StatelessWidget {
     return Row(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        const Icon(Icons.info_outline, size: 18, color: AppColors.trustMedium),
-        const SizedBox(width: 8),
+         Icon(Icons.info_outline, size: 18, color: AppColors.trustMedium),
+         SizedBox(width: 8),
         Expanded(
           child: Text(
             'Nenhum app ativo nas camadas. Ajuste em Camadas protegidas no app.',

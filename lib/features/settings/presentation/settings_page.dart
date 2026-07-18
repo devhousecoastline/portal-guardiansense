@@ -3,6 +3,8 @@ import 'package:flutter/material.dart';
 import 'package:guardian_portal/core/layout/app_layout.dart';
 import 'package:guardian_portal/core/theme/app_colors.dart';
 import 'package:guardian_portal/core/theme/dashboard_typography.dart';
+import 'package:guardian_portal/core/theme/portal_theme_mode.dart';
+import 'package:guardian_portal/core/theme/theme_scope.dart';
 import 'package:guardian_portal/core/widgets/device_online_chip.dart';
 import 'package:guardian_portal/core/widgets/guardian_scaffold.dart';
 import 'package:guardian_portal/core/widgets/online_refresh.dart';
@@ -64,10 +66,14 @@ class _SettingsPageState extends State<SettingsPage> {
                     const RefreshTickBar(visible: true),
                   if (initialLoad)
                     const Center(child: CircularProgressIndicator())
-                  else if (device == null)
-                    const EmptyDevicesCard()
-                  else
-                    _SettingsBody(uid: uid, status: device.status),
+                  else ...[
+                    const _AppearanceCard(),
+                    const SizedBox(height: 16),
+                    if (device == null)
+                      const EmptyDevicesCard()
+                    else
+                      _SettingsBody(uid: uid, status: device.status),
+                  ],
                 ],
               ),
             );
@@ -122,19 +128,19 @@ class _SettingsBody extends StatelessWidget {
               item: _item('recovery'),
               hasChecklist: hasChecklist,
             ),
-            const _PlannedSettingRow(
+             _PlannedSettingRow(
               icon: Icons.contacts_outlined,
               title: 'Contatos confiáveis',
               subtitle: 'Em breve — backup na nuvem',
             ),
           ],
         ),
-        const SizedBox(height: 16),
+         SizedBox(height: 16),
         SectionCard(
           child: Row(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              const Icon(Icons.info_outline, color: AppColors.primary, size: 20),
+               Icon(Icons.info_outline, color: AppColors.primary, size: 20),
               const SizedBox(width: 12),
               Expanded(
                 child: Text(
@@ -196,7 +202,7 @@ class _DeviceInfoCard extends StatelessWidget {
                 color: AppColors.primary.withValues(alpha: 0.9),
                 size: 28,
               ),
-              const SizedBox(width: 14),
+               SizedBox(width: 14),
               Expanded(
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
@@ -238,9 +244,9 @@ class _DeviceInfoCard extends StatelessWidget {
               ],
             ],
           ),
-          const SizedBox(height: 18),
-          const Divider(height: 1, color: AppColors.divider),
-          const SizedBox(height: 14),
+           SizedBox(height: 18),
+           Divider(height: 1, color: AppColors.divider),
+           SizedBox(height: 14),
           Text(
             'ESTADO EM TEMPO REAL',
             style: Theme.of(context).textTheme.bodySmall?.copyWith(
@@ -312,7 +318,7 @@ class _SettingsGroup extends StatelessWidget {
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         Padding(
-          padding: const EdgeInsets.only(left: 4, bottom: 8),
+          padding:  EdgeInsets.only(left: 4, bottom: 8),
           child: Text(
             title.toUpperCase(),
             style: Theme.of(context).textTheme.bodyMedium?.copyWith(
@@ -357,19 +363,19 @@ class _SyncedSettingRow extends StatelessWidget {
     final (subtitle, trailing) = switch ((hasChecklist, item?.done)) {
       (false, _) => (
           'Aguardando sync do app',
-          const Icon(Icons.hourglass_empty, color: AppColors.textMuted, size: 20),
+           Icon(Icons.hourglass_empty, color: AppColors.textMuted, size: 20),
         ),
       (true, true) => (
           'Configurado no app',
-          const Icon(Icons.check_circle_rounded, color: AppColors.trustHigh, size: 22),
+           Icon(Icons.check_circle_rounded, color: AppColors.trustHigh, size: 22),
         ),
       (true, false) => (
           item?.label ?? 'Falta no aparelho',
-          const Icon(Icons.error_outline_rounded, color: AppColors.trustMedium, size: 22),
+           Icon(Icons.error_outline_rounded, color: AppColors.trustMedium, size: 22),
         ),
       (true, null) => (
           'Aguardando sync do app',
-          const Icon(Icons.hourglass_empty, color: AppColors.textMuted, size: 20),
+           Icon(Icons.hourglass_empty, color: AppColors.textMuted, size: 20),
         ),
     };
 
@@ -416,7 +422,7 @@ class _PlannedSettingRow extends StatelessWidget {
         leading: Icon(icon, color: AppColors.textMuted),
         title: Text(title),
         subtitle: Text(subtitle),
-        trailing: const Icon(Icons.schedule_outlined, color: AppColors.textMuted),
+        trailing: Icon(Icons.schedule_outlined, color: AppColors.textMuted),
         onTap: () {
           ScaffoldMessenger.of(context).showSnackBar(
             const SnackBar(
@@ -425,6 +431,60 @@ class _PlannedSettingRow extends StatelessWidget {
             ),
           );
         },
+      ),
+    );
+  }
+}
+
+class _AppearanceCard extends StatelessWidget {
+  const _AppearanceCard();
+
+  @override
+  Widget build(BuildContext context) {
+    final theme = ThemeScope.of(context);
+
+    return SectionCard(
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        children: [
+          Text(
+            'APARÊNCIA',
+            style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                  letterSpacing: 0.8,
+                  fontWeight: FontWeight.w600,
+                  color: AppColors.textMuted,
+                ),
+          ),
+          const SizedBox(height: 6),
+          Text(
+            'Tema do portal',
+            style: Theme.of(context).textTheme.titleMedium?.copyWith(
+                  fontWeight: FontWeight.w600,
+                ),
+          ),
+          const SizedBox(height: 4),
+          Text(
+            'Escolha entre fundo claro ou escuro. A preferência fica salva neste navegador.',
+            style: Theme.of(context).textTheme.bodyMedium,
+          ),
+          const SizedBox(height: 14),
+          SegmentedButton<PortalThemeMode>(
+            segments: [
+              for (final mode in PortalThemeMode.values)
+                ButtonSegment<PortalThemeMode>(
+                  value: mode,
+                  icon: Icon(mode.icon, size: 18),
+                  label: Text(mode.label),
+                  tooltip: mode.description,
+                ),
+            ],
+            selected: {theme.mode},
+            onSelectionChanged: (selected) {
+              if (selected.isEmpty) return;
+              theme.setMode(selected.first);
+            },
+          ),
+        ],
       ),
     );
   }

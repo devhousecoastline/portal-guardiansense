@@ -61,10 +61,10 @@ class _ProfileView extends StatelessWidget {
         Text(
           _shortLabel(user),
           textAlign: TextAlign.center,
-          style: const TextStyle(fontSize: 22, fontWeight: FontWeight.w700),
+          style:  TextStyle(fontSize: 22, fontWeight: FontWeight.w700),
         ),
         if (user.email != null && user.email!.isNotEmpty) ...[
-          const SizedBox(height: 4),
+           SizedBox(height: 4),
           Row(
             mainAxisAlignment: MainAxisAlignment.center,
             children: [
@@ -72,13 +72,13 @@ class _ProfileView extends StatelessWidget {
                 child: Text(
                   user.email!,
                   textAlign: TextAlign.center,
-                  style: const TextStyle(
+                  style:  TextStyle(
                     color: AppColors.textMuted,
                     fontSize: 16,
                   ),
                 ),
               ),
-              const SizedBox(width: 6),
+               SizedBox(width: 6),
               Icon(
                 user.emailVerified
                     ? Icons.verified_outlined
@@ -113,7 +113,7 @@ class _ProfileView extends StatelessWidget {
                   : Icons.mark_email_unread_outlined,
               label: 'E-mail verificado',
               valueWidget: Padding(
-                padding: const EdgeInsets.only(top: 2),
+                padding:  EdgeInsets.only(top: 2),
                 child: Icon(
                   user.emailVerified ? Icons.check_circle : Icons.cancel,
                   size: 22,
@@ -135,8 +135,8 @@ class _ProfileView extends StatelessWidget {
             ),
           ],
         ),
-        const SizedBox(height: 20),
-        const Text(
+         SizedBox(height: 20),
+         Text(
           'Sua conta mantém este aparelho vinculado e prepara os recursos de '
           'nuvem. A proteção anti-furto funciona 100% no aparelho.',
           textAlign: TextAlign.center,
@@ -146,12 +146,12 @@ class _ProfileView extends StatelessWidget {
             height: 1.45,
           ),
         ),
-        const SizedBox(height: 16),
+         SizedBox(height: 16),
         Center(
           child: TextButton.icon(
             onPressed: onSignOut,
-            icon: const Icon(Icons.logout_outlined, size: 20),
-            label: const Text('Sair da conta'),
+            icon:  Icon(Icons.logout_outlined, size: 20),
+            label:  Text('Sair da conta'),
             style: TextButton.styleFrom(
               foregroundColor: AppColors.riskCritical,
               textStyle: const TextStyle(
@@ -214,7 +214,7 @@ class _Avatar extends StatelessWidget {
     return Center(
       child: Text(
         _userInitials(user),
-        style: const TextStyle(
+        style:  TextStyle(
           fontSize: 34,
           fontWeight: FontWeight.w700,
           color: AppColors.trustHigh,
@@ -243,7 +243,7 @@ class _ProvidersRow extends StatelessWidget {
   Widget _chip(String providerId) {
     final (label, icon) = _providerInfo(providerId);
     return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 7),
+      padding:  EdgeInsets.symmetric(horizontal: 12, vertical: 7),
       decoration: BoxDecoration(
         color: AppColors.card,
         borderRadius: BorderRadius.circular(20),
@@ -309,19 +309,19 @@ class _InfoTile extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Padding(
-      padding: const EdgeInsets.symmetric(vertical: 8),
+      padding:  EdgeInsets.symmetric(vertical: 8),
       child: Row(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Icon(icon, size: 22, color: AppColors.trustHigh),
-          const SizedBox(width: 12),
+           SizedBox(width: 12),
           Expanded(
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 Text(
                   label,
-                  style: const TextStyle(
+                  style:  TextStyle(
                     color: AppColors.textMuted,
                     fontSize: 15,
                   ),
@@ -376,7 +376,7 @@ class _SignedOutView extends StatelessWidget {
   Widget build(BuildContext context) {
     return Center(
       child: Padding(
-        padding: const EdgeInsets.all(24),
+        padding:  EdgeInsets.all(24),
         child: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
@@ -385,14 +385,14 @@ class _SignedOutView extends StatelessWidget {
               size: 88,
               color: AppColors.textMuted.withValues(alpha: 0.6),
             ),
-            const SizedBox(height: 16),
-            const Text(
+             SizedBox(height: 16),
+             Text(
               'Você ainda não entrou',
               textAlign: TextAlign.center,
               style: TextStyle(fontSize: 20, fontWeight: FontWeight.w700),
             ),
-            const SizedBox(height: 8),
-            const Text(
+             SizedBox(height: 8),
+             Text(
               'Entre ou crie uma conta para vincular este aparelho e preparar '
               'recursos de nuvem. A proteção funciona mesmo sem login.',
               textAlign: TextAlign.center,
@@ -402,7 +402,7 @@ class _SignedOutView extends StatelessWidget {
                 height: 1.45,
               ),
             ),
-            const SizedBox(height: 24),
+             SizedBox(height: 24),
             FilledButton(
               onPressed: () => context.go(AppRoutes.login),
               style: FilledButton.styleFrom(

@@ -30,7 +30,7 @@ class DrawerAccountTile extends StatelessWidget {
             : Colors.transparent;
 
         return Container(
-          decoration: const BoxDecoration(
+          decoration:  BoxDecoration(
             border: Border(top: BorderSide(color: AppColors.divider)),
           ),
           padding: const EdgeInsets.fromLTRB(12, 10, 12, 12),
@@ -46,7 +46,7 @@ class DrawerAccountTile extends StatelessWidget {
                 child: Row(
                   children: [
                     _AccountAvatar(user: user),
-                    const SizedBox(width: 12),
+                     SizedBox(width: 12),
                     Expanded(
                       child: Column(
                         crossAxisAlignment: CrossAxisAlignment.start,
@@ -63,7 +63,7 @@ class DrawerAccountTile extends StatelessWidget {
                               fontSize: 14,
                             ),
                           ),
-                          const SizedBox(height: 2),
+                           SizedBox(height: 2),
                           Text(
                             user == null ? 'Desconectado' : 'Ver minha conta',
                             maxLines: 1,
@@ -136,7 +136,7 @@ class _AccountAvatar extends StatelessWidget {
   Widget _initialsFallback() {
     final u = user;
     if (u == null) {
-      return const Icon(
+      return  Icon(
         Icons.person_outline_rounded,
         color: AppColors.primary,
         size: 22,
@@ -145,7 +145,7 @@ class _AccountAvatar extends StatelessWidget {
     return Center(
       child: Text(
         _initials(u),
-        style: const TextStyle(
+        style:  TextStyle(
           fontSize: 15,
           fontWeight: FontWeight.w700,
           color: AppColors.primary,

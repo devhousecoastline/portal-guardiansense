@@ -10,7 +10,7 @@ class EmptyDevicesCard extends StatelessWidget {
     return SectionCard(
       child: Column(
         children: [
-          const Icon(Icons.smartphone_outlined, size: 48, color: AppColors.textMuted),
+           Icon(Icons.smartphone_outlined, size: 48, color: AppColors.textMuted),
           const SizedBox(height: 16),
           Text(
             'Nenhum dispositivo sincronizado',

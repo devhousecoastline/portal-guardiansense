@@ -32,7 +32,7 @@ class LoginFormCard extends StatelessWidget {
   Widget build(BuildContext context) {
     return Container(
       width: double.infinity,
-      padding: const EdgeInsets.all(32),
+      padding:  EdgeInsets.all(32),
       decoration: BoxDecoration(
         color: AppColors.card.withValues(alpha: 0.65),
         borderRadius: BorderRadius.circular(20),
@@ -70,7 +70,7 @@ class LoginFormCard extends StatelessWidget {
                 TextFormField(
                   controller: password,
                   obscureText: true,
-                  autofillHints: const [AutofillHints.password],
+                  autofillHints:  [AutofillHints.password],
                   decoration: loginFieldDecoration.copyWith(labelText: 'Senha'),
                   validator: (v) =>
                       v == null || v.length < 6 ? 'Mínimo de 6 caracteres' : null,
@@ -79,8 +79,8 @@ class LoginFormCard extends StatelessWidget {
             ),
           ),
           if (error != null) ...[
-            const SizedBox(height: 16),
-            Text(error!, style: const TextStyle(color: AppColors.riskCritical)),
+             SizedBox(height: 16),
+            Text(error!, style:  TextStyle(color: AppColors.riskCritical)),
           ],
           const SizedBox(height: 24),
           GuardianPillButton(
