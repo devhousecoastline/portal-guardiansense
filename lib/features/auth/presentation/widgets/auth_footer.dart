@@ -7,29 +7,18 @@ class AuthFooter extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final muted = Theme.of(context).textTheme.bodyMedium?.copyWith(
-          fontSize: 12,
-          color: AppColors.textMuted.withValues(alpha: 0.7),
+    final copyright = Theme.of(context).textTheme.bodyMedium?.copyWith(
+          fontSize: 13,
+          color: AppColors.textMuted.withValues(alpha: 0.55),
         );
-
-    final copyright = muted?.copyWith(
-      fontSize: 11,
-      color: AppColors.textMuted.withValues(alpha: 0.5),
-    );
 
     return Padding(
       padding: const EdgeInsets.fromLTRB(24, 16, 24, 24),
-      child: Column(
-        children: [
-          Text(AppConstants.appVersion, style: muted),
-          const SizedBox(height: 8),
-          Text(
-            '© ${DateTime.now().year} ${AppConstants.copyrightHolder}. '
-            'Todos os direitos reservados.',
-            style: copyright,
-            textAlign: TextAlign.center,
-          ),
-        ],
+      child: Text(
+        '© ${DateTime.now().year} ${AppConstants.copyrightHolder}. '
+        'Todos os direitos reservados.',
+        style: copyright,
+        textAlign: TextAlign.center,
       ),
     );
   }

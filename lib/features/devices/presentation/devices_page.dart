@@ -72,7 +72,8 @@ class _DevicesPageState extends State<DevicesPage> {
       return const [
         SectionCard(
           child: Text(
-            'Nenhum dispositivo encontrado. Faça login no app mobile com esta conta.',
+            'Nenhum aparelho vinculado. Instale o Guardian Sense no celular, '
+            'entre com a mesma conta e conclua o onboarding para sincronizar.',
             textAlign: TextAlign.center,
           ),
         ),

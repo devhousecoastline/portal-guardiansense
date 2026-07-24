@@ -6,16 +6,18 @@ class GuardianPillButton extends StatefulWidget {
   const GuardianPillButton({
     super.key,
     required this.label,
-    required this.icon,
     required this.onPressed,
+    this.icon,
+    this.leading,
     this.busy = false,
     this.iconLeading = false,
     this.neutral = false,
     this.fullWidth = false,
-  });
+  }) : assert(icon != null || leading != null);
 
   final String label;
-  final IconData icon;
+  final IconData? icon;
+  final Widget? leading;
   final VoidCallback? onPressed;
   final bool busy;
   final bool iconLeading;
@@ -41,7 +43,8 @@ class _GuardianPillButtonState extends State<GuardianPillButton> {
             height: 16,
             child: CircularProgressIndicator(strokeWidth: 2, color: fg),
           )
-        : Icon(widget.icon, size: 19, color: fg);
+        : (widget.leading ??
+            Icon(widget.icon, size: 19, color: fg));
 
     final pill = Material(
       color: enabled

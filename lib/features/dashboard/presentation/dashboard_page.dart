@@ -86,7 +86,10 @@ class _DashboardPageState extends State<DashboardPage> {
                       crossAxisAlignment: CrossAxisAlignment.stretch,
                       children: [
                         if (initialLoad)
-                          const Center(child: CircularProgressIndicator())
+                          const Padding(
+                            padding: EdgeInsets.symmetric(vertical: 48),
+                            child: Center(child: CircularProgressIndicator()),
+                          )
                         else if (device == null)
                           const EmptyDevicesCard()
                         else

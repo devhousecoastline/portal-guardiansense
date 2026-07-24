@@ -38,9 +38,9 @@ final class AppPalette {
 
   static const dark = AppPalette(
     background: Color(0xFF0B0F14),
-    loginBackgroundCenter: Color(0xFF10151C),
-    loginBackgroundMid: Color(0xFF0C1016),
-    loginBackgroundEdge: Color(0xFF080B10),
+    loginBackgroundCenter: Color(0xFF162028),
+    loginBackgroundMid: Color(0xFF0E141B),
+    loginBackgroundEdge: Color(0xFF070A0E),
     surface: Color(0xFF141A22),
     card: Color(0xFF161B22),
     primary: Color(0xFF3D8BFF),

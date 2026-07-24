@@ -1,55 +1,80 @@
-import 'dart:math' as math;
-
 import 'package:flutter/material.dart';
 import 'package:guardian_portal/core/theme/app_colors.dart';
 import 'package:guardian_portal/features/auth/presentation/widgets/auth_footer.dart';
-import 'package:guardian_portal/features/auth/presentation/widgets/login_watermark.dart';
 
-/// Fundo e estrutura compartilhados entre Home e Login.
+/// Fundo e estrutura compartilhados das telas de autenticação.
 class AuthPageShell extends StatelessWidget {
   const AuthPageShell({
     super.key,
-    required this.appBar,
     required this.body,
   });
 
-  final PreferredSizeWidget appBar;
   final Widget body;
 
   @override
   Widget build(BuildContext context) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+    final wide = MediaQuery.sizeOf(context).width >= 900;
+
     return Scaffold(
       backgroundColor: AppColors.background,
-      appBar: appBar,
       body: Stack(
         children: [
           DecoratedBox(
             decoration: BoxDecoration(
               gradient: RadialGradient(
-                center:  Alignment(0, -0.15),
-                radius: 0.95,
+                center: const Alignment(-0.15, -0.08),
+                radius: 1.05,
                 colors: [
                   AppColors.loginBackgroundCenter,
                   AppColors.loginBackgroundMid,
                   AppColors.loginBackgroundEdge,
                 ],
-                stops: const [0.0, 0.55, 1.0],
+                stops: const [0.0, 0.5, 1.0],
               ),
             ),
             child: const SizedBox.expand(),
           ),
-          LayoutBuilder(
-            builder: (context, constraints) {
-              return LoginWatermark(
-                size: math.min(constraints.maxWidth * 0.42, 520),
-              );
-            },
-          ),
-          Column(
-            children: [
-              Expanded(child: body),
-              const AuthFooter(),
-            ],
+          if (isDark) ...[
+            // Glow esquerda (escudo).
+            DecoratedBox(
+              decoration: BoxDecoration(
+                gradient: RadialGradient(
+                  center: wide
+                      ? const Alignment(-0.35, -0.05)
+                      : const Alignment(0, -0.18),
+                  radius: wide ? 0.65 : 0.72,
+                  colors: [
+                    AppColors.trustHigh.withValues(alpha: wide ? 0.09 : 0.08),
+                    AppColors.trustHigh.withValues(alpha: 0.0),
+                  ],
+                ),
+              ),
+              child: const SizedBox.expand(),
+            ),
+            // Mesmo fundo, espelhado na direita.
+            if (wide)
+              DecoratedBox(
+                decoration: BoxDecoration(
+                  gradient: RadialGradient(
+                    center: const Alignment(0.42, -0.05),
+                    radius: 0.92,
+                    colors: [
+                      AppColors.trustHigh.withValues(alpha: 0.09),
+                      AppColors.trustHigh.withValues(alpha: 0.0),
+                    ],
+                  ),
+                ),
+                child: const SizedBox.expand(),
+              ),
+          ],
+          SafeArea(
+            child: Column(
+              children: [
+                Expanded(child: body),
+                const AuthFooter(),
+              ],
+            ),
           ),
         ],
       ),

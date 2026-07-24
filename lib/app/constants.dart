@@ -12,8 +12,7 @@ abstract final class AppConstants {
       'Entre para acompanhar seus dispositivos protegidos.';
   static const String footerTagline =
       'Proteção inteligente para seus ativos digitais.';
-  static const String appVersion = 'v1.0';
-  static const String copyrightHolder = 'devhousecoastline';
+  static const String copyrightHolder = 'guardian-sense.com';
 
   static const List<String> loginFeatures = [
     'Detecção inteligente',

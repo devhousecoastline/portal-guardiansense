@@ -32,7 +32,13 @@ class AuthController extends ChangeNotifier {
   Future<void> signInWithGoogle() async {
     final provider = GoogleAuthProvider();
     if (kIsWeb) {
-      await _auth.signInWithPopup(provider);
+      await _auth.signInWithPopup(provider).timeout(
+        const Duration(seconds: 90),
+        onTimeout: () => throw FirebaseAuthException(
+          code: 'popup-closed-by-user',
+          message: 'Login com Google cancelado.',
+        ),
+      );
       return;
     }
     await _auth.signInWithProvider(provider);

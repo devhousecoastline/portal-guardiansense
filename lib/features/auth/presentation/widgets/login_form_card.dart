@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:guardian_portal/app/constants.dart';
 import 'package:guardian_portal/core/theme/app_colors.dart';
+import 'package:guardian_portal/core/widgets/google_g_mark.dart';
 import 'package:guardian_portal/core/widgets/guardian_logo.dart';
 import 'package:guardian_portal/core/widgets/guardian_pill_button.dart';
 
@@ -16,6 +17,7 @@ class LoginFormCard extends StatelessWidget {
     required this.onSubmit,
     required this.onGoogleSignIn,
     required this.onToggleMode,
+    required this.onForgotPassword,
   });
 
   final GlobalKey<FormState> formKey;
@@ -27,12 +29,13 @@ class LoginFormCard extends StatelessWidget {
   final VoidCallback onSubmit;
   final VoidCallback onGoogleSignIn;
   final VoidCallback onToggleMode;
+  final VoidCallback onForgotPassword;
 
   @override
   Widget build(BuildContext context) {
     return Container(
       width: double.infinity,
-      padding:  EdgeInsets.all(32),
+      padding: const EdgeInsets.fromLTRB(28, 28, 28, 24),
       decoration: BoxDecoration(
         color: AppColors.card.withValues(alpha: 0.65),
         borderRadius: BorderRadius.circular(20),
@@ -70,17 +73,36 @@ class LoginFormCard extends StatelessWidget {
                 TextFormField(
                   controller: password,
                   obscureText: true,
-                  autofillHints:  [AutofillHints.password],
+                  autofillHints: const [AutofillHints.password],
                   decoration: loginFieldDecoration.copyWith(labelText: 'Senha'),
                   validator: (v) =>
                       v == null || v.length < 6 ? 'Mínimo de 6 caracteres' : null,
                 ),
+                if (!creating) ...[
+                  const SizedBox(height: 4),
+                  Align(
+                    alignment: Alignment.centerRight,
+                    child: TextButton(
+                      onPressed: busy ? null : onForgotPassword,
+                      style: TextButton.styleFrom(
+                        foregroundColor: AppColors.textMuted,
+                        padding: const EdgeInsets.symmetric(
+                          horizontal: 4,
+                          vertical: 4,
+                        ),
+                        minimumSize: Size.zero,
+                        tapTargetSize: MaterialTapTargetSize.shrinkWrap,
+                      ),
+                      child: const Text('Esqueci a senha'),
+                    ),
+                  ),
+                ],
               ],
             ),
           ),
           if (error != null) ...[
-             SizedBox(height: 16),
-            Text(error!, style:  TextStyle(color: AppColors.riskCritical)),
+            const SizedBox(height: 16),
+            Text(error!, style: TextStyle(color: AppColors.riskCritical)),
           ],
           const SizedBox(height: 24),
           GuardianPillButton(
@@ -93,7 +115,7 @@ class LoginFormCard extends StatelessWidget {
           const SizedBox(height: 12),
           GuardianPillButton(
             label: 'Continuar com Google',
-            icon: Icons.g_mobiledata_rounded,
+            leading: const GoogleGMark(size: 18),
             iconLeading: true,
             neutral: true,
             fullWidth: true,
@@ -103,8 +125,13 @@ class LoginFormCard extends StatelessWidget {
           const SizedBox(height: 12),
           TextButton(
             onPressed: busy ? null : onToggleMode,
+            style: TextButton.styleFrom(
+              foregroundColor: AppColors.trustHigh,
+            ),
             child: Text(
-              creating ? 'Já tenho conta — entrar' : 'Primeiro acesso — criar conta',
+              creating
+                  ? 'Já tenho conta — entrar'
+                  : 'Primeiro acesso — criar conta',
             ),
           ),
         ],
