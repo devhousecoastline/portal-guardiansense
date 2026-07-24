@@ -1,26 +1,26 @@
 /// Constantes globais do portal web.
 abstract final class AppConstants {
   static const String appName = 'Guardian Sense';
-  static const String portalTitle = 'Centro de Segurança';
+  static const String portalTitle = 'Central de Proteção';
+  static const String loginCardTitle = 'Acesse sua Central de Proteção';
   static const String tagline =
-      'Seu aparelho continua protegido mesmo quando você não está com ele.';
+      'Seu aparelho continua protegido. Mesmo quando está longe de você.';
   static const String loginHeadline = tagline;
   static const String loginDescription =
       'O Guardian Sense monitora continuamente sinais de furto e protege '
       'automaticamente seus aplicativos e dados.';
   static const String loginCardSubtitle =
-      'Entre para acompanhar seus dispositivos protegidos.';
+      'Gerencie sua proteção, dispositivos e alertas em tempo real.';
+  static const String loginTrustLine =
+      'Proteção inteligente baseada em contexto e risco';
   static const String footerTagline =
       'Proteção inteligente para seus ativos digitais.';
-  static const String copyrightHolder = 'guardian-sense.com';
 
-  static const List<String> loginFeatures = [
-    'Detecção inteligente',
-    'Proteção offline',
-    'Recuperação por biometria',
-    'App Locker',
-    'Contenção automática',
-    'Monitoramento contínuo',
+  /// Destaques do painel de marca na login (desktop).
+  static const List<String> loginHighlights = [
+    'Proteção dos seus ativos digitais',
+    'Detecção inteligente de risco',
+    'Bloqueio automático de apps críticos',
   ];
 
   /// Largura máxima do layout desktop da login.

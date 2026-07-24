@@ -253,16 +253,18 @@ class _MobileLoginBody extends StatelessWidget {
             child: Column(
               mainAxisAlignment: MainAxisAlignment.center,
               children: [
-                const GuardianLogo(size: 72),
-                const SizedBox(height: 12),
-                Text(
-                  AppConstants.appName,
-                  textAlign: TextAlign.center,
-                  style: Theme.of(context).textTheme.titleLarge?.copyWith(
-                        fontWeight: FontWeight.w700,
-                      ),
+                const GuardianLogo(size: 72, breathe: true),
+                Transform.translate(
+                  offset: const Offset(0, -6),
+                  child: Text(
+                    AppConstants.appName,
+                    textAlign: TextAlign.center,
+                    style: Theme.of(context).textTheme.titleLarge?.copyWith(
+                          fontWeight: FontWeight.w700,
+                        ),
+                  ),
                 ),
-                const SizedBox(height: 6),
+                const SizedBox(height: 4),
                 Text(
                   AppConstants.portalTitle,
                   textAlign: TextAlign.center,

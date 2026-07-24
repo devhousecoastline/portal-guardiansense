@@ -15,7 +15,7 @@ class AuthFooter extends StatelessWidget {
     return Padding(
       padding: const EdgeInsets.fromLTRB(24, 16, 24, 24),
       child: Text(
-        '© ${DateTime.now().year} ${AppConstants.copyrightHolder}. '
+        '© ${DateTime.now().year} ${AppConstants.appName} · '
         'Todos os direitos reservados.',
         style: copyright,
         textAlign: TextAlign.center,
