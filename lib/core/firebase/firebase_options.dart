@@ -22,12 +22,13 @@ class DefaultFirebaseOptions {
   }
 
   static const FirebaseOptions web = FirebaseOptions(
-    apiKey: 'AIzaSyC58bPZIg-RPJX41EHmTbftRd4A3FDjOII',
-    appId: '1:74607962213:web:portal0000000000000000',
+    apiKey: 'AIzaSyCtaVMMa8GUKwwRUhl4Ai0jKLzptFEsa7I',
+    appId: '1:74607962213:web:59a3360f830a65e6467e8c',
     messagingSenderId: '74607962213',
     projectId: 'guardian-sense-dbdfa',
     authDomain: 'guardian-sense-dbdfa.firebaseapp.com',
     storageBucket: 'guardian-sense-dbdfa.firebasestorage.app',
+    measurementId: 'G-31BSWEGQMH',
   );
 
   static const FirebaseOptions android = FirebaseOptions(
