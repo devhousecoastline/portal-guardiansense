@@ -8,7 +8,7 @@ class AuthFooter extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final copyright = Theme.of(context).textTheme.bodyMedium?.copyWith(
-          fontSize: 13,
+          fontSize: 15,
           color: AppColors.textMuted.withValues(alpha: 0.55),
         );
 
