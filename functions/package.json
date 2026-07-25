@@ -1,0 +1,18 @@
+{
+  "name": "guardian-portal-functions",
+  "description": "Cloud Functions — PIX (Mercado Pago) + entitlement subscription",
+  "engines": {
+    "node": "22"
+  },
+  "main": "src/index.js",
+  "scripts": {
+    "lint": "node --check src/index.js && node --check src/mercadopago.js && node --check src/subscription.js",
+    "serve": "firebase emulators:start --only functions",
+    "deploy": "firebase deploy --only functions"
+  },
+  "dependencies": {
+    "firebase-admin": "^13.4.0",
+    "firebase-functions": "^6.3.2"
+  },
+  "private": true
+}

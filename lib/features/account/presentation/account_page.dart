@@ -7,6 +7,10 @@ import 'package:guardian_portal/core/widgets/guardian_scaffold.dart';
 import 'package:guardian_portal/features/auth/presentation/widgets/auth_scope.dart';
 import 'package:guardian_portal/features/devices/data/device_repository.dart';
 import 'package:guardian_portal/features/devices/domain/guardian_device.dart';
+import 'package:guardian_portal/features/subscription/data/subscription_repository.dart';
+import 'package:guardian_portal/features/subscription/domain/subscription_entitlement.dart';
+import 'package:guardian_portal/features/subscription/domain/subscription_pricing.dart';
+import 'package:intl/intl.dart';
 
 /// Minha conta — layout alinhado ao app mobile (`ProfilePage`).
 class AccountPage extends StatelessWidget {
@@ -93,6 +97,8 @@ class _ProfileView extends StatelessWidget {
         ],
         const SizedBox(height: 20),
         _ProvidersRow(providers: providers),
+        const SizedBox(height: 20),
+        _PlanCard(uid: user.uid),
         const SizedBox(height: 20),
         _InfoCard(
           title: 'Informações da conta',
@@ -260,6 +266,96 @@ class _ProvidersRow extends StatelessWidget {
           ),
         ],
       ),
+    );
+  }
+}
+
+class _PlanCard extends StatelessWidget {
+  const _PlanCard({required this.uid});
+
+  final String uid;
+
+  @override
+  Widget build(BuildContext context) {
+    return StreamBuilder<SubscriptionEntitlement?>(
+      stream: SubscriptionRepository().watchEntitlement(uid),
+      builder: (context, snap) {
+        final entitlement = snap.data;
+        final now = DateTime.now();
+        final status = entitlement?.effectiveStatusAt(now);
+        final df = DateFormat('dd/MM/yyyy');
+
+        final (title, detail, cta) = switch (status) {
+          SubscriptionStatus.trial => (
+              'Trial',
+              'Restam ${entitlement!.trialDaysLeftCeil(now)} dia'
+                  '${entitlement.trialDaysLeftCeil(now) == 1 ? '' : 's'} grátis.',
+              'Assinar com PIX',
+            ),
+          SubscriptionStatus.active => (
+              'Ativo',
+              entitlement!.expiresAt != null
+                  ? 'Até ${df.format(entitlement.expiresAt!.toLocal())}'
+                      '${entitlement.store != null ? ' · ${entitlement.store}' : ''}'
+                  : 'Assinatura anual ativa.',
+              'Ver plano',
+            ),
+          SubscriptionStatus.expired => (
+              'Trial encerrado',
+              'Assine para continuar com a proteção completa.',
+              'Assinar com PIX',
+            ),
+          SubscriptionStatus.lapsed => (
+              'Assinatura vencida',
+              'Renove com PIX para reativar.',
+              'Renovar com PIX',
+            ),
+          null => (
+              'Plano',
+              'Assinatura anual · ${SubscriptionPricing.yearlyLabelBr}',
+              'Assinar com PIX',
+            ),
+        };
+
+        return _InfoCard(
+          title: 'Plano',
+          children: [
+            _InfoTile(
+              icon: Icons.workspace_premium_outlined,
+              label: title,
+              valueWidget: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    detail,
+                    style: const TextStyle(
+                      fontSize: 16,
+                      fontWeight: FontWeight.w500,
+                    ),
+                  ),
+                  const SizedBox(height: 10),
+                  Align(
+                    alignment: Alignment.centerLeft,
+                    child: TextButton(
+                      onPressed: () => context.go(AppRoutes.premium),
+                      style: TextButton.styleFrom(
+                        foregroundColor: AppColors.trustHigh,
+                        padding: EdgeInsets.zero,
+                        minimumSize: Size.zero,
+                        tapTargetSize: MaterialTapTargetSize.shrinkWrap,
+                      ),
+                      child: Text(
+                        cta,
+                        style: const TextStyle(fontWeight: FontWeight.w700),
+                      ),
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          ],
+        );
+      },
     );
   }
 }

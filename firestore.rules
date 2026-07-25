@@ -92,9 +92,98 @@ service cloud.firestore {
         && commandImmutableFieldsUnchanged(before, after);
     }
 
+    // Entitlement pago só via Admin SDK (Play verify / webhook PIX).
+    function paidStore(value) {
+      return value in ['play', 'pix', 'app_store'];
+    }
+
+    function subscriptionCreateEscalation() {
+      return 'subscription' in request.resource.data
+        && (
+          request.resource.data.subscription.status == 'active'
+          || (
+            'store' in request.resource.data.subscription
+            && paidStore(request.resource.data.subscription.store)
+          )
+          || (
+            'pixPaymentId' in request.resource.data.subscription
+            && request.resource.data.subscription.pixPaymentId != null
+          )
+          || (
+            'expiresAt' in request.resource.data.subscription
+            && request.resource.data.subscription.expiresAt != null
+          )
+          || (
+            'startedAt' in request.resource.data.subscription
+            && request.resource.data.subscription.startedAt != null
+          )
+        );
+    }
+
+    function subscriptionUpdateEscalation() {
+      return 'subscription' in request.resource.data
+        && (
+          (
+            request.resource.data.subscription.status == 'active'
+            && (
+              !('subscription' in resource.data)
+              || resource.data.subscription.status != 'active'
+            )
+          )
+          || (
+            'store' in request.resource.data.subscription
+            && paidStore(request.resource.data.subscription.store)
+            && (
+              !('subscription' in resource.data)
+              || !('store' in resource.data.subscription)
+              || resource.data.subscription.store
+                != request.resource.data.subscription.store
+            )
+          )
+          || (
+            'pixPaymentId' in request.resource.data.subscription
+            && request.resource.data.subscription.pixPaymentId != null
+            && (
+              !('subscription' in resource.data)
+              || resource.data.subscription.pixPaymentId
+                != request.resource.data.subscription.pixPaymentId
+            )
+          )
+          || (
+            'expiresAt' in request.resource.data.subscription
+            && request.resource.data.subscription.expiresAt != null
+            && (
+              !('subscription' in resource.data)
+              || !('expiresAt' in resource.data.subscription)
+              || request.resource.data.subscription.expiresAt
+                > resource.data.subscription.expiresAt
+            )
+          )
+          || (
+            'startedAt' in request.resource.data.subscription
+            && request.resource.data.subscription.startedAt != null
+            && (
+              !('subscription' in resource.data)
+              || !('startedAt' in resource.data.subscription)
+              || request.resource.data.subscription.startedAt
+                != resource.data.subscription.startedAt
+            )
+          )
+        );
+    }
+
+    function validUserCreate() {
+      return !subscriptionCreateEscalation();
+    }
+
+    function validUserUpdate() {
+      return !subscriptionUpdateEscalation();
+    }
+
     match /users/{userId} {
       allow read: if isOwner(userId);
-      allow create, update: if isOwner(userId);
+      allow create: if isOwner(userId) && validUserCreate();
+      allow update: if isOwner(userId) && validUserUpdate();
       allow delete: if false;
 
       match /devices/{deviceId} {
@@ -121,6 +210,11 @@ service cloud.firestore {
         allow read: if isOwner(userId);
         allow create, update, delete: if isOwner(userId);
       }
+    }
+
+    // Cobranças PIX — só Admin SDK (Functions).
+    match /pixPayments/{paymentId} {
+      allow read, write: if false;
     }
   }
 }

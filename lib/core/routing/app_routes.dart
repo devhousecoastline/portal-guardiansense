@@ -8,6 +8,7 @@ abstract final class AppRoutes {
   static const devices = '/devices';
   static const settings = '/settings';
   static const account = '/account';
+  static const premium = '/premium';
 
   /// `/events-details/yyyy-MM-dd`
   static String eventsDetailsFor(DateTime day) {

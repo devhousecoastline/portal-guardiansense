@@ -11,6 +11,7 @@ import 'package:guardian_portal/features/events/presentation/events_details_page
 import 'package:guardian_portal/features/events/presentation/events_page.dart';
 import 'package:guardian_portal/features/locate/presentation/locate_page.dart';
 import 'package:guardian_portal/features/settings/presentation/settings_page.dart';
+import 'package:guardian_portal/features/subscription/presentation/premium_page.dart';
 
 bool _isPublicRoute(String path) => path == AppRoutes.login;
 
@@ -91,6 +92,10 @@ GoRouter createAppRouter({required Listenable authListenable}) {
           GoRoute(
             path: AppRoutes.account,
             builder: (context, state) => const AccountPage(),
+          ),
+          GoRoute(
+            path: AppRoutes.premium,
+            builder: (context, state) => const PremiumPage(),
           ),
         ],
       ),
