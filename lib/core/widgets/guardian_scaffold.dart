@@ -41,56 +41,112 @@ class GuardianScaffold extends StatelessWidget {
     final location = GoRouterState.of(context).matchedLocation;
     final viewportWidth = MediaQuery.sizeOf(context).width;
     final wide = AppLayout.isWide(viewportWidth);
+    final isDark = Theme.of(context).brightness == Brightness.dark;
 
     return Scaffold(
-      body: Row(
+      backgroundColor: isDark
+          ? AppColors.loginBackgroundEdge
+          : AppColors.background,
+      body: Stack(
+        fit: StackFit.expand,
         children: [
-          if (wide) _SideNav(current: location),
-          Expanded(
-            child: LayoutBuilder(
-              builder: (context, constraints) {
-                final mainWidth = constraints.maxWidth;
-                final contentWidth = AppLayout.contentMaxWidth(mainWidth);
-                final hPad = AppLayout.horizontalPadding(mainWidth);
+          if (isDark) ...[
+            DecoratedBox(
+              decoration: BoxDecoration(
+                gradient: RadialGradient(
+                  center: const Alignment(-0.12, -0.06),
+                  radius: 1.08,
+                  colors: [
+                    AppColors.loginBackgroundCenter,
+                    AppColors.loginBackgroundMid,
+                    AppColors.loginBackgroundEdge,
+                  ],
+                  stops: const [0.0, 0.52, 1.0],
+                ),
+              ),
+              child: const SizedBox.expand(),
+            ),
+            DecoratedBox(
+              decoration: BoxDecoration(
+                gradient: RadialGradient(
+                  center: wide
+                      ? const Alignment(-0.42, -0.12)
+                      : const Alignment(0, -0.2),
+                  radius: wide ? 0.7 : 0.75,
+                  colors: [
+                    AppColors.trustHigh.withValues(alpha: 0.07),
+                    AppColors.trustHigh.withValues(alpha: 0.0),
+                  ],
+                ),
+              ),
+              child: const SizedBox.expand(),
+            ),
+            if (wide)
+              DecoratedBox(
+                decoration: BoxDecoration(
+                  gradient: RadialGradient(
+                    center: const Alignment(0.55, -0.1),
+                    radius: 0.85,
+                    colors: [
+                      AppColors.trustHigh.withValues(alpha: 0.05),
+                      AppColors.trustHigh.withValues(alpha: 0.0),
+                    ],
+                  ),
+                ),
+                child: const SizedBox.expand(),
+              ),
+          ],
+          Row(
+            children: [
+              if (wide) _SideNav(current: location),
+              Expanded(
+                child: LayoutBuilder(
+                  builder: (context, constraints) {
+                    final mainWidth = constraints.maxWidth;
+                    final contentWidth = AppLayout.contentMaxWidth(mainWidth);
+                    final hPad = AppLayout.horizontalPadding(mainWidth);
 
-                return Column(
-                  crossAxisAlignment: CrossAxisAlignment.stretch,
-                  children: [
-                    Padding(
-                      padding: EdgeInsets.symmetric(horizontal: hPad),
-                      child: Align(
-                        alignment: Alignment.center,
-                        child: ConstrainedBox(
-                          constraints: BoxConstraints(maxWidth: contentWidth),
-                          child: _TopBar(
-                            title: title,
-                            subtitle: subtitle,
-                            subtitleTrailing: subtitleTrailing,
-                            onBack: onBack,
-                            showMenu: !wide,
-                            current: location,
+                    return Column(
+                      crossAxisAlignment: CrossAxisAlignment.stretch,
+                      children: [
+                        Padding(
+                          padding: EdgeInsets.symmetric(horizontal: hPad),
+                          child: Align(
+                            alignment: Alignment.center,
+                            child: ConstrainedBox(
+                              constraints:
+                                  BoxConstraints(maxWidth: contentWidth),
+                              child: _TopBar(
+                                title: title,
+                                subtitle: subtitle,
+                                subtitleTrailing: subtitleTrailing,
+                                onBack: onBack,
+                                showMenu: !wide,
+                                current: location,
+                              ),
+                            ),
                           ),
                         ),
-                      ),
-                    ),
-                    Expanded(
-                      child: _ViewportContent(
-                        fitViewport: fitViewport,
-                        padding: EdgeInsets.fromLTRB(
-                          hPad,
-                          8,
-                          hPad,
-                          _contentBottomPadding(context, fitViewport),
+                        Expanded(
+                          child: _ViewportContent(
+                            fitViewport: fitViewport,
+                            padding: EdgeInsets.fromLTRB(
+                              hPad,
+                              8,
+                              hPad,
+                              _contentBottomPadding(context, fitViewport),
+                            ),
+                            maxWidth: contentWidth,
+                            onRefresh: onRefresh,
+                            child: child,
+                          ),
                         ),
-                        maxWidth: contentWidth,
-                        onRefresh: onRefresh,
-                        child: child,
-                      ),
-                    ),
-                  ],
-                );
-              },
-            ),
+                      ],
+                    );
+                  },
+                ),
+              ),
+            ],
           ),
         ],
       ),
@@ -273,9 +329,13 @@ class _TopBar extends StatelessWidget {
   }
 
   void _openDrawer(BuildContext context, String current) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+
     showModalBottomSheet<void>(
       context: context,
-      backgroundColor: AppColors.surface,
+      backgroundColor: isDark
+          ? AppColors.loginBackgroundMid
+          : AppColors.surface,
       isScrollControlled: true,
       shape: const RoundedRectangleBorder(
         borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
@@ -319,25 +379,57 @@ class _SideNav extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+
     return Container(
       width: AppLayout.sideNavWidth,
-      decoration:  BoxDecoration(
-        color: AppColors.surface,
+      decoration: BoxDecoration(
+        color: isDark ? null : AppColors.surface,
+        gradient: isDark
+            ? RadialGradient(
+                center: const Alignment(-0.2, -0.35),
+                radius: 1.15,
+                colors: [
+                  AppColors.loginBackgroundCenter,
+                  AppColors.loginBackgroundMid,
+                  AppColors.loginBackgroundEdge,
+                ],
+                stops: const [0.0, 0.55, 1.0],
+              )
+            : null,
         border: Border(right: BorderSide(color: AppColors.divider)),
       ),
-      child: SafeArea(
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.stretch,
-          children: [
-            const Padding(
-              padding: EdgeInsets.fromLTRB(20, 24, 20, 28),
-              child: _BrandHeader(),
+      child: Stack(
+        fit: StackFit.expand,
+        children: [
+          if (isDark)
+            DecoratedBox(
+              decoration: BoxDecoration(
+                gradient: RadialGradient(
+                  center: const Alignment(-0.15, -0.25),
+                  radius: 0.9,
+                  colors: [
+                    AppColors.trustHigh.withValues(alpha: 0.06),
+                    AppColors.trustHigh.withValues(alpha: 0.0),
+                  ],
+                ),
+              ),
             ),
-            Expanded(child: _NavList(current: current)),
-            const DrawerPremiumTeaser(),
-            DrawerAccountTile(current: current),
-          ],
-        ),
+          SafeArea(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.stretch,
+              children: [
+                const Padding(
+                  padding: EdgeInsets.fromLTRB(20, 24, 20, 28),
+                  child: _BrandHeader(),
+                ),
+                Expanded(child: _NavList(current: current)),
+                const DrawerPremiumTeaser(),
+                DrawerAccountTile(current: current),
+              ],
+            ),
+          ),
+        ],
       ),
     );
   }

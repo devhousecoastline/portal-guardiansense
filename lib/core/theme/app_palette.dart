@@ -37,12 +37,13 @@ final class AppPalette {
   final Color divider;
 
   static const dark = AppPalette(
-    background: Color(0xFF0B0F14),
+    // Alinhado ao fundo da login (radial charcoal-teal).
+    background: Color(0xFF0E141B),
     loginBackgroundCenter: Color(0xFF162028),
     loginBackgroundMid: Color(0xFF0E141B),
     loginBackgroundEdge: Color(0xFF070A0E),
-    surface: Color(0xFF141A22),
-    card: Color(0xFF161B22),
+    surface: Color(0xFF121A22),
+    card: Color(0xFF162028),
     primary: Color(0xFF3D8BFF),
     trustHigh: Color(0xFF2ECC71),
     trustMedium: Color(0xFFF1C40F),
@@ -50,7 +51,7 @@ final class AppPalette {
     riskCritical: Color(0xFFE74C3C),
     textPrimary: Color(0xFFF4F7FB),
     textMuted: Color(0xFF8B98A8),
-    divider: Color(0xFF2A3441),
+    divider: Color(0xFF24303C),
   );
 
   static const light = AppPalette(
