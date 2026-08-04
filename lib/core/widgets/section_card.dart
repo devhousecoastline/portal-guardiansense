@@ -18,6 +18,7 @@ class SectionCard extends StatelessWidget {
     return Container(
       width: double.infinity,
       height: expandVertically ? double.infinity : null,
+      clipBehavior: Clip.none,
       padding: padding,
       decoration: BoxDecoration(
         color: AppColors.card,

@@ -281,41 +281,53 @@ class _OysterClosedPanel extends StatelessWidget {
         ? 'Só reabre no app ${AppConstants.appName}.'
         : 'Contenção ativa. Última sync ${formatRelativeTime(status.lastSeen)}.';
 
-    return Container(
+    final hero = Container(
       width: double.infinity,
-      height: fillHeight ? double.infinity : null,
       padding: EdgeInsets.symmetric(
         horizontal: compact ? 10 : 14,
-        vertical: compact ? 10 : 14,
+        vertical: compact || fillHeight ? 8 : 14,
       ),
       decoration: BoxDecoration(
         color: color.withValues(alpha: 0.06),
         borderRadius: BorderRadius.circular(10),
         border: Border.all(color: color.withValues(alpha: 0.2)),
       ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.stretch,
-        children: [
-          if (fillHeight)
-            Expanded(
-              child: Center(
+      child: fillHeight
+          ? Center(
+              child: FittedBox(
+                fit: BoxFit.scaleDown,
                 child: _OysterClosedHero(
                   color: color,
                   subtitle: subtitle,
-                  compact: compact,
+                  compact: true,
                 ),
               ),
             )
-          else
-            _OysterClosedHero(
+          : _OysterClosedHero(
               color: color,
               subtitle: subtitle,
               compact: compact,
             ),
-          SizedBox(height: compact ? 10 : 14),
+    );
+
+    if (!fillHeight) {
+      return Column(
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        children: [
+          hero,
+          SizedBox(height: compact ? 10 : 12),
           CelularSeguroCallout(compact: compact),
         ],
-      ),
+      );
+    }
+
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.stretch,
+      children: [
+        Expanded(child: hero),
+        const SizedBox(height: 6),
+        CelularSeguroCallout(compact: true),
+      ],
     );
   }
 }

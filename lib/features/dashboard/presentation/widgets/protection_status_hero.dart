@@ -34,126 +34,112 @@ class ProtectionStatusHero extends StatelessWidget {
       width: double.infinity,
       height: expands ? double.infinity : null,
       child: Container(
-      width: double.infinity,
-      height: expands ? double.infinity : null,
-      padding: EdgeInsets.all(cardPadding),
-      decoration: BoxDecoration(
-        color: AppColors.card,
-        borderRadius: BorderRadius.circular(compact ? 16 : 20),
-        border: Border.all(color: accent.withValues(alpha: 0.35), width: 1.5),
-      ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          StatusBadge(label: status.protectionLabel.toUpperCase(), tone: tone),
-          if (offline) ...[
-            SizedBox(height: compact ? 6 : 12),
-            _OfflineBanner(compact: compact),
-          ],
-          SizedBox(height: compact ? 6 : 16),
-          if (fillHeight) ...[
-            Row(
-              crossAxisAlignment: CrossAxisAlignment.end,
-              children: [
-                Expanded(
-                  child: Text(
-                    status.modelLabel,
-                    style: DashboardTypography.deviceName(
-                      context,
-                      compact: compact,
-                    ),
-                    maxLines: compact ? 3 : 2,
-                    overflow: TextOverflow.ellipsis,
-                  ),
-                ),
-                const SizedBox(width: 12),
-                _indexColumn(
-                  context,
-                  accent: accent,
-                  offline: offline,
-                  indexSize: indexSize,
-                ),
-              ],
-            ),
-            const Spacer(),
-          ] else ...[
-            Text(
-              status.modelLabel,
-              style: DashboardTypography.deviceName(context, compact: compact),
-              maxLines: compact ? 2 : null,
-              overflow: compact ? TextOverflow.ellipsis : null,
-            ),
-            if (!compact) ...[
-               SizedBox(height: 8),
-              Text(
-                headline,
-                style: Theme.of(context).textTheme.bodyLarge?.copyWith(
-                      color: AppColors.textMuted,
-                      height: 1.4,
-                    ),
-              ),
-            ],
-            if (stretchVertically) const Spacer(),
-            _indexRow(
-              context,
-              accent: accent,
-              offline: offline,
-              indexSize: indexSize,
-            ),
-          ],
-        ],
-      ),
-      ),
-    );
-  }
-
-  Widget _indexColumn(
-    BuildContext context, {
-    required Color accent,
-    required bool offline,
-    required double indexSize,
-  }) {
-    return Column(
-      mainAxisSize: MainAxisSize.min,
-      crossAxisAlignment: CrossAxisAlignment.end,
-      children: [
-        Row(
-          mainAxisSize: MainAxisSize.min,
-          crossAxisAlignment: CrossAxisAlignment.end,
+        width: double.infinity,
+        height: expands ? double.infinity : null,
+        padding: EdgeInsets.all(cardPadding),
+        decoration: BoxDecoration(
+          color: AppColors.card,
+          borderRadius: BorderRadius.circular(compact ? 16 : 20),
+          border: Border.all(color: accent.withValues(alpha: 0.35), width: 1.5),
+        ),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            Text(
-              offline ? '—' : '${status.protectionIndex}',
-              style: Theme.of(context).textTheme.headlineLarge?.copyWith(
-                    fontSize: indexSize,
-                    fontWeight: FontWeight.w700,
-                    color: accent,
-                    height: 1,
-                  ),
+            StatusBadge(
+              label: status.protectionLabel.toUpperCase(),
+              tone: tone,
             ),
-            if (!offline)
-              Padding(
-                padding: EdgeInsets.only(bottom: compact ? 3 : 6, left: 2),
-                child: Text(
-                  '%',
-                  style: Theme.of(context).textTheme.titleLarge?.copyWith(
-                        color: accent,
-                        fontWeight: FontWeight.w600,
-                        fontSize: compact ? 16 : null,
+            if (offline) ...[
+              SizedBox(height: compact ? 6 : 12),
+              _OfflineBanner(compact: compact),
+            ],
+            if (fillHeight) ...[
+              Expanded(
+                child: Align(
+                  alignment: Alignment.bottomLeft,
+                  child: Padding(
+                    padding: EdgeInsets.only(bottom: compact ? 6 : 8),
+                    child: Text(
+                      headline,
+                      style: Theme.of(context).textTheme.titleMedium?.copyWith(
+                            color: AppColors.textMuted,
+                            height: 1.3,
+                            fontWeight: FontWeight.w500,
+                            fontSize: compact ? 13.5 : 15,
+                          ),
+                      maxLines: compact ? 2 : 3,
+                      overflow: TextOverflow.ellipsis,
+                    ),
+                  ),
+                ),
+              ),
+              Divider(
+                height: compact ? 12 : 14,
+                thickness: 1,
+                color: AppColors.divider.withValues(alpha: 0.9),
+              ),
+              SizedBox(height: compact ? 6 : 8),
+              Row(
+                crossAxisAlignment: CrossAxisAlignment.end,
+                children: [
+                  Expanded(
+                    child: Text(
+                      status.modelLabel,
+                      style: DashboardTypography.deviceName(
+                        context,
+                        compact: compact,
+                      ),
+                      maxLines: 2,
+                      overflow: TextOverflow.ellipsis,
+                    ),
+                  ),
+                  const SizedBox(width: 12),
+                  _IndexBlock(
+                    status: status,
+                    accent: accent,
+                    offline: offline,
+                    indexSize: indexSize,
+                    compact: compact,
+                    alignEnd: true,
+                  ),
+                ],
+              ),
+            ] else ...[
+              SizedBox(height: compact ? 6 : 16),
+              Text(
+                status.modelLabel,
+                style: DashboardTypography.deviceName(context, compact: compact),
+                maxLines: compact ? 2 : null,
+                overflow: compact ? TextOverflow.ellipsis : null,
+              ),
+              if (!compact) ...[
+                const SizedBox(height: 8),
+                Text(
+                  headline,
+                  style: Theme.of(context).textTheme.bodyLarge?.copyWith(
+                        color: AppColors.textMuted,
+                        height: 1.4,
                       ),
                 ),
+              ],
+              if (stretchVertically) const Spacer(),
+              if (!stretchVertically) SizedBox(height: compact ? 10 : 16),
+              if (stretchVertically)
+                Divider(
+                  height: compact ? 16 : 20,
+                  thickness: 1,
+                  color: AppColors.divider.withValues(alpha: 0.9),
+                ),
+              _indexRow(
+                context,
+                accent: accent,
+                offline: offline,
+                indexSize: indexSize,
               ),
+            ],
           ],
         ),
-        Text(
-          'Índice de Proteção',
-          style: DashboardTypography.mutedLabel(context),
-        ),
-        if (offline && status.hasSetupChecklist)
-          Text(
-            'Último: ${status.storedProtectionIndex}%',
-            style: DashboardTypography.mutedLabel(context),
-          ),
-      ],
+      ),
     );
   }
 
@@ -166,27 +152,14 @@ class ProtectionStatusHero extends StatelessWidget {
     return Row(
       crossAxisAlignment: CrossAxisAlignment.end,
       children: [
-        Text(
-          offline ? '—' : '${status.protectionIndex}',
-          style: Theme.of(context).textTheme.headlineLarge?.copyWith(
-                fontSize: indexSize,
-                fontWeight: FontWeight.w700,
-                color: accent,
-                height: 1,
-              ),
+        _IndexBlock(
+          status: status,
+          accent: accent,
+          offline: offline,
+          indexSize: indexSize,
+          compact: compact,
+          alignEnd: false,
         ),
-        if (!offline)
-          Padding(
-            padding: EdgeInsets.only(bottom: compact ? 3 : 6, left: 2),
-            child: Text(
-              '%',
-              style: Theme.of(context).textTheme.titleLarge?.copyWith(
-                    color: accent,
-                    fontWeight: FontWeight.w600,
-                    fontSize: compact ? 16 : null,
-                  ),
-            ),
-          ),
         const Spacer(),
         Column(
           crossAxisAlignment: CrossAxisAlignment.end,
@@ -219,6 +192,74 @@ class ProtectionStatusHero extends StatelessWidget {
       };
 }
 
+class _IndexBlock extends StatelessWidget {
+  const _IndexBlock({
+    required this.status,
+    required this.accent,
+    required this.offline,
+    required this.indexSize,
+    required this.compact,
+    required this.alignEnd,
+  });
+
+  final DeviceStatus status;
+  final Color accent;
+  final bool offline;
+  final double indexSize;
+  final bool compact;
+  final bool alignEnd;
+
+  @override
+  Widget build(BuildContext context) {
+    return Column(
+      mainAxisSize: MainAxisSize.min,
+      crossAxisAlignment:
+          alignEnd ? CrossAxisAlignment.end : CrossAxisAlignment.start,
+      children: [
+        Row(
+          mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.end,
+          children: [
+            Text(
+              offline ? '—' : '${status.protectionIndex}',
+              style: Theme.of(context).textTheme.headlineLarge?.copyWith(
+                    fontSize: indexSize,
+                    fontWeight: FontWeight.w700,
+                    color: accent,
+                    height: 1,
+                  ),
+            ),
+            if (!offline)
+              Padding(
+                padding: EdgeInsets.only(bottom: compact ? 3 : 6, left: 2),
+                child: Text(
+                  '%',
+                  style: Theme.of(context).textTheme.titleLarge?.copyWith(
+                        color: accent,
+                        fontWeight: FontWeight.w600,
+                        fontSize: compact ? 16 : null,
+                      ),
+                ),
+              ),
+          ],
+        ),
+        if (alignEnd) ...[
+          const SizedBox(height: 2),
+          Text(
+            'Índice de Proteção',
+            style: DashboardTypography.mutedLabel(context),
+          ),
+          if (offline && status.hasSetupChecklist)
+            Text(
+              'Último: ${status.storedProtectionIndex}%',
+              style: DashboardTypography.mutedLabel(context),
+            ),
+        ],
+      ],
+    );
+  }
+}
+
 class _OfflineBanner extends StatelessWidget {
   const _OfflineBanner({this.compact = false});
 
@@ -239,7 +280,7 @@ class _OfflineBanner extends StatelessWidget {
       ),
       child: Row(
         children: [
-           Icon(
+          Icon(
             Icons.cloud_off_outlined,
             size: 18,
             color: AppColors.textMuted,
