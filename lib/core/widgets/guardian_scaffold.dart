@@ -209,23 +209,26 @@ class _TopBar extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final isHome = current == AppRoutes.dashboard;
+
     return Container(
-      padding:  EdgeInsets.fromLTRB(16, 20, 24, 12),
-      decoration:  BoxDecoration(
+      padding: EdgeInsets.fromLTRB(isHome && !showMenu ? 16 : 8, 20, 24, 12),
+      decoration: BoxDecoration(
         border: Border(bottom: BorderSide(color: AppColors.divider)),
       ),
       child: Row(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          if (onBack != null)
+          if (!isHome)
             IconButton(
               icon: const Icon(Icons.arrow_back_rounded),
               tooltip: 'Voltar',
-              onPressed: onBack,
-            )
-          else if (showMenu)
+              onPressed: () => _handleBack(context),
+            ),
+          if (showMenu)
             IconButton(
               icon: const Icon(Icons.menu_rounded),
+              tooltip: 'Menu',
               onPressed: () => _openDrawer(context, current),
             ),
           Expanded(
@@ -250,6 +253,23 @@ class _TopBar extends StatelessWidget {
         ],
       ),
     );
+  }
+
+  void _handleBack(BuildContext context) {
+    if (onBack != null) {
+      onBack!();
+      return;
+    }
+    if (context.canPop()) {
+      context.pop();
+      return;
+    }
+    if (current == AppRoutes.eventsDetails ||
+        current.startsWith('${AppRoutes.eventsDetails}/')) {
+      context.go(AppRoutes.events);
+      return;
+    }
+    context.go(AppRoutes.dashboard);
   }
 
   void _openDrawer(BuildContext context, String current) {

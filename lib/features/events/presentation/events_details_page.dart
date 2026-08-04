@@ -63,13 +63,6 @@ class _EventsDetailsPageState extends State<EventsDetailsPage> {
                 return GuardianScaffold(
                   title: 'Eventos · $dayLabel',
                   subtitle: subtitle,
-                  onBack: () {
-                    if (context.canPop()) {
-                      context.pop();
-                    } else {
-                      context.go(AppRoutes.events);
-                    }
-                  },
                   onRefresh: _refreshController.refresh,
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.stretch,
