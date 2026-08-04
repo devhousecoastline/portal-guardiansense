@@ -464,27 +464,127 @@ class _AppearanceCard extends StatelessWidget {
           ),
           const SizedBox(height: 4),
           Text(
-            'Escolha entre fundo claro ou escuro. A preferência fica salva neste navegador.',
+            'A preferência fica salva neste navegador.',
             style: Theme.of(context).textTheme.bodyMedium,
           ),
           const SizedBox(height: 14),
-          SegmentedButton<PortalThemeMode>(
-            segments: [
-              for (final mode in PortalThemeMode.values)
-                ButtonSegment<PortalThemeMode>(
-                  value: mode,
-                  icon: Icon(mode.icon, size: 18),
-                  label: Text(mode.label),
-                  tooltip: mode.description,
+          Row(
+            children: [
+              Icon(
+                theme.mode == PortalThemeMode.dark
+                    ? Icons.dark_mode_outlined
+                    : Icons.light_mode_outlined,
+                color: AppColors.textMuted,
+                size: 20,
+              ),
+              const SizedBox(width: 12),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      'Tema escuro',
+                      style: Theme.of(context).textTheme.titleSmall?.copyWith(
+                            fontWeight: FontWeight.w600,
+                          ),
+                    ),
+                    const SizedBox(height: 2),
+                    Text(
+                      theme.mode == PortalThemeMode.dark
+                          ? 'Fundo escuro'
+                          : 'Fundo claro — melhor ao sol',
+                      style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                            color: AppColors.textMuted,
+                          ),
+                    ),
+                  ],
                 ),
+              ),
+              _PillSwitch(
+                value: theme.mode == PortalThemeMode.dark,
+                onChanged: (dark) {
+                  theme.setMode(
+                    dark ? PortalThemeMode.dark : PortalThemeMode.light,
+                  );
+                },
+              ),
             ],
-            selected: {theme.mode},
-            onSelectionChanged: (selected) {
-              if (selected.isEmpty) return;
-              theme.setMode(selected.first);
-            },
           ),
         ],
+      ),
+    );
+  }
+}
+
+/// Switch com track em pill — visual alinhado aos FilterChips de Eventos.
+class _PillSwitch extends StatelessWidget {
+  const _PillSwitch({
+    required this.value,
+    required this.onChanged,
+  });
+
+  final bool value;
+  final ValueChanged<bool> onChanged;
+
+  static const _width = 52.0;
+  static const _height = 30.0;
+  static const _thumb = 22.0;
+  static const _pad = 4.0;
+
+  @override
+  Widget build(BuildContext context) {
+    final accent = AppColors.trustHigh;
+
+    return Semantics(
+      button: true,
+      toggled: value,
+      label: 'Tema escuro',
+      child: GestureDetector(
+        onTap: () => onChanged(!value),
+        child: AnimatedContainer(
+          duration: const Duration(milliseconds: 200),
+          curve: Curves.easeOut,
+          width: _width,
+          height: _height,
+          padding: const EdgeInsets.all(_pad),
+          decoration: BoxDecoration(
+            color: value
+                ? accent.withValues(alpha: 0.14)
+                : AppColors.card,
+            borderRadius: BorderRadius.circular(99),
+            border: Border.all(
+              color: value
+                  ? accent.withValues(alpha: 0.45)
+                  : AppColors.divider,
+            ),
+          ),
+          child: AnimatedAlign(
+            duration: const Duration(milliseconds: 200),
+            curve: Curves.easeOut,
+            alignment:
+                value ? Alignment.centerRight : Alignment.centerLeft,
+            child: Container(
+              width: _thumb,
+              height: _thumb,
+              decoration: BoxDecoration(
+                color: value ? accent : AppColors.surface,
+                shape: BoxShape.circle,
+                border: Border.all(
+                  color: value
+                      ? accent.withValues(alpha: 0.55)
+                      : AppColors.divider,
+                ),
+                boxShadow: [
+                  BoxShadow(
+                    color: Colors.black.withValues(alpha: value ? 0.18 : 0.08),
+                    blurRadius: 4,
+                    offset: const Offset(0, 1),
+                  ),
+                ],
+              ),
+            ),
+          ),
+        ),
       ),
     );
   }

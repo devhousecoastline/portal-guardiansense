@@ -5,6 +5,7 @@ import 'package:guardian_portal/core/layout/app_layout.dart';
 import 'package:guardian_portal/core/navigation/navigation_loading_controller.dart';
 import 'package:guardian_portal/core/routing/app_routes.dart';
 import 'package:guardian_portal/core/theme/app_colors.dart';
+import 'package:guardian_portal/core/theme/theme_scope.dart';
 import 'package:guardian_portal/core/widgets/drawer_premium_teaser.dart';
 import 'package:guardian_portal/core/widgets/drawer_account_tile.dart';
 import 'package:guardian_portal/core/widgets/guardian_logo.dart';
@@ -34,6 +35,9 @@ class GuardianScaffold extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    // AppColors lê paleta estática — depende do ThemeScope para rebuild ao trocar tema.
+    ThemeScope.of(context);
+
     final location = GoRouterState.of(context).matchedLocation;
     final viewportWidth = MediaQuery.sizeOf(context).width;
     final wide = AppLayout.isWide(viewportWidth);
