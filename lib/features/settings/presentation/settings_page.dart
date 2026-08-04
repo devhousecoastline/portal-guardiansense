@@ -179,13 +179,23 @@ class _DeviceInfoCard extends StatelessWidget {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Text(
-            'APARELHO VINCULADO',
-            style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                  letterSpacing: 0.8,
-                  fontWeight: FontWeight.w600,
-                  color: AppColors.textMuted,
+          Row(
+            children: [
+              Icon(
+                Icons.smartphone_outlined,
+                color: AppColors.primary,
+                size: 22,
+              ),
+              const SizedBox(width: 10),
+              Expanded(
+                child: Text(
+                  'Aparelho vinculado',
+                  style: Theme.of(context).textTheme.titleMedium?.copyWith(
+                        fontWeight: FontWeight.w600,
+                      ),
                 ),
+              ),
+            ],
           ),
           const SizedBox(height: 10),
           Wrap(
@@ -475,22 +485,25 @@ class _AppearanceCard extends StatelessWidget {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
-          Text(
-            'APARÊNCIA',
-            style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                  letterSpacing: 0.8,
-                  fontWeight: FontWeight.w600,
-                  color: AppColors.textMuted,
+          Row(
+            children: [
+              Icon(
+                Icons.palette_outlined,
+                color: AppColors.primary,
+                size: 22,
+              ),
+              const SizedBox(width: 10),
+              Expanded(
+                child: Text(
+                  'Tema do portal',
+                  style: Theme.of(context).textTheme.titleMedium?.copyWith(
+                        fontWeight: FontWeight.w600,
+                      ),
                 ),
+              ),
+            ],
           ),
           const SizedBox(height: 6),
-          Text(
-            'Tema do portal',
-            style: Theme.of(context).textTheme.titleMedium?.copyWith(
-                  fontWeight: FontWeight.w600,
-                ),
-          ),
-          const SizedBox(height: 4),
           Text(
             'A preferência fica salva neste navegador.',
             style: Theme.of(context).textTheme.bodyMedium,

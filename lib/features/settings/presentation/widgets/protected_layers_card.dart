@@ -125,7 +125,7 @@ class _ProtectedLayersCardState extends State<ProtectedLayersCard> {
         children: [
           Row(
             children: [
-               Icon(Icons.layers_outlined, color: AppColors.primary, size: 22),
+              Icon(Icons.layers_outlined, color: AppColors.primary, size: 22),
               const SizedBox(width: 10),
               Expanded(
                 child: Text(
@@ -135,18 +135,36 @@ class _ProtectedLayersCardState extends State<ProtectedLayersCard> {
                       ),
                 ),
               ),
-              if (hasSnapshot && active.isNotEmpty)
-                _CountBadge(count: ProtectedLayerSnapshot.totalActiveApps(layers)),
             ],
           ),
-           SizedBox(height: 6),
-          Text(
-            _subtitle(hasSnapshot: hasSnapshot, active: active),
-            style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                  color: AppColors.textMuted,
-                  height: 1.35,
+          const SizedBox(height: 6),
+          if (hasSnapshot && active.isNotEmpty)
+            Row(
+              crossAxisAlignment: CrossAxisAlignment.center,
+              children: [
+                _CountBadge(
+                  count: ProtectedLayerSnapshot.totalActiveApps(layers),
                 ),
-          ),
+                const SizedBox(width: 8),
+                Expanded(
+                  child: Text(
+                    _subtitle(hasSnapshot: hasSnapshot, active: active),
+                    style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                          color: AppColors.textMuted,
+                          height: 1.35,
+                        ),
+                  ),
+                ),
+              ],
+            )
+          else
+            Text(
+              _subtitle(hasSnapshot: hasSnapshot, active: active),
+              style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                    color: AppColors.textMuted,
+                    height: 1.35,
+                  ),
+            ),
           if (protectAllTargets.isNotEmpty) ...[
             const SizedBox(height: 10),
             Align(
@@ -203,7 +221,24 @@ class _ProtectedLayersCardState extends State<ProtectedLayersCard> {
     if (!hasSnapshot) {
       return 'Abra o app no celular para sincronizar o resumo por categoria.';
     }
-    return ProtectedLayerSnapshot.summarySubtitle(status.protectedLayers);
+    if (active.isEmpty) {
+      return 'Nenhum app instalado nas camadas';
+    }
+
+    final categories = active.length;
+    final catWord = categories == 1 ? 'categoria' : 'categorias';
+    final outside =
+        ProtectedLayerSnapshot.totalUnprotectedApps(status.protectedLayers);
+
+    // O total de apps já aparece no badge — evita repetir o número.
+    if (outside == 0) {
+      return 'Protegidos em $categories $catWord';
+    }
+
+    final outLabel = outside == 1
+        ? '1 fora da proteção'
+        : '$outside fora da proteção';
+    return '$outLabel · $categories $catWord';
   }
 }
 
