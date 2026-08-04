@@ -134,27 +134,6 @@ class _SettingsBody extends StatelessWidget {
             ),
           ],
         ),
-         SizedBox(height: 16),
-        SectionCard(
-          child: Row(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-               Icon(Icons.info_outline, color: AppColors.primary, size: 20),
-              const SizedBox(width: 12),
-              Expanded(
-                child: Text(
-                  hasChecklist
-                      ? 'Índice e checklist de permissões estão no Centro. '
-                          'Camadas e demais opções são ajustadas no celular; '
-                          'o portal apenas exibe o que foi sincronizado.'
-                      : 'Abra o Guardian Sense no celular com esta conta para '
-                          'sincronizar. O resumo de proteção aparece no Centro.',
-                  style: Theme.of(context).textTheme.bodyMedium,
-                ),
-              ),
-            ],
-          ),
-        ),
       ],
     );
   }
