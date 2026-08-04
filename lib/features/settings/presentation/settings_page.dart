@@ -4,7 +4,6 @@ import 'package:guardian_portal/core/theme/app_colors.dart';
 import 'package:guardian_portal/core/theme/dashboard_typography.dart';
 import 'package:guardian_portal/core/theme/portal_theme_mode.dart';
 import 'package:guardian_portal/core/theme/theme_scope.dart';
-import 'package:guardian_portal/core/widgets/device_online_chip.dart';
 import 'package:guardian_portal/core/widgets/guardian_scaffold.dart';
 import 'package:guardian_portal/core/widgets/online_refresh.dart';
 import 'package:guardian_portal/core/widgets/live_status_tile.dart';
@@ -51,12 +50,6 @@ class _SettingsPageState extends State<SettingsPage> {
             return GuardianScaffold(
               title: 'Configurações',
               subtitle: 'Sincronizadas com o app — o celular é soberano',
-              subtitleTrailing: device != null
-                  ? DeviceOnlineChip(
-                      isOnline: device.status.isOnline,
-                      lastSeen: device.status.lastSeen,
-                    )
-                  : null,
               onRefresh: _refreshController.refresh,
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.stretch,
@@ -98,36 +91,22 @@ class _SettingsBody extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final hasChecklist = status.hasSetupChecklist;
-
     return Column(
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
-        _DeviceInfoCard(status: status),
+        _DeviceInfoCard(
+          status: status,
+          recovery: _item('recovery'),
+        ),
         const SizedBox(height: 16),
         ProtectedLayersCard(uid: uid, status: status),
         const SizedBox(height: 16),
-        _SettingsGroup(
-          title: 'Detecção',
-          children: const [
-            _PlannedSettingRow(
-              icon: Icons.tune_outlined,
-              title: 'Sensibilidade',
-              subtitle: 'Em breve — ajuste remoto via comandos',
-            ),
-          ],
-        ),
+        const _DetectionSensitivityCard(),
         const SizedBox(height: 16),
         _SettingsGroup(
           title: 'Recuperação',
-          children: [
-            _SyncedSettingRow(
-              icon: Icons.pin_outlined,
-              title: 'PIN / biometria do aparelho',
-              item: _item('recovery'),
-              hasChecklist: hasChecklist,
-            ),
-             _PlannedSettingRow(
+          children: const [
+            _PlannedSettingRow(
               icon: Icons.contacts_outlined,
               title: 'Contatos confiáveis',
               subtitle: 'Em breve — backup na nuvem',
@@ -140,9 +119,13 @@ class _SettingsBody extends StatelessWidget {
 }
 
 class _DeviceInfoCard extends StatelessWidget {
-  const _DeviceInfoCard({required this.status});
+  const _DeviceInfoCard({
+    required this.status,
+    required this.recovery,
+  });
 
   final DeviceStatus status;
+  final ProtectionSetupItem? recovery;
 
   String get _platformLabel {
     final raw = status.platform.trim().toLowerCase();
@@ -174,6 +157,24 @@ class _DeviceInfoCard extends StatelessWidget {
         ? _indexColor(status.protectionIndex)
         : AppColors.primary;
 
+    final (recoveryValue, recoveryAccent) = switch ((
+      status.hasSetupChecklist,
+      recovery?.done,
+    )) {
+      (false, _) || (true, null) => (
+          'Aguardando sync',
+          AppColors.textMuted,
+        ),
+      (true, true) => (
+          'Configurado no app',
+          AppColors.trustHigh,
+        ),
+      (true, false) => (
+          recovery?.label ?? 'Falta no aparelho',
+          AppColors.trustMedium,
+        ),
+    };
+
     return SectionCard(
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -198,6 +199,16 @@ class _DeviceInfoCard extends StatelessWidget {
                 accent: deviceAccent,
               ),
               LiveStatusTile(
+                icon: status.isOnline
+                    ? Icons.wifi_rounded
+                    : Icons.wifi_off_rounded,
+                label: status.isOnline ? 'Online' : 'Offline',
+                value: formatRelativeTime(status.lastSeen),
+                accent: status.isOnline
+                    ? AppColors.trustHigh
+                    : AppColors.textMuted,
+              ),
+              LiveStatusTile(
                 icon: Icons.memory_rounded,
                 label: 'Runtime',
                 value: runtime.answer,
@@ -209,12 +220,17 @@ class _DeviceInfoCard extends StatelessWidget {
                 value: oyster.answer,
                 accent: _signalColor(oyster.signal),
               ),
+              LiveStatusTile(
+                icon: Icons.pin_outlined,
+                label: 'PIN / biometria',
+                value: recoveryValue,
+                accent: recoveryAccent,
+              ),
             ],
           ),
           const SizedBox(height: 10),
           Text(
-            '$_platformLabel · v${status.appVersion} · '
-            'sync ${formatRelativeTime(status.lastSeen)}',
+            '$_platformLabel · v${status.appVersion}',
             style: DashboardTypography.cardSubtitle(context),
           ),
         ],
@@ -275,71 +291,138 @@ class _SettingsGroup extends StatelessWidget {
   }
 }
 
-class _SyncedSettingRow extends StatelessWidget {
-  const _SyncedSettingRow({
-    required this.icon,
-    required this.title,
-    required this.item,
-    required this.hasChecklist,
-  });
+class _DetectionSensitivityCard extends StatefulWidget {
+  const _DetectionSensitivityCard();
 
-  final IconData icon;
-  final String title;
-  final ProtectionSetupItem? item;
-  final bool hasChecklist;
+  @override
+  State<_DetectionSensitivityCard> createState() =>
+      _DetectionSensitivityCardState();
+}
+
+enum _SensitivityLevel {
+  conservative,
+  balanced,
+  aggressive;
+
+  String get label => switch (this) {
+        _SensitivityLevel.conservative => 'Conservadora',
+        _SensitivityLevel.balanced => 'Equilibrada',
+        _SensitivityLevel.aggressive => 'Alta',
+      };
+
+  String get description => switch (this) {
+        _SensitivityLevel.conservative =>
+          'Exige sinais mais fortes antes de elevar o risco.',
+        _SensitivityLevel.balanced =>
+          'Calibração padrão da sensibilidade validada em dispositivo real.',
+        _SensitivityLevel.aggressive =>
+          'Detecta mais cedo; pode aumentar alertas em movimento leve.',
+      };
+}
+
+class _DetectionSensitivityCardState extends State<_DetectionSensitivityCard> {
+  _SensitivityLevel _level = _SensitivityLevel.balanced;
 
   @override
   Widget build(BuildContext context) {
-    final (subtitle, badge) = switch ((hasChecklist, item?.done)) {
-      (false, _) => (
-          'Aguardando sync do app',
-          const StatusBadge(
-            label: 'Aguardando',
-            tone: StatusTone.offline,
-          ),
-        ),
-      (true, true) => (
-          'Configurado no app',
-          const StatusBadge(
-            label: 'Configurado',
-            tone: StatusTone.protected,
-          ),
-        ),
-      (true, false) => (
-          item?.label ?? 'Falta no aparelho',
-          const StatusBadge(
-            label: 'Falta',
-            tone: StatusTone.warning,
-          ),
-        ),
-      (true, null) => (
-          'Aguardando sync do app',
-          const StatusBadge(
-            label: 'Aguardando',
-            tone: StatusTone.offline,
-          ),
-        ),
-    };
-
-    return Material(
-      color: Colors.transparent,
-      child: ListTile(
-        leading: Icon(icon, color: AppColors.textMuted),
-        title: Text(title),
-        subtitle: Text(subtitle),
-        trailing: badge,
-        onTap: () {
-          ScaffoldMessenger.of(context).showSnackBar(
-            SnackBar(
-              content: Text(
-                hasChecklist && item?.done == false
-                    ? 'Ajuste "$title" no app Guardian Sense no celular.'
-                    : 'Esta opção é configurada no app no celular.',
+    return SectionCard(
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        children: [
+          Row(
+            children: [
+              Icon(Icons.tune_outlined, color: AppColors.primary, size: 22),
+              const SizedBox(width: 10),
+              Expanded(
+                child: Text(
+                  'Detecção',
+                  style: Theme.of(context).textTheme.titleMedium?.copyWith(
+                        fontWeight: FontWeight.w600,
+                      ),
+                ),
               ),
-              behavior: SnackBarBehavior.floating,
-            ),
-          );
-        },
+            ],
+          ),
+          const SizedBox(height: 12),
+          LayoutBuilder(
+            builder: (context, constraints) {
+              final stacked = constraints.maxWidth < 480;
+              final description = Text(
+                _level.description,
+                style: Theme.of(context).textTheme.bodyMedium,
+              );
+              final slider = Column(
+                crossAxisAlignment: CrossAxisAlignment.stretch,
+                children: [
+                  SliderTheme(
+                    data: SliderTheme.of(context).copyWith(
+                      activeTrackColor: AppColors.trustHigh,
+                      inactiveTrackColor: AppColors.divider,
+                      thumbColor: AppColors.trustHigh,
+                      overlayColor:
+                          AppColors.trustHigh.withValues(alpha: 0.14),
+                      trackHeight: 4,
+                      tickMarkShape: SliderTickMarkShape.noTickMark,
+                    ),
+                    child: Slider(
+                      value: _level.index.toDouble(),
+                      min: 0,
+                      max: (_SensitivityLevel.values.length - 1).toDouble(),
+                      divisions: _SensitivityLevel.values.length - 1,
+                      label: _level.label,
+                      onChanged: (value) {
+                        setState(() {
+                          _level = _SensitivityLevel.values[value.round()];
+                        });
+                      },
+                    ),
+                  ),
+                  Padding(
+                    padding: const EdgeInsets.symmetric(horizontal: 4),
+                    child: Row(
+                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                      children: [
+                        for (final level in _SensitivityLevel.values)
+                          Text(
+                            level.label,
+                            style:
+                                Theme.of(context).textTheme.bodySmall?.copyWith(
+                                      fontWeight: level == _level
+                                          ? FontWeight.w700
+                                          : FontWeight.w500,
+                                      color: level == _level
+                                          ? AppColors.trustHigh
+                                          : AppColors.textMuted,
+                                    ),
+                          ),
+                      ],
+                    ),
+                  ),
+                ],
+              );
+
+              if (stacked) {
+                return Column(
+                  crossAxisAlignment: CrossAxisAlignment.stretch,
+                  children: [
+                    description,
+                    const SizedBox(height: 8),
+                    slider,
+                  ],
+                );
+              }
+
+              return Row(
+                crossAxisAlignment: CrossAxisAlignment.center,
+                children: [
+                  Expanded(flex: 5, child: description),
+                  const SizedBox(width: 16),
+                  Expanded(flex: 6, child: slider),
+                ],
+              );
+            },
+          ),
+        ],
       ),
     );
   }
