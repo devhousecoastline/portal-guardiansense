@@ -1,6 +1,5 @@
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
-import 'package:guardian_portal/core/layout/app_layout.dart';
 import 'package:guardian_portal/core/theme/app_colors.dart';
 import 'package:guardian_portal/core/theme/dashboard_typography.dart';
 import 'package:guardian_portal/core/theme/portal_theme_mode.dart';
@@ -185,70 +184,23 @@ class _DeviceInfoCard extends StatelessWidget {
     final oyster = checklist.firstWhere(
       (e) => e.question.startsWith('A Ostra'),
     );
-    final wide =
-        AppLayout.mainAreaWidth(MediaQuery.sizeOf(context).width) >= 520;
+
+    final phoneIcon = status.platform.toLowerCase() == 'ios'
+        ? Icons.phone_iphone_outlined
+        : Icons.smartphone_outlined;
+    final deviceValue = status.hasSetupChecklist
+        ? '${status.protectionIndex}% · índice'
+        : '$_platformLabel · v${status.appVersion}';
+    final deviceAccent = status.hasSetupChecklist
+        ? _indexColor(status.protectionIndex)
+        : AppColors.primary;
 
     return SectionCard(
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Row(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Icon(
-                status.platform.toLowerCase() == 'ios'
-                    ? Icons.phone_iphone_outlined
-                    : Icons.smartphone_outlined,
-                color: AppColors.primary.withValues(alpha: 0.9),
-                size: 28,
-              ),
-               SizedBox(width: 14),
-              Expanded(
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text(
-                      'APARELHO VINCULADO',
-                      style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                            letterSpacing: 0.8,
-                            fontWeight: FontWeight.w600,
-                            color: AppColors.textMuted,
-                          ),
-                    ),
-                    const SizedBox(height: 6),
-                    Text(
-                      status.modelLabel,
-                      style: Theme.of(context).textTheme.titleMedium?.copyWith(
-                            fontWeight: FontWeight.w600,
-                          ),
-                    ),
-                    const SizedBox(height: 6),
-                    Text(
-                      '$_platformLabel · v${status.appVersion} · '
-                      'sync ${formatRelativeTime(status.lastSeen)}',
-                      style: DashboardTypography.cardSubtitle(context),
-                    ),
-                  ],
-                ),
-              ),
-              if (status.hasSetupChecklist) ...[
-                const SizedBox(width: 12),
-                StatusBadge(
-                  label: '${status.protectionIndex}%',
-                  tone: status.protectionIndex >= 90
-                      ? StatusTone.protected
-                      : status.protectionIndex >= 50
-                          ? StatusTone.warning
-                          : StatusTone.critical,
-                ),
-              ],
-            ],
-          ),
-           SizedBox(height: 18),
-           Divider(height: 1, color: AppColors.divider),
-           SizedBox(height: 14),
           Text(
-            'ESTADO EM TEMPO REAL',
+            'APARELHO VINCULADO',
             style: Theme.of(context).textTheme.bodySmall?.copyWith(
                   letterSpacing: 0.8,
                   fontWeight: FontWeight.w600,
@@ -256,43 +208,36 @@ class _DeviceInfoCard extends StatelessWidget {
                 ),
           ),
           const SizedBox(height: 10),
-          if (wide)
-            Row(
-              children: [
-                Expanded(
-                  child: LiveStatusTile(
-                    icon: Icons.memory_rounded,
-                    label: 'Runtime',
-                    value: runtime.answer,
-                    accent: _signalColor(runtime.signal),
-                  ),
-                ),
-                const SizedBox(width: 12),
-                Expanded(
-                  child: LiveStatusTile(
-                    icon: Icons.lock_outline_rounded,
-                    label: 'Ostra',
-                    value: oyster.answer,
-                    accent: _signalColor(oyster.signal),
-                  ),
-                ),
-              ],
-            )
-          else ...[
-            LiveStatusTile(
-              icon: Icons.memory_rounded,
-              label: 'Runtime',
-              value: runtime.answer,
-              accent: _signalColor(runtime.signal),
-            ),
-            const SizedBox(height: 10),
-            LiveStatusTile(
-              icon: Icons.lock_outline_rounded,
-              label: 'Ostra',
-              value: oyster.answer,
-              accent: _signalColor(oyster.signal),
-            ),
-          ],
+          Wrap(
+            spacing: 12,
+            runSpacing: 10,
+            children: [
+              LiveStatusTile(
+                icon: phoneIcon,
+                label: status.modelLabel,
+                value: deviceValue,
+                accent: deviceAccent,
+              ),
+              LiveStatusTile(
+                icon: Icons.memory_rounded,
+                label: 'Runtime',
+                value: runtime.answer,
+                accent: _signalColor(runtime.signal),
+              ),
+              LiveStatusTile(
+                icon: Icons.lock_outline_rounded,
+                label: 'Ostra',
+                value: oyster.answer,
+                accent: _signalColor(oyster.signal),
+              ),
+            ],
+          ),
+          const SizedBox(height: 10),
+          Text(
+            '$_platformLabel · v${status.appVersion} · '
+            'sync ${formatRelativeTime(status.lastSeen)}',
+            style: DashboardTypography.cardSubtitle(context),
+          ),
         ],
       ),
     );
@@ -304,6 +249,12 @@ class _DeviceInfoCard extends StatelessWidget {
         ChecklistSignal.alert => AppColors.riskCritical,
         ChecklistSignal.muted => AppColors.textMuted,
       };
+
+  static Color _indexColor(int index) {
+    if (index >= 90) return AppColors.trustHigh;
+    if (index >= 50) return AppColors.trustMedium;
+    return AppColors.riskCritical;
+  }
 }
 
 class _SettingsGroup extends StatelessWidget {
@@ -360,22 +311,34 @@ class _SyncedSettingRow extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final (subtitle, trailing) = switch ((hasChecklist, item?.done)) {
+    final (subtitle, badge) = switch ((hasChecklist, item?.done)) {
       (false, _) => (
           'Aguardando sync do app',
-           Icon(Icons.hourglass_empty, color: AppColors.textMuted, size: 20),
+          const StatusBadge(
+            label: 'Aguardando',
+            tone: StatusTone.offline,
+          ),
         ),
       (true, true) => (
           'Configurado no app',
-           Icon(Icons.check_circle_rounded, color: AppColors.trustHigh, size: 22),
+          const StatusBadge(
+            label: 'Configurado',
+            tone: StatusTone.protected,
+          ),
         ),
       (true, false) => (
           item?.label ?? 'Falta no aparelho',
-           Icon(Icons.error_outline_rounded, color: AppColors.trustMedium, size: 22),
+          const StatusBadge(
+            label: 'Falta',
+            tone: StatusTone.warning,
+          ),
         ),
       (true, null) => (
           'Aguardando sync do app',
-           Icon(Icons.hourglass_empty, color: AppColors.textMuted, size: 20),
+          const StatusBadge(
+            label: 'Aguardando',
+            tone: StatusTone.offline,
+          ),
         ),
     };
 
@@ -385,7 +348,7 @@ class _SyncedSettingRow extends StatelessWidget {
         leading: Icon(icon, color: AppColors.textMuted),
         title: Text(title),
         subtitle: Text(subtitle),
-        trailing: trailing,
+        trailing: badge,
         onTap: () {
           ScaffoldMessenger.of(context).showSnackBar(
             SnackBar(
@@ -422,7 +385,10 @@ class _PlannedSettingRow extends StatelessWidget {
         leading: Icon(icon, color: AppColors.textMuted),
         title: Text(title),
         subtitle: Text(subtitle),
-        trailing: Icon(Icons.schedule_outlined, color: AppColors.textMuted),
+        trailing: const StatusBadge(
+          label: 'Em breve',
+          tone: StatusTone.neutral,
+        ),
         onTap: () {
           ScaffoldMessenger.of(context).showSnackBar(
             const SnackBar(

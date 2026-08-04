@@ -27,14 +27,15 @@ class LiveStatusTile extends StatelessWidget {
   Widget build(BuildContext context) {
     final color = accent;
     final hPad = compact ? 10.0 : 14.0;
-    final vPad = compact ? 8.0 : 12.0;
+    final vPad = compact ? 8.0 : 10.0;
     final iconSize = compact ? 18.0 : 20.0;
     final gap = compact ? 8.0 : 10.0;
     final valueGap = compact ? 2.0 : 4.0;
-    final radius = compact ? 10.0 : 12.0;
+    // Camadas: canto suave. Runtime/Ostra: pill (mesmo idioma dos filtros).
+    final radius = compact ? 10.0 : 99.0;
 
     final tile = Container(
-      width: double.infinity,
+      width: compact ? double.infinity : null,
       padding: EdgeInsets.symmetric(horizontal: hPad, vertical: vPad),
       decoration: BoxDecoration(
         color: color.withValues(alpha: 0.06),
@@ -42,31 +43,27 @@ class LiveStatusTile extends StatelessWidget {
         border: Border.all(color: color.withValues(alpha: 0.2)),
       ),
       child: Row(
+        mainAxisSize: compact ? MainAxisSize.max : MainAxisSize.min,
         crossAxisAlignment: CrossAxisAlignment.center,
         children: [
           Icon(icon, size: iconSize, color: color.withValues(alpha: 0.95)),
           SizedBox(width: gap),
-          Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                Text(
-                  label,
-                  maxLines: 1,
-                  overflow: TextOverflow.ellipsis,
-                  style: DashboardTypography.mutedLabel(context),
-                ),
-                SizedBox(height: valueGap),
-                Text(
-                  value,
-                  maxLines: compact ? 1 : 2,
-                  overflow: TextOverflow.ellipsis,
-                  style: DashboardTypography.emphasis(context, color: color),
-                ),
-              ],
+          if (compact)
+            Expanded(child: _LiveStatusTexts(
+              label: label,
+              value: value,
+              color: color,
+              valueGap: valueGap,
+              compact: compact,
+            ))
+          else
+            _LiveStatusTexts(
+              label: label,
+              value: value,
+              color: color,
+              valueGap: valueGap,
+              compact: compact,
             ),
-          ),
         ],
       ),
     );
@@ -93,4 +90,43 @@ Color liveStatusAccent({
   if (warn) return AppColors.trustMedium;
   if (ok) return AppColors.trustHigh;
   return AppColors.textMuted;
+}
+
+class _LiveStatusTexts extends StatelessWidget {
+  const _LiveStatusTexts({
+    required this.label,
+    required this.value,
+    required this.color,
+    required this.valueGap,
+    required this.compact,
+  });
+
+  final String label;
+  final String value;
+  final Color color;
+  final double valueGap;
+  final bool compact;
+
+  @override
+  Widget build(BuildContext context) {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      mainAxisSize: MainAxisSize.min,
+      children: [
+        Text(
+          label,
+          maxLines: 1,
+          overflow: TextOverflow.ellipsis,
+          style: DashboardTypography.mutedLabel(context),
+        ),
+        SizedBox(height: valueGap),
+        Text(
+          value,
+          maxLines: compact ? 1 : 2,
+          overflow: TextOverflow.ellipsis,
+          style: DashboardTypography.emphasis(context, color: color),
+        ),
+      ],
+    );
+  }
 }
