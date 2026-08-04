@@ -534,6 +534,28 @@ class _PillSwitch extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final accent = AppColors.trustHigh;
+    final light = Theme.of(context).brightness == Brightness.light;
+
+    final trackColor = value
+        ? accent.withValues(alpha: light ? 0.18 : 0.14)
+        : light
+            ? const Color(0xFFCBD5E1)
+            : AppColors.card;
+    final borderColor = value
+        ? accent.withValues(alpha: light ? 0.55 : 0.45)
+        : light
+            ? AppColors.textMuted.withValues(alpha: 0.55)
+            : AppColors.divider;
+    final thumbColor = value
+        ? accent
+        : light
+            ? Colors.white
+            : AppColors.surface;
+    final thumbBorder = value
+        ? accent.withValues(alpha: 0.55)
+        : light
+            ? AppColors.textMuted.withValues(alpha: 0.4)
+            : AppColors.divider;
 
     return Semantics(
       button: true,
@@ -548,15 +570,9 @@ class _PillSwitch extends StatelessWidget {
           height: _height,
           padding: const EdgeInsets.all(_pad),
           decoration: BoxDecoration(
-            color: value
-                ? accent.withValues(alpha: 0.14)
-                : AppColors.card,
+            color: trackColor,
             borderRadius: BorderRadius.circular(99),
-            border: Border.all(
-              color: value
-                  ? accent.withValues(alpha: 0.45)
-                  : AppColors.divider,
-            ),
+            border: Border.all(color: borderColor),
           ),
           child: AnimatedAlign(
             duration: const Duration(milliseconds: 200),
@@ -567,17 +583,15 @@ class _PillSwitch extends StatelessWidget {
               width: _thumb,
               height: _thumb,
               decoration: BoxDecoration(
-                color: value ? accent : AppColors.surface,
+                color: thumbColor,
                 shape: BoxShape.circle,
-                border: Border.all(
-                  color: value
-                      ? accent.withValues(alpha: 0.55)
-                      : AppColors.divider,
-                ),
+                border: Border.all(color: thumbBorder),
                 boxShadow: [
                   BoxShadow(
-                    color: Colors.black.withValues(alpha: value ? 0.18 : 0.08),
-                    blurRadius: 4,
+                    color: Colors.black.withValues(
+                      alpha: light ? (value ? 0.16 : 0.14) : (value ? 0.18 : 0.08),
+                    ),
+                    blurRadius: light ? 5 : 4,
                     offset: const Offset(0, 1),
                   ),
                 ],
