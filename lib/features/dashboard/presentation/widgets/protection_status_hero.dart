@@ -55,10 +55,11 @@ class ProtectionStatusHero extends StatelessWidget {
             ],
             if (fillHeight) ...[
               Expanded(
+                // Centralizado: sem o vazio entre o badge e a frase.
                 child: Align(
-                  alignment: Alignment.bottomLeft,
+                  alignment: Alignment.centerLeft,
                   child: Padding(
-                    padding: EdgeInsets.only(bottom: compact ? 6 : 8),
+                    padding: EdgeInsets.symmetric(vertical: compact ? 6 : 8),
                     child: Text(
                       headline,
                       style: Theme.of(context).textTheme.titleMedium?.copyWith(
