@@ -18,7 +18,7 @@ abstract final class EventDisplay {
     final summary = humanizeSummary(event.summary);
     if (summary != null && summary.isNotEmpty) {
       final displayTitle = title(event);
-      if (displayTitle.contains(summary)) return null;
+      if (_isRedundantDetail(displayTitle, summary)) return null;
       return summary;
     }
     return _fallbackSubtitle(event);
@@ -30,6 +30,12 @@ abstract final class EventDisplay {
 
     final pattern = _patternLabel(text);
     if (pattern != null) return pattern;
+
+    final reason = _reasonCodeLabel(text);
+    if (reason != null) return reason;
+
+    final narrative = _humanizeNarrative(text);
+    if (narrative != null) return narrative;
 
     final levels = _parseRiskTransition(text);
     if (levels != null) {
@@ -54,14 +60,14 @@ abstract final class EventDisplay {
       return 'Impacto de ${spike.group(1)} m/s² registrado';
     }
 
-    if (text.startsWith('tela ')) {
+    if (text.toLowerCase().startsWith('tela ')) {
       return _humanizeScreenTransition(text);
     }
-    if (text.startsWith('movimento')) {
+    if (text.toLowerCase().startsWith('movimento')) {
       return _humanizeMotionTransition(text);
     }
 
-    if (!_looksTechnical(text)) return text;
+    if (!_looksTechnical(text)) return _sentenceCase(text);
     return 'Sequência registrada pelo motor de proteção';
   }
 
@@ -108,6 +114,12 @@ abstract final class EventDisplay {
 
   static String? _fallbackSubtitle(SecurityEvent event) {
     final t = event.title.toLowerCase();
+    if (t.contains('ostra fechada')) {
+      return 'Aparelho em contenção — Ostra ativada';
+    }
+    if (t.contains('ostra reaberta')) {
+      return 'Usuário confirmou que o aparelho está seguro';
+    }
     if (t.contains('risco crítico')) {
       return 'Ameaça confirmada pelo motor de proteção';
     }
@@ -125,12 +137,87 @@ abstract final class EventDisplay {
     return lower.contains('padrão') && lower.contains('risco');
   }
 
+  /// Narrativas em português vindas do app (às vezes em minúsculo).
+  static String? _humanizeNarrative(String text) {
+    final lower = text.toLowerCase().trim();
+
+    if (lower.contains('ostra reaberta') &&
+        (lower.contains('confirmou') ||
+            lower.contains('segurança') ||
+            lower.contains('seguranca'))) {
+      return 'Usuário confirmou que o aparelho está seguro';
+    }
+    if (lower == 'ostra reaberta') {
+      return 'Usuário confirmou que o aparelho está seguro';
+    }
+
+    if (lower.contains('bloqueado') && lower.contains('ostra')) {
+      final app = _blockedAppName(text);
+      if (app != null) {
+        return '$app bloqueado com a Ostra ativada';
+      }
+      return 'App bloqueado com a Ostra ativada';
+    }
+
+    if (lower == 'ostra fechada' ||
+        lower.startsWith('ostra fechada ·') ||
+        lower.startsWith('ostra fechada -')) {
+      return 'Aparelho em contenção — Ostra ativada';
+    }
+
+    return null;
+  }
+
+  static String? _blockedAppName(String text) {
+    final match = RegExp(
+      r'^(.+?)\s+bloqueado',
+      caseSensitive: false,
+    ).firstMatch(text.trim());
+    final name = match?.group(1)?.trim();
+    if (name == null || name.isEmpty) return null;
+    if (name.toLowerCase() == 'app' ||
+        name.toLowerCase() == 'app protegido') {
+      return null;
+    }
+    return _sentenceCase(name);
+  }
+
+  static bool _isRedundantDetail(String title, String detail) {
+    final t = title.toLowerCase().trim();
+    final d = detail.toLowerCase().trim();
+    if (t == d) return true;
+    if (t.contains(d) || d.contains(t)) return true;
+    return false;
+  }
+
+  static String _sentenceCase(String text) {
+    final trimmed = text.trim();
+    if (trimmed.isEmpty) return trimmed;
+    if (trimmed.length == 1) return trimmed.toUpperCase();
+    return '${trimmed[0].toUpperCase()}${trimmed.substring(1)}';
+  }
+
   static String? _patternLabel(String text) {
     return switch (text) {
       'snatchFromHand' => 'Puxão da mão',
       'grabAndRun' => 'Retirada + fuga',
       'pocketExtraction' => 'Puxão + tela apagou',
       'suspiciousMotion' => 'Movimento suspeito',
+      _ => null,
+    };
+  }
+
+  /// Códigos internos do app (camelCase) → texto para o usuário.
+  static String? _reasonCodeLabel(String text) {
+    return switch (text) {
+      'nativeCriticalConfirmed' =>
+        'Ameaça crítica confirmada pelo aparelho',
+      'criticalConfirmed' => 'Ameaça crítica confirmada',
+      'userConfirmedSafe' => 'Usuário confirmou que está seguro',
+      'userConfirmedSafety' => 'Usuário confirmou que está seguro',
+      'manualLock' => 'Bloqueio manual acionado',
+      'autoLock' => 'Bloqueio automático acionado',
+      'timeout' => 'Tempo esgotado sem confirmação',
       _ => null,
     };
   }
@@ -156,11 +243,16 @@ abstract final class EventDisplay {
       };
 
   static bool _looksTechnical(String text) {
+    // Identificador camelCase / snake_case sem espaços (ex.: nativeCriticalConfirmed).
+    if (RegExp(r'^[a-z]+([A-Z][a-zA-Z0-9]*)+$').hasMatch(text)) return true;
+    if (RegExp(r'^[a-z]+(_[a-z0-9]+)+$').hasMatch(text)) return true;
+
     final lower = text.toLowerCase();
     return lower.contains('snatch') ||
         lower.contains('grabandrun') ||
         lower.contains('pocketextraction') ||
         lower.contains('suspiciousmotion') ||
+        lower.contains('nativecritical') ||
         lower.contains('critical confirmado') ||
         lower.contains('aguardando confirmação critical');
   }

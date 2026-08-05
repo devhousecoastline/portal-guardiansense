@@ -45,4 +45,49 @@ void main() {
       'Ostra reaberta',
     );
   });
+
+  test('traduz nativeCriticalConfirmed e esconde camelCase', () {
+    final event = _event(
+      title: 'Ostra fechada',
+      summary: 'nativeCriticalConfirmed',
+    );
+
+    expect(
+      EventDisplay.subtitle(event),
+      'Ameaça crítica confirmada pelo aparelho',
+    );
+    expect(
+      EventDisplay.humanizeSummary('nativeCriticalConfirmed'),
+      'Ameaça crítica confirmada pelo aparelho',
+    );
+    expect(
+      EventDisplay.humanizeSummary('unknownReasonCode'),
+      'Sequência registrada pelo motor de proteção',
+    );
+  });
+
+  test('humaniza subtítulos de ostra e bloqueio em minúsculo', () {
+    final reopened = _event(
+      title: 'Ostra reaberta',
+      summary: 'ostra reaberta - usuário confirmou segurança',
+    );
+    expect(
+      EventDisplay.subtitle(reopened),
+      'Usuário confirmou que o aparelho está seguro',
+    );
+
+    final blocked = _event(
+      title: 'App protegido bloqueado',
+      summary: 'WhatsApp bloqueado com ostra fechada',
+    );
+    expect(
+      EventDisplay.subtitle(blocked),
+      'WhatsApp bloqueado com a Ostra ativada',
+    );
+
+    expect(
+      EventDisplay.humanizeSummary('ostra reaberta · usuário confirmou'),
+      'Usuário confirmou que o aparelho está seguro',
+    );
+  });
 }

@@ -8,7 +8,6 @@ import 'package:guardian_portal/core/widgets/online_refresh.dart';
 import 'package:guardian_portal/core/widgets/section_card.dart';
 import 'package:guardian_portal/features/devices/data/device_repository.dart';
 import 'package:guardian_portal/features/events/data/events_repository.dart';
-import 'package:guardian_portal/features/events/domain/event_display.dart';
 import 'package:guardian_portal/features/events/domain/event_filters.dart';
 import 'package:guardian_portal/features/events/domain/event_timeline_entry.dart';
 import 'package:guardian_portal/features/events/domain/events_timeline_builder.dart';
@@ -64,27 +63,29 @@ class _EventsDetailsPageState extends State<EventsDetailsPage> {
                   title: 'Eventos · $dayLabel',
                   subtitle: subtitle,
                   onRefresh: _refreshController.refresh,
+                  fitViewport: true,
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.stretch,
                     children: [
                       RefreshTickBar(
                         visible: isRefreshing && snapshot.hasData,
                       ),
-                      if (initialLoad)
-                        const Center(child: CircularProgressIndicator())
-                      else if (snapshot.hasError)
-                        SectionCard(
-                          child: Text(
-                            'Não foi possível carregar eventos.\n${snapshot.error}',
-                            textAlign: TextAlign.center,
-                          ),
-                        )
-                      else
-                        _DayDetailsBody(
-                          day: day,
-                          dayLabel: dayLabel,
-                          rawEvents: snapshot.data ?? const [],
-                        ),
+                      Expanded(
+                        child: initialLoad
+                            ? const Center(child: CircularProgressIndicator())
+                            : snapshot.hasError
+                                ? SectionCard(
+                                    child: Text(
+                                      'Não foi possível carregar eventos.\n${snapshot.error}',
+                                      textAlign: TextAlign.center,
+                                    ),
+                                  )
+                                : _DayDetailsBody(
+                                    day: day,
+                                    dayLabel: dayLabel,
+                                    rawEvents: snapshot.data ?? const [],
+                                  ),
+                      ),
                     ],
                   ),
                 );
@@ -120,175 +121,76 @@ class _DayDetailsBody extends StatelessWidget {
     }
 
     if (entry == null) {
-      return SectionCard(
-        child: Column(
-          children: [
-             Icon(
-              Icons.event_busy_outlined,
-              size: 36,
-              color: AppColors.textMuted,
-            ),
-            const SizedBox(height: 12),
-            Text(
-              'Nenhum evento em $dayLabel.',
-              style: Theme.of(context).textTheme.titleMedium,
-              textAlign: TextAlign.center,
-            ),
-            const SizedBox(height: 12),
-            OutlinedButton(
-              onPressed: () => context.go(AppRoutes.events),
-              child: const Text('Voltar para Eventos'),
-            ),
-          ],
+      return Center(
+        child: SectionCard(
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Icon(
+                Icons.event_busy_outlined,
+                size: 36,
+                color: AppColors.textMuted,
+              ),
+              const SizedBox(height: 12),
+              Text(
+                'Nenhum evento em $dayLabel.',
+                style: Theme.of(context).textTheme.titleMedium,
+                textAlign: TextAlign.center,
+              ),
+              const SizedBox(height: 12),
+              OutlinedButton(
+                onPressed: () => context.go(AppRoutes.events),
+                child: const Text('Voltar para Eventos'),
+              ),
+            ],
+          ),
         ),
       );
     }
 
-    final summary = entry.summary;
     final dayEvents = entry.dayEvents;
-    final status = EventDisplay.statusLabel(summary);
-    final time = EventTile.formatOccurredAt(summary.occurredAt, showDate: true);
+    final count = dayEvents.length;
+    final countLabel =
+        '$count ${count == 1 ? 'registro' : 'registros'} neste dia';
 
     return Column(
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
-        SectionCard(
-          padding:  EdgeInsets.fromLTRB(16, 14, 16, 14),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
+        Padding(
+          padding: const EdgeInsets.only(bottom: 10),
+          child: Row(
             children: [
-              Text(
-                'Último evento',
-                style: Theme.of(context).textTheme.labelMedium?.copyWith(
-                      color: AppColors.textMuted,
-                      fontWeight: FontWeight.w700,
-                      letterSpacing: 0.3,
-                    ),
-              ),
-               SizedBox(height: 6),
-              Text(
-                '$time · $status',
-                style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                      color: AppColors.textMuted,
-                    ),
-              ),
-               SizedBox(height: 4),
-              Text(
-                EventDisplay.title(summary),
-                style: Theme.of(context).textTheme.titleMedium?.copyWith(
-                      fontWeight: FontWeight.w700,
-                    ),
-              ),
-               SizedBox(height: 8),
-              Text(
-                '${dayEvents.length} registro(s) neste dia',
-                style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                      color: AppColors.primary,
-                      fontWeight: FontWeight.w600,
-                    ),
+              Icon(Icons.insights_outlined, size: 16, color: AppColors.primary),
+              const SizedBox(width: 8),
+              Expanded(
+                child: Text(
+                  countLabel,
+                  style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                        color: AppColors.textMuted,
+                        fontWeight: FontWeight.w600,
+                      ),
+                ),
               ),
             ],
           ),
         ),
-        const SizedBox(height: 16),
-        for (final event in dayEvents) ...[
-          _EventDetailRow(event: event),
-          const SizedBox(height: 8),
-        ],
+        Expanded(
+          child: Scrollbar(
+            thumbVisibility: true,
+            child: ListView.separated(
+              padding: const EdgeInsets.only(right: 14, bottom: 28),
+              itemCount: dayEvents.length,
+              separatorBuilder: (_, _) => const SizedBox(height: 10),
+              itemBuilder: (context, index) {
+                return EventTile(
+                  event: dayEvents[index],
+                  showDate: false,
+                );
+              },
+            ),
+          ),
+        ),
       ],
-    );
-  }
-}
-
-class _EventDetailRow extends StatelessWidget {
-  const _EventDetailRow({required this.event});
-
-  final SecurityEvent event;
-
-  @override
-  Widget build(BuildContext context) {
-    final time = EventTile.formatOccurredAt(event.occurredAt, showDate: false);
-    final status = EventDisplay.statusLabel(event);
-    final title = EventDisplay.title(event);
-    final subtitle = EventDisplay.subtitle(event);
-    final color = event.isNormalSession
-        ? AppColors.trustHigh
-        : EventTile.severityColor(event.severity);
-
-    return SectionCard(
-      padding:  EdgeInsets.fromLTRB(16, 12, 16, 12),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Row(
-            children: [
-              Text(
-                time,
-                style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                      color: AppColors.textMuted,
-                      fontWeight: FontWeight.w500,
-                      fontFeatures: const [FontFeature.tabularFigures()],
-                    ),
-              ),
-              const SizedBox(width: 8),
-              Text(
-                status,
-                style: Theme.of(context).textTheme.labelSmall?.copyWith(
-                      color: color,
-                      fontWeight: FontWeight.w700,
-                      letterSpacing: 0.4,
-                    ),
-              ),
-              const Spacer(),
-              _SeverityPill(label: event.severityLabel, color: color),
-            ],
-          ),
-           SizedBox(height: 6),
-          Text(
-            title,
-            style: Theme.of(context).textTheme.titleSmall?.copyWith(
-                  fontWeight: FontWeight.w600,
-                ),
-          ),
-          if (subtitle != null) ...[
-             SizedBox(height: 4),
-            Text(
-              subtitle,
-              style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                    color: AppColors.textMuted,
-                    height: 1.35,
-                  ),
-            ),
-          ],
-        ],
-      ),
-    );
-  }
-}
-
-class _SeverityPill extends StatelessWidget {
-  const _SeverityPill({required this.label, required this.color});
-
-  final String label;
-  final Color color;
-
-  @override
-  Widget build(BuildContext context) {
-    return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
-      decoration: BoxDecoration(
-        color: color.withValues(alpha: 0.1),
-        borderRadius: BorderRadius.circular(99),
-        border: Border.all(color: color.withValues(alpha: 0.28)),
-      ),
-      child: Text(
-        label,
-        style: Theme.of(context).textTheme.bodySmall?.copyWith(
-              color: color,
-              fontWeight: FontWeight.w700,
-              fontSize: 11,
-            ),
-      ),
     );
   }
 }
