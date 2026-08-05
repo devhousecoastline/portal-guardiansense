@@ -37,112 +37,158 @@ class EventTile extends StatelessWidget {
     final subtitle = EventDisplay.subtitle(event);
     final status = EventDisplay.statusLabel(event);
     final showDetails = (detailCount ?? 0) > 1;
-    final occurredLabel = formatOccurredAt(event.occurredAt, showDate: showDate);
+    final occurredLabel =
+        formatOccurredAt(event.occurredAt, showDate: showDate);
+    final theme = Theme.of(context);
+    final relative = formatRelativeTime(event.occurredAt);
+    final narrow = MediaQuery.sizeOf(context).width < 560;
 
     return SectionCard(
-      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
-      child: Material(
-        color: Colors.transparent,
-        child: InkWell(
-          onTap: onTap,
-          borderRadius: BorderRadius.circular(12),
-          child: Padding(
-            padding: const EdgeInsets.symmetric(vertical: 2),
-            child: Row(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Container(
-                  width: 40,
-                  height: 40,
-                  decoration: BoxDecoration(
-                    color: color.withValues(alpha: 0.12),
-                    borderRadius: BorderRadius.circular(10),
-                    border: Border.all(color: color.withValues(alpha: 0.25)),
-                  ),
-                  child: Icon(icon, size: 20, color: color),
-                ),
-                 SizedBox(width: 12),
-                Expanded(
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Row(
+      padding: EdgeInsets.zero,
+      child: ClipRRect(
+        borderRadius: BorderRadius.circular(16),
+        child: Material(
+          color: Colors.transparent,
+          child: InkWell(
+            onTap: onTap,
+            child: IntrinsicHeight(
+              child: Row(
+                crossAxisAlignment: CrossAxisAlignment.stretch,
+                children: [
+                  Container(width: 4, color: color),
+                  Expanded(
+                    child: Padding(
+                      padding: const EdgeInsets.fromLTRB(12, 10, 10, 10),
+                      child: Row(
+                        crossAxisAlignment: CrossAxisAlignment.center,
                         children: [
-                          Text(
-                            occurredLabel,
-                            style:
-                                Theme.of(context).textTheme.bodySmall?.copyWith(
+                          Container(
+                            width: 36,
+                            height: 36,
+                            decoration: BoxDecoration(
+                              color: color.withValues(alpha: 0.12),
+                              borderRadius: BorderRadius.circular(10),
+                              border: Border.all(
+                                color: color.withValues(alpha: 0.25),
+                              ),
+                            ),
+                            child: Icon(icon, size: 18, color: color),
+                          ),
+                          const SizedBox(width: 10),
+                          Expanded(
+                            child: Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              mainAxisSize: MainAxisSize.min,
+                              children: [
+                                Text.rich(
+                                  TextSpan(
+                                    children: [
+                                      TextSpan(
+                                        text: occurredLabel,
+                                        style:
+                                            theme.textTheme.bodySmall?.copyWith(
+                                          color: AppColors.textMuted,
+                                          fontFeatures: const [
+                                            FontFeature.tabularFigures(),
+                                          ],
+                                        ),
+                                      ),
+                                      TextSpan(
+                                        text: '  ·  ',
+                                        style:
+                                            theme.textTheme.bodySmall?.copyWith(
+                                          color: AppColors.textMuted,
+                                        ),
+                                      ),
+                                      TextSpan(
+                                        text: status,
+                                        style:
+                                            theme.textTheme.labelSmall?.copyWith(
+                                          color: color,
+                                          fontWeight: FontWeight.w700,
+                                          letterSpacing: 0.3,
+                                        ),
+                                      ),
+                                    ],
+                                  ),
+                                  maxLines: 1,
+                                  overflow: TextOverflow.ellipsis,
+                                ),
+                                const SizedBox(height: 3),
+                                Text(
+                                  title,
+                                  maxLines: 1,
+                                  overflow: TextOverflow.ellipsis,
+                                  style: theme.textTheme.titleSmall?.copyWith(
+                                    fontWeight: FontWeight.w700,
+                                  ),
+                                ),
+                                if (subtitle != null) ...[
+                                  const SizedBox(height: 2),
+                                  Text(
+                                    subtitle,
+                                    maxLines: 1,
+                                    overflow: TextOverflow.ellipsis,
+                                    style: theme.textTheme.bodySmall?.copyWith(
+                                      height: 1.25,
                                       color: AppColors.textMuted,
-                                      fontFeatures: const [
-                                        FontFeature.tabularFigures(),
+                                    ),
+                                  ),
+                                ],
+                                if (narrow) ...[
+                                  const SizedBox(height: 6),
+                                  Row(
+                                    children: [
+                                      _SeverityPill(
+                                        label: event.severityLabel,
+                                        color: color,
+                                      ),
+                                      const SizedBox(width: 8),
+                                      Text(
+                                        relative,
+                                        style:
+                                            theme.textTheme.bodySmall?.copyWith(
+                                          color: AppColors.textMuted,
+                                        ),
+                                      ),
+                                      if (showDetails) ...[
+                                        const SizedBox(width: 8),
+                                        Text(
+                                          '$detailCount registros',
+                                          style: theme.textTheme.bodySmall
+                                              ?.copyWith(
+                                            color: AppColors.primary,
+                                            fontWeight: FontWeight.w600,
+                                          ),
+                                        ),
                                       ],
-                                    ),
+                                    ],
+                                  ),
+                                ],
+                              ],
+                            ),
                           ),
-                          const SizedBox(width: 8),
-                          Text(
-                            status,
-                            style:
-                                Theme.of(context).textTheme.labelSmall?.copyWith(
-                                      color: color,
-                                      fontWeight: FontWeight.w700,
-                                      letterSpacing: 0.4,
-                                    ),
-                          ),
-                           Spacer(),
-                          if (onTap != null)
+                          if (!narrow) ...[
+                            const SizedBox(width: 12),
+                            _TrailingMeta(
+                              severityLabel: event.severityLabel,
+                              color: color,
+                              relative: relative,
+                              detailCount: showDetails ? detailCount : null,
+                              showChevron: onTap != null,
+                            ),
+                          ] else if (onTap != null)
                             Icon(
                               Icons.chevron_right_rounded,
-                              size: 20,
+                              size: 22,
                               color: AppColors.textMuted,
                             ),
                         ],
                       ),
-                      const SizedBox(height: 6),
-                      Text(
-                        title,
-                        style:
-                            Theme.of(context).textTheme.titleSmall?.copyWith(
-                                  fontWeight: FontWeight.w700,
-                                ),
-                      ),
-                      if (subtitle != null) ...[
-                        const SizedBox(height: 4),
-                        Text(
-                          subtitle,
-                          style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                                height: 1.35,
-                              ),
-                        ),
-                      ],
-                       SizedBox(height: 8),
-                      Row(
-                        children: [
-                          _SeverityPill(label: event.severityLabel, color: color),
-                           SizedBox(width: 8),
-                          Text(
-                            formatRelativeTime(event.occurredAt),
-                            style:
-                                Theme.of(context).textTheme.bodySmall?.copyWith(
-                                      color: AppColors.textMuted,
-                                    ),
-                          ),
-                          if (showDetails) ...[
-                             SizedBox(width: 8),
-                            Text(
-                              '$detailCount registros',
-                              style:
-                                  Theme.of(context).textTheme.bodySmall?.copyWith(
-                                        color: AppColors.primary,
-                                        fontWeight: FontWeight.w600,
-                                      ),
-                            ),
-                          ],
-                        ],
-                      ),
-                    ],
+                    ),
                   ),
-                ),
-              ],
+                ],
+              ),
             ),
           ),
         ),
@@ -165,6 +211,61 @@ class EventTile extends StatelessWidget {
         EventCategory.normal => Icons.verified_user_outlined,
         EventCategory.other => Icons.notifications_active_outlined,
       };
+}
+
+/// Meta compacta à direita — uma faixa horizontal, sem coluna alta.
+class _TrailingMeta extends StatelessWidget {
+  const _TrailingMeta({
+    required this.severityLabel,
+    required this.color,
+    required this.relative,
+    required this.showChevron,
+    this.detailCount,
+  });
+
+  final String severityLabel;
+  final Color color;
+  final String relative;
+  final bool showChevron;
+  final int? detailCount;
+
+  @override
+  Widget build(BuildContext context) {
+    final muted = Theme.of(context).textTheme.bodySmall?.copyWith(
+          color: AppColors.textMuted,
+        );
+
+    return Row(
+      mainAxisSize: MainAxisSize.min,
+      children: [
+        _SeverityPill(label: severityLabel, color: color),
+        const SizedBox(width: 10),
+        Column(
+          mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.end,
+          children: [
+            Text(relative, style: muted),
+            if (detailCount != null)
+              Text(
+                '$detailCount registros',
+                style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                      color: AppColors.primary,
+                      fontWeight: FontWeight.w600,
+                    ),
+              ),
+          ],
+        ),
+        if (showChevron) ...[
+          const SizedBox(width: 4),
+          Icon(
+            Icons.chevron_right_rounded,
+            size: 22,
+            color: AppColors.textMuted,
+          ),
+        ],
+      ],
+    );
+  }
 }
 
 class _SeverityPill extends StatelessWidget {

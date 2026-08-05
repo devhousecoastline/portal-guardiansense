@@ -47,7 +47,7 @@ class EventsFilterBar extends StatelessWidget {
           ],
         ),
         const SizedBox(height: 8),
-        _FilterRow(
+        _ScrollChips(
           children: [
             for (final period in EventPeriod.values)
               _FilterChip(
@@ -68,20 +68,11 @@ class EventsFilterBar extends StatelessWidget {
             ),
           ],
         ),
-        if (filters.customRange != null) ...[
-           SizedBox(height: 6),
-          Text(
-            'Período personalizado: ${EventFilters.formatCustomRange(filters.customRange!)}',
-            style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                  color: AppColors.textMuted,
-                ),
-          ),
-        ],
-        const SizedBox(height: 8),
-        _FilterRow(
+        const SizedBox(height: 6),
+        _ScrollChips(
           children: [
             _FilterChip(
-              label: 'Todas severidades',
+              label: 'Todas sev.',
               selected: filters.severity == null,
               onTap: () => onChanged(filters.copyWith(clearSeverity: true)),
             ),
@@ -95,11 +86,7 @@ class EventsFilterBar extends StatelessWidget {
                 color: _severityColor(severity),
                 onTap: () => onChanged(filters.copyWith(severity: severity)),
               ),
-          ],
-        ),
-        const SizedBox(height: 8),
-        _FilterRow(
-          children: [
+            const _ChipDivider(),
             for (final category in EventCategoryFilter.values)
               _FilterChip(
                 label: _countedLabel(
@@ -207,8 +194,8 @@ class EventsFilterBar extends StatelessWidget {
   static String _countedLabel(String label, int count) => '$label ($count)';
 }
 
-class _FilterRow extends StatelessWidget {
-  const _FilterRow({required this.children});
+class _ScrollChips extends StatelessWidget {
+  const _ScrollChips({required this.children});
 
   final List<Widget> children;
 
@@ -217,6 +204,20 @@ class _FilterRow extends StatelessWidget {
     return SingleChildScrollView(
       scrollDirection: Axis.horizontal,
       child: Row(children: children),
+    );
+  }
+}
+
+class _ChipDivider extends StatelessWidget {
+  const _ChipDivider();
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      width: 1,
+      height: 22,
+      margin: const EdgeInsets.symmetric(horizontal: 6),
+      color: AppColors.divider,
     );
   }
 }
@@ -241,12 +242,12 @@ class _FilterChip extends StatelessWidget {
     final accent = color ?? AppColors.primary;
 
     return Padding(
-      padding:  EdgeInsets.only(right: 8),
+      padding: const EdgeInsets.only(right: 6),
       child: FilterChip(
         avatar: icon != null
             ? Icon(
                 icon,
-                size: 16,
+                size: 15,
                 color: selected ? accent : AppColors.textMuted,
               )
             : null,
@@ -255,7 +256,7 @@ class _FilterChip extends StatelessWidget {
         onSelected: (_) => onTap(),
         showCheckmark: false,
         labelStyle: TextStyle(
-          fontSize: 13,
+          fontSize: 12.5,
           fontWeight: FontWeight.w600,
           color: selected ? accent : AppColors.textMuted,
         ),
@@ -268,8 +269,9 @@ class _FilterChip extends StatelessWidget {
         ),
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(99)),
         materialTapTargetSize: MaterialTapTargetSize.shrinkWrap,
-        visualDensity: VisualDensity.compact,
-        padding: const EdgeInsets.symmetric(horizontal: 4),
+        visualDensity: const VisualDensity(horizontal: -2, vertical: -2),
+        padding: const EdgeInsets.symmetric(horizontal: 2),
+        labelPadding: const EdgeInsets.symmetric(horizontal: 6),
       ),
     );
   }

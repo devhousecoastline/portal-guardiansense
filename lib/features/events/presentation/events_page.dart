@@ -147,7 +147,7 @@ class _EventsBody extends StatelessWidget {
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
         SectionCard(
-          padding: const EdgeInsets.fromLTRB(16, 14, 16, 12),
+          padding: const EdgeInsets.fromLTRB(12, 10, 12, 8),
           child: EventsFilterBar(
             filters: filters,
             onChanged: onFiltersChanged,
@@ -156,33 +156,23 @@ class _EventsBody extends StatelessWidget {
             categoryCounts: EventFilters.categoryCounts(inPeriod),
           ),
         ),
-         SizedBox(height: 8),
-        Padding(
-          padding:  EdgeInsets.symmetric(horizontal: 4),
-          child: Text(
-            'Um card por dia — toque para abrir os eventos daquela data.',
-            style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                  color: AppColors.textMuted,
-                ),
-          ),
-        ),
-         SizedBox(height: 12),
+        const SizedBox(height: 14),
         if (timeline.isEmpty)
           SectionCard(
             child: Column(
               children: [
-                 Icon(
+                Icon(
                   Icons.filter_list_off_outlined,
                   size: 36,
                   color: AppColors.textMuted,
                 ),
-                 SizedBox(height: 12),
+                const SizedBox(height: 12),
                 Text(
                   'Nenhum evento com esses filtros.',
                   style: Theme.of(context).textTheme.titleMedium,
                   textAlign: TextAlign.center,
                 ),
-                 SizedBox(height: 6),
+                const SizedBox(height: 6),
                 Text(
                   'Tente ampliar o período ou limpar os filtros.',
                   style: Theme.of(context).textTheme.bodyMedium?.copyWith(

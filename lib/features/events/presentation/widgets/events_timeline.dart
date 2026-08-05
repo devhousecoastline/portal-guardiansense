@@ -18,21 +18,23 @@ class EventsStatsBar extends StatelessWidget {
         '${stats.total} ${stats.total == 1 ? 'evento' : 'eventos'}'
       else
         'Mostrando ${stats.visible} de ${stats.total}',
-      if (stats.critical > 0) '${stats.critical} crítico${stats.critical == 1 ? '' : 's'}',
+      if (stats.critical > 0)
+        '${stats.critical} crítico${stats.critical == 1 ? '' : 's'}',
       if (stats.warning > 0) '${stats.warning} atenção',
     ];
 
     return Padding(
-      padding:  EdgeInsets.only(bottom: 12),
+      padding: const EdgeInsets.only(bottom: 10),
       child: Row(
         children: [
-           Icon(Icons.insights_outlined, size: 18, color: AppColors.primary),
-           SizedBox(width: 10),
+          Icon(Icons.insights_outlined, size: 16, color: AppColors.primary),
+          const SizedBox(width: 8),
           Expanded(
             child: Text(
               parts.join(' · '),
-              style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+              style: Theme.of(context).textTheme.bodySmall?.copyWith(
                     color: AppColors.textMuted,
+                    fontWeight: FontWeight.w600,
                   ),
             ),
           ),
@@ -70,7 +72,7 @@ class EventsTimeline extends StatelessWidget {
               AppRoutes.eventsDetailsFor(entry.summary.occurredAt),
             ),
           ),
-          const SizedBox(height: 16),
+          const SizedBox(height: 12),
         ],
       ],
     );
@@ -86,9 +88,9 @@ class _DayHeader extends StatelessWidget {
   Widget build(BuildContext context) {
     return Row(
       children: [
-         Expanded(child: Divider(color: AppColors.divider)),
+        Expanded(child: Divider(color: AppColors.divider)),
         Padding(
-          padding:  EdgeInsets.symmetric(horizontal: 12),
+          padding: const EdgeInsets.symmetric(horizontal: 12),
           child: Text(
             label,
             style: Theme.of(context).textTheme.bodySmall?.copyWith(
@@ -98,7 +100,7 @@ class _DayHeader extends StatelessWidget {
                 ),
           ),
         ),
-         Expanded(child: Divider(color: AppColors.divider)),
+        Expanded(child: Divider(color: AppColors.divider)),
       ],
     );
   }
