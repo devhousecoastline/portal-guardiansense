@@ -4,7 +4,10 @@ import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 import 'package:guardian_portal/core/routing/app_routes.dart';
 import 'package:guardian_portal/core/theme/app_colors.dart';
+import 'package:guardian_portal/core/widgets/guardian_link_chip.dart';
 import 'package:guardian_portal/core/widgets/guardian_scaffold.dart';
+import 'package:guardian_portal/core/widgets/section_card.dart';
+import 'package:guardian_portal/core/widgets/status_pill.dart';
 import 'package:guardian_portal/features/auth/presentation/widgets/auth_scope.dart';
 import 'package:guardian_portal/features/devices/data/device_repository.dart';
 import 'package:guardian_portal/features/devices/domain/guardian_device.dart';
@@ -13,7 +16,7 @@ import 'package:guardian_portal/features/subscription/domain/subscription_entitl
 import 'package:guardian_portal/features/subscription/domain/subscription_pricing.dart';
 import 'package:intl/intl.dart';
 
-/// Minha conta — layout alinhado ao app mobile (`ProfilePage`).
+/// Minha conta — cards no mesmo idioma de Configurações e Dispositivos.
 class AccountPage extends StatelessWidget {
   const AccountPage({super.key});
 
@@ -28,12 +31,16 @@ class AccountPage extends StatelessWidget {
 
         return GuardianScaffold(
           title: 'Minha conta',
+          subtitle: 'Acesso, plano e dados vinculados ao aparelho',
           child: user == null
-              ? const _SignedOutView()
-              : _ProfileView(user: user, onSignOut: () async {
-                  await auth.signOut();
-                  if (context.mounted) context.go(AppRoutes.login);
-                }),
+              ? const _SignedOutCard()
+              : _ProfileView(
+                  user: user,
+                  onSignOut: () async {
+                    await auth.signOut();
+                    if (context.mounted) context.go(AppRoutes.login);
+                  },
+                ),
         );
       },
     );
@@ -41,147 +48,143 @@ class AccountPage extends StatelessWidget {
 }
 
 class _ProfileView extends StatelessWidget {
-  const _ProfileView({
-    required this.user,
-    required this.onSignOut,
-  });
+  const _ProfileView({required this.user, required this.onSignOut});
 
   final User user;
   final Future<void> Function() onSignOut;
 
   @override
   Widget build(BuildContext context) {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.stretch,
+      children: [
+        _IdentityCard(user: user),
+        const SizedBox(height: 16),
+        _PlanCard(uid: user.uid),
+        const SizedBox(height: 16),
+        _AccountInfoCard(user: user),
+        const SizedBox(height: 10),
+        const _AccountFootnote(),
+        const SizedBox(height: 12),
+        Align(
+          alignment: Alignment.centerLeft,
+          child: TextButton.icon(
+            onPressed: onSignOut,
+            icon: const Icon(Icons.logout_outlined, size: 18),
+            label: const Text('Sair da conta'),
+            style: TextButton.styleFrom(
+              foregroundColor: AppColors.riskCritical,
+              textStyle: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                    fontWeight: FontWeight.w700,
+                  ),
+            ),
+          ),
+        ),
+      ],
+    );
+  }
+}
+
+/// Cabeçalho no formato dos tiles: strip colorida, avatar e três linhas.
+class _IdentityCard extends StatelessWidget {
+  const _IdentityCard({required this.user});
+
+  final User user;
+
+  @override
+  Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    final verified = user.emailVerified;
+    final color = verified ? AppColors.trustHigh : AppColors.riskElevated;
     final providers = user.providerData
         .map((p) => p.providerId)
         .where((id) => id.isNotEmpty)
+        .map((id) => _providerInfo(id).$1)
         .toList();
+    final narrow = MediaQuery.sizeOf(context).width < 560;
 
-    return Padding(
-      padding: const EdgeInsets.fromLTRB(16, 20, 16, 24),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.stretch,
-        children: [
-        Center(child: _Avatar(user: user)),
-        const SizedBox(height: 16),
-        Text(
-          _shortLabel(user),
-          textAlign: TextAlign.center,
-          style:  TextStyle(fontSize: 22, fontWeight: FontWeight.w700),
-        ),
-        if (user.email != null && user.email!.isNotEmpty) ...[
-           SizedBox(height: 4),
-          Row(
-            mainAxisAlignment: MainAxisAlignment.center,
+    return SectionCard(
+      padding: EdgeInsets.zero,
+      child: ClipRRect(
+        borderRadius: BorderRadius.circular(16),
+        child: IntrinsicHeight(
+          child: Row(
+            crossAxisAlignment: CrossAxisAlignment.stretch,
             children: [
-              Flexible(
-                child: Text(
-                  user.email!,
-                  textAlign: TextAlign.center,
-                  style:  TextStyle(
-                    color: AppColors.textMuted,
-                    fontSize: 16,
+              Container(width: 4, color: color),
+              Expanded(
+                child: Padding(
+                  padding: const EdgeInsets.fromLTRB(12, 10, 12, 10),
+                  child: Row(
+                    children: [
+                      _Avatar(user: user, size: 44),
+                      const SizedBox(width: 12),
+                      Expanded(
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          mainAxisSize: MainAxisSize.min,
+                          children: [
+                            Text(
+                              _shortLabel(user),
+                              maxLines: 1,
+                              overflow: TextOverflow.ellipsis,
+                              style: theme.textTheme.titleSmall?.copyWith(
+                                fontWeight: FontWeight.w700,
+                              ),
+                            ),
+                            const SizedBox(height: 2),
+                            Text(
+                              user.email?.trim().isNotEmpty == true
+                                  ? user.email!
+                                  : 'Sem e-mail cadastrado',
+                              maxLines: 1,
+                              overflow: TextOverflow.ellipsis,
+                              style: theme.textTheme.bodySmall?.copyWith(
+                                color: AppColors.textMuted,
+                              ),
+                            ),
+                            if (providers.isNotEmpty) ...[
+                              const SizedBox(height: 2),
+                              Text(
+                                'Entrada por ${providers.join(' · ')}',
+                                maxLines: 1,
+                                overflow: TextOverflow.ellipsis,
+                                style: theme.textTheme.bodySmall?.copyWith(
+                                  height: 1.25,
+                                  color: AppColors.textMuted,
+                                ),
+                              ),
+                            ],
+                          ],
+                        ),
+                      ),
+                      if (!narrow) ...[
+                        const SizedBox(width: 12),
+                        StatusPill(
+                          label: verified ? 'VERIFICADO' : 'NÃO VERIFICADO',
+                          color: color,
+                        ),
+                      ],
+                    ],
                   ),
                 ),
               ),
-               SizedBox(width: 6),
-              Icon(
-                user.emailVerified
-                    ? Icons.verified_outlined
-                    : Icons.error_outline,
-                size: 20,
-                color: user.emailVerified
-                    ? AppColors.trustHigh
-                    : AppColors.riskElevated,
-              ),
             ],
           ),
-        ],
-        const SizedBox(height: 20),
-        _ProvidersRow(providers: providers),
-        const SizedBox(height: 20),
-        _PlanCard(uid: user.uid),
-        const SizedBox(height: 20),
-        _InfoCard(
-          title: 'Informações da conta',
-          children: [
-            _InfoTile(
-              icon: Icons.smartphone_outlined,
-              label: 'Aparelho',
-              valueWidget: _LinkedDeviceValue(uid: user.uid),
-            ),
-            _InfoTile(
-              icon: Icons.mail_outline,
-              label: 'E-mail',
-              value: user.email ?? '—',
-            ),
-            _InfoTile(
-              icon: user.emailVerified
-                  ? Icons.verified_outlined
-                  : Icons.mark_email_unread_outlined,
-              label: 'E-mail verificado',
-              valueWidget: Padding(
-                padding:  EdgeInsets.only(top: 2),
-                child: Icon(
-                  user.emailVerified ? Icons.check_circle : Icons.cancel,
-                  size: 22,
-                  color: user.emailVerified
-                      ? AppColors.trustHigh
-                      : AppColors.riskCritical,
-                ),
-              ),
-            ),
-            _InfoTile(
-              icon: Icons.calendar_today_outlined,
-              label: 'Conta criada em',
-              value: _formatDate(user.metadata.creationTime),
-            ),
-            _InfoTile(
-              icon: Icons.login_outlined,
-              label: 'Último acesso',
-              value: _formatDateTime(user.metadata.lastSignInTime),
-            ),
-          ],
         ),
-         SizedBox(height: 20),
-         Text(
-          'Sua conta mantém este aparelho vinculado e prepara os recursos de '
-          'nuvem. A proteção anti-furto funciona 100% no aparelho.',
-          textAlign: TextAlign.center,
-          style: TextStyle(
-            color: AppColors.textMuted,
-            fontSize: 14,
-            height: 1.45,
-          ),
-        ),
-         SizedBox(height: 16),
-        Center(
-          child: TextButton.icon(
-            onPressed: onSignOut,
-            icon:  Icon(Icons.logout_outlined, size: 20),
-            label:  Text('Sair da conta'),
-            style: TextButton.styleFrom(
-              foregroundColor: AppColors.riskCritical,
-              textStyle: const TextStyle(
-                fontSize: 15,
-                fontWeight: FontWeight.w600,
-              ),
-            ),
-          ),
-        ),
-        ],
       ),
     );
   }
 }
 
 class _Avatar extends StatelessWidget {
-  const _Avatar({required this.user});
+  const _Avatar({required this.user, required this.size});
 
   final User user;
+  final double size;
 
   @override
   Widget build(BuildContext context) {
-    const size = 96.0;
     final photo = user.photoURL;
     final hasPhoto = photo != null && photo.isNotEmpty;
 
@@ -201,71 +204,30 @@ class _Avatar extends StatelessWidget {
           ? Image.network(
               photo,
               fit: BoxFit.cover,
-              errorBuilder: (_, _, _) => _initials(),
+              errorBuilder: (_, _, _) => _initials(context),
               loadingBuilder: (context, child, progress) {
                 if (progress == null) return child;
                 return const Center(
                   child: SizedBox(
-                    width: 22,
-                    height: 22,
+                    width: 18,
+                    height: 18,
                     child: CircularProgressIndicator(strokeWidth: 2),
                   ),
                 );
               },
             )
-          : _initials(),
+          : _initials(context),
     );
   }
 
-  Widget _initials() {
+  Widget _initials(BuildContext context) {
     return Center(
       child: Text(
         _userInitials(user),
-        style:  TextStyle(
-          fontSize: 34,
-          fontWeight: FontWeight.w700,
-          color: AppColors.trustHigh,
-        ),
-      ),
-    );
-  }
-}
-
-class _ProvidersRow extends StatelessWidget {
-  const _ProvidersRow({required this.providers});
-
-  final List<String> providers;
-
-  @override
-  Widget build(BuildContext context) {
-    if (providers.isEmpty) return const SizedBox.shrink();
-    return Wrap(
-      alignment: WrapAlignment.center,
-      spacing: 8,
-      runSpacing: 8,
-      children: providers.map(_chip).toList(),
-    );
-  }
-
-  Widget _chip(String providerId) {
-    final (label, icon) = _providerInfo(providerId);
-    return Container(
-      padding:  EdgeInsets.symmetric(horizontal: 12, vertical: 7),
-      decoration: BoxDecoration(
-        color: AppColors.card,
-        borderRadius: BorderRadius.circular(20),
-        border: Border.all(color: AppColors.divider),
-      ),
-      child: Row(
-        mainAxisSize: MainAxisSize.min,
-        children: [
-          Icon(icon, size: 20, color: AppColors.trustHigh),
-          const SizedBox(width: 6),
-          Text(
-            label,
-            style: const TextStyle(fontSize: 14.5, fontWeight: FontWeight.w600),
-          ),
-        ],
+        style: Theme.of(context).textTheme.titleMedium?.copyWith(
+              fontWeight: FontWeight.w700,
+              color: AppColors.trustHigh,
+            ),
       ),
     );
   }
@@ -304,6 +266,8 @@ class _PlanCardState extends State<_PlanCard> {
 
   @override
   Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+
     return StreamBuilder<SubscriptionEntitlement?>(
       stream: SubscriptionRepository().watchEntitlement(widget.uid),
       builder: (context, snap) {
@@ -312,15 +276,15 @@ class _PlanCardState extends State<_PlanCard> {
         final status = entitlement?.effectiveStatusAt(now);
         final df = DateFormat('dd/MM/yyyy');
 
-        final (title, detail, cta) = switch (status) {
+        final (label, detail, cta) = switch (status) {
           SubscriptionStatus.trial => (
-              'Trial',
+              'TRIAL',
               'Restam ${entitlement!.trialDaysLeftCeil(now)} dia'
                   '${entitlement.trialDaysLeftCeil(now) == 1 ? '' : 's'} grátis.',
               'Assinar com PIX',
             ),
           SubscriptionStatus.active => (
-              'Ativo',
+              'ATIVO',
               entitlement!.expiresAt != null
                   ? 'Até ${df.format(entitlement.expiresAt!.toLocal())}'
                       '${entitlement.store != null ? ' · ${entitlement.store}' : ''}'
@@ -328,106 +292,198 @@ class _PlanCardState extends State<_PlanCard> {
               'Ver plano',
             ),
           SubscriptionStatus.expired => (
-              'Trial encerrado',
+              'TRIAL ENCERRADO',
               'Assine para continuar com a proteção completa.',
               'Assinar com PIX',
             ),
           SubscriptionStatus.lapsed => (
-              'Assinatura vencida',
+              'VENCIDA',
               'Renove com PIX para reativar.',
               'Renovar com PIX',
             ),
           null => (
-              'Plano',
+              'PLANO',
               'Assinatura anual · ${SubscriptionPricing.yearlyLabelBr}',
               'Assinar com PIX',
             ),
         };
+        final color = switch (status) {
+          SubscriptionStatus.active => AppColors.trustHigh,
+          SubscriptionStatus.trial => AppColors.trustMedium,
+          SubscriptionStatus.expired ||
+          SubscriptionStatus.lapsed =>
+            AppColors.riskCritical,
+          null => AppColors.primary,
+        };
 
-        return _InfoCard(
-          title: 'Plano',
-          children: [
-            _InfoTile(
-              icon: Icons.workspace_premium_outlined,
-              label: title,
-              valueWidget: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
+        return SectionCard(
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.stretch,
+            children: [
+              _CardTitle(
+                icon: Icons.workspace_premium_outlined,
+                label: 'Plano',
+                trailing: StatusPill(label: label, color: color),
+              ),
+              const SizedBox(height: 12),
+              Text(detail, style: theme.textTheme.bodyMedium),
+              const SizedBox(height: 12),
+              Wrap(
+                spacing: 10,
+                runSpacing: 8,
                 children: [
-                  Text(
-                    detail,
-                    style: const TextStyle(
-                      fontSize: 16,
-                      fontWeight: FontWeight.w500,
-                    ),
+                  GuardianLinkChip(
+                    label: cta,
+                    onPressed: () => context.go(AppRoutes.premium),
+                    compact: true,
                   ),
-                  const SizedBox(height: 10),
-                  Align(
-                    alignment: Alignment.centerLeft,
-                    child: TextButton(
-                      onPressed: () => context.go(AppRoutes.premium),
-                      style: TextButton.styleFrom(
-                        foregroundColor: AppColors.trustHigh,
-                        padding: EdgeInsets.zero,
-                        minimumSize: Size.zero,
-                        tapTargetSize: MaterialTapTargetSize.shrinkWrap,
-                      ),
-                      child: Text(
-                        cta,
-                        style: const TextStyle(fontWeight: FontWeight.w700),
-                      ),
-                    ),
-                  ),
-                  if (kDebugMode) ...[
-                    const SizedBox(height: 12),
-                    OutlinedButton.icon(
+                  if (kDebugMode)
+                    GuardianLinkChip(
+                      label: _resetting
+                          ? 'Reiniciando…'
+                          : 'Resetar trial (teste)',
+                      icon: Icons.refresh_rounded,
+                      compact: true,
                       onPressed: _resetting ? null : _resetTrial,
-                      icon: _resetting
-                          ? const SizedBox(
-                              width: 16,
-                              height: 16,
-                              child: CircularProgressIndicator(strokeWidth: 2),
-                            )
-                          : const Icon(Icons.refresh_rounded, size: 18),
-                      label: Text(
-                        _resetting ? 'Reiniciando…' : 'Resetar trial (teste)',
-                      ),
                     ),
-                  ],
                 ],
               ),
-            ),
-          ],
+            ],
+          ),
         );
       },
     );
   }
 }
 
-class _InfoCard extends StatelessWidget {
-  const _InfoCard({required this.title, required this.children});
+class _AccountInfoCard extends StatelessWidget {
+  const _AccountInfoCard({required this.user});
 
-  final String title;
-  final List<Widget> children;
+  final User user;
 
   @override
   Widget build(BuildContext context) {
-    return Container(
-      decoration: BoxDecoration(
-        color: AppColors.card,
-        borderRadius: BorderRadius.circular(14),
+    final verified = user.emailVerified;
+    final tiles = <Widget>[
+      _InfoTile(
+        icon: Icons.smartphone_outlined,
+        label: 'Aparelho',
+        valueWidget: _LinkedDeviceValue(uid: user.uid),
       ),
-      padding: const EdgeInsets.fromLTRB(16, 14, 16, 6),
+      _InfoTile(
+        icon: Icons.mail_outline,
+        label: 'E-mail',
+        value: user.email ?? '—',
+      ),
+      _InfoTile(
+        icon: verified
+            ? Icons.verified_outlined
+            : Icons.mark_email_unread_outlined,
+        label: 'E-mail verificado',
+        value: verified ? 'Sim' : 'Não',
+        valueColor: verified ? AppColors.trustHigh : AppColors.riskElevated,
+      ),
+      _InfoTile(
+        icon: Icons.calendar_today_outlined,
+        label: 'Conta criada em',
+        value: _formatDate(user.metadata.creationTime),
+      ),
+      _InfoTile(
+        icon: Icons.login_outlined,
+        label: 'Último acesso',
+        value: _formatDateTime(user.metadata.lastSignInTime),
+      ),
+    ];
+
+    return SectionCard(
       child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
+        crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
-          Text(
-            title,
-            style: const TextStyle(fontSize: 18, fontWeight: FontWeight.w700),
+          const _CardTitle(
+            icon: Icons.person_outline,
+            label: 'Informações da conta',
           ),
-          const SizedBox(height: 8),
-          ...children,
+          const SizedBox(height: 12),
+          LayoutBuilder(
+            builder: (context, constraints) {
+              if (constraints.maxWidth < 560) {
+                return Column(
+                  crossAxisAlignment: CrossAxisAlignment.stretch,
+                  children: [
+                    for (var i = 0; i < tiles.length; i++) ...[
+                      if (i > 0) const SizedBox(height: 8),
+                      tiles[i],
+                    ],
+                  ],
+                );
+              }
+              return _PairGrid(tiles: tiles);
+            },
+          ),
         ],
       ),
+    );
+  }
+}
+
+/// Grade de dois por linha — mesma leitura do card "Respostas em segundos".
+class _PairGrid extends StatelessWidget {
+  const _PairGrid({required this.tiles});
+
+  final List<Widget> tiles;
+
+  @override
+  Widget build(BuildContext context) {
+    final rows = <Widget>[];
+    for (var i = 0; i < tiles.length; i += 2) {
+      rows.add(
+        IntrinsicHeight(
+          child: Row(
+            crossAxisAlignment: CrossAxisAlignment.stretch,
+            children: [
+              Expanded(child: tiles[i]),
+              const SizedBox(width: 8),
+              Expanded(
+                child: i + 1 < tiles.length
+                    ? tiles[i + 1]
+                    : const SizedBox.shrink(),
+              ),
+            ],
+          ),
+        ),
+      );
+      if (i + 2 < tiles.length) rows.add(const SizedBox(height: 8));
+    }
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.stretch,
+      children: rows,
+    );
+  }
+}
+
+class _CardTitle extends StatelessWidget {
+  const _CardTitle({required this.icon, required this.label, this.trailing});
+
+  final IconData icon;
+  final String label;
+  final Widget? trailing;
+
+  @override
+  Widget build(BuildContext context) {
+    return Row(
+      children: [
+        Icon(icon, color: AppColors.primary, size: 22),
+        const SizedBox(width: 10),
+        Expanded(
+          child: Text(
+            label,
+            style: Theme.of(context).textTheme.titleMedium?.copyWith(
+                  fontWeight: FontWeight.w600,
+                ),
+          ),
+        ),
+        ?trailing,
+      ],
     );
   }
 }
@@ -438,40 +494,56 @@ class _InfoTile extends StatelessWidget {
     required this.label,
     this.value,
     this.valueWidget,
+    this.valueColor,
   }) : assert(value != null || valueWidget != null);
 
   final IconData icon;
   final String label;
   final String? value;
   final Widget? valueWidget;
+  final Color? valueColor;
 
   @override
   Widget build(BuildContext context) {
-    return Padding(
-      padding:  EdgeInsets.symmetric(vertical: 8),
+    final theme = Theme.of(context);
+
+    return Container(
+      padding: const EdgeInsets.fromLTRB(10, 8, 10, 8),
+      decoration: BoxDecoration(
+        color: AppColors.surface.withValues(alpha: 0.55),
+        borderRadius: BorderRadius.circular(10),
+        border: Border.all(color: AppColors.divider.withValues(alpha: 0.9)),
+      ),
       child: Row(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Icon(icon, size: 22, color: AppColors.trustHigh),
-           SizedBox(width: 12),
+          Padding(
+            padding: const EdgeInsets.only(top: 1),
+            child: Icon(icon, size: 16, color: AppColors.textMuted),
+          ),
+          const SizedBox(width: 8),
           Expanded(
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
+              mainAxisSize: MainAxisSize.min,
               children: [
                 Text(
                   label,
-                  style:  TextStyle(
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                  style: theme.textTheme.bodySmall?.copyWith(
                     color: AppColors.textMuted,
-                    fontSize: 15,
                   ),
                 ),
                 const SizedBox(height: 2),
                 valueWidget ??
                     Text(
                       value!,
-                      style: const TextStyle(
-                        fontSize: 16,
-                        fontWeight: FontWeight.w500,
+                      maxLines: 2,
+                      overflow: TextOverflow.ellipsis,
+                      style: theme.textTheme.bodyMedium?.copyWith(
+                        fontWeight: FontWeight.w600,
+                        color: valueColor,
                       ),
                     ),
               ],
@@ -490,76 +562,101 @@ class _LinkedDeviceValue extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    const valueStyle = TextStyle(fontSize: 16, fontWeight: FontWeight.w500);
+    final style = Theme.of(context).textTheme.bodyMedium?.copyWith(
+          fontWeight: FontWeight.w600,
+        );
+
     return StreamBuilder<GuardianDevice?>(
       stream: DeviceRepository().watchPrimaryDevice(uid),
       builder: (context, snapshot) {
         if (snapshot.connectionState == ConnectionState.waiting &&
             !snapshot.hasData) {
-          return const Text('—', style: valueStyle);
+          return Text('—', style: style);
         }
-        final device = snapshot.data;
-        final label = device?.status.modelLabel.trim();
-        final text =
-            (label != null && label.isNotEmpty) ? label : '—';
-        return Text(text, style: valueStyle);
+        final label = snapshot.data?.status.modelLabel.trim();
+        return Text(
+          label == null || label.isEmpty ? '—' : label,
+          maxLines: 1,
+          overflow: TextOverflow.ellipsis,
+          style: style,
+        );
       },
     );
   }
 }
 
-class _SignedOutView extends StatelessWidget {
-  const _SignedOutView();
+class _AccountFootnote extends StatelessWidget {
+  const _AccountFootnote();
 
   @override
   Widget build(BuildContext context) {
-    return Center(
-      child: Padding(
-        padding:  EdgeInsets.all(24),
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            Icon(
-              Icons.account_circle_outlined,
-              size: 88,
-              color: AppColors.textMuted.withValues(alpha: 0.6),
-            ),
-             SizedBox(height: 16),
-             Text(
-              'Você ainda não entrou',
-              textAlign: TextAlign.center,
-              style: TextStyle(fontSize: 20, fontWeight: FontWeight.w700),
-            ),
-             SizedBox(height: 8),
-             Text(
-              'Entre ou crie uma conta para vincular este aparelho e preparar '
-              'recursos de nuvem. A proteção funciona mesmo sem login.',
-              textAlign: TextAlign.center,
-              style: TextStyle(
-                color: AppColors.textMuted,
-                fontSize: 15,
-                height: 1.45,
-              ),
-            ),
-             SizedBox(height: 24),
-            FilledButton(
-              onPressed: () => context.go(AppRoutes.login),
-              style: FilledButton.styleFrom(
-                backgroundColor: AppColors.trustHigh,
-                padding:
-                    const EdgeInsets.symmetric(horizontal: 32, vertical: 14),
-              ),
-              child: const Text(
-                'Entrar ou criar conta',
-                style: TextStyle(
-                  fontSize: 16,
-                  fontWeight: FontWeight.w700,
-                  color: Colors.white,
+    return Row(
+      children: [
+        Icon(Icons.info_outline, size: 14, color: AppColors.textMuted),
+        const SizedBox(width: 8),
+        Expanded(
+          child: Text(
+            'A conta mantém o aparelho vinculado e prepara os recursos de '
+            'nuvem. A proteção anti-furto funciona no próprio aparelho.',
+            style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                  color: AppColors.textMuted,
                 ),
+          ),
+        ),
+      ],
+    );
+  }
+}
+
+/// Estado vazio no padrão de Dispositivos e Localizar.
+class _SignedOutCard extends StatelessWidget {
+  const _SignedOutCard();
+
+  @override
+  Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+
+    return SectionCard(
+      child: Column(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Icon(
+            Icons.account_circle_outlined,
+            size: 36,
+            color: AppColors.textMuted,
+          ),
+          const SizedBox(height: 12),
+          Text(
+            'Você ainda não entrou',
+            textAlign: TextAlign.center,
+            style: theme.textTheme.titleMedium,
+          ),
+          const SizedBox(height: 6),
+          Text(
+            'Entre ou crie uma conta para vincular este aparelho e preparar '
+            'os recursos de nuvem. A proteção funciona mesmo sem login.',
+            textAlign: TextAlign.center,
+            style: theme.textTheme.bodyMedium?.copyWith(
+              color: AppColors.textMuted,
+              height: 1.35,
+            ),
+          ),
+          const SizedBox(height: 16),
+          FilledButton(
+            onPressed: () => context.go(AppRoutes.login),
+            style: FilledButton.styleFrom(
+              backgroundColor: AppColors.trustHigh,
+              padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 12),
+            ),
+            child: Text(
+              'Entrar ou criar conta',
+              style: theme.textTheme.bodyMedium?.copyWith(
+                fontWeight: FontWeight.w700,
+                color: Colors.white,
               ),
             ),
-          ],
-        ),
+          ),
+        ],
       ),
     );
   }
@@ -609,8 +706,7 @@ String _formatDate(DateTime? date) {
   final local = date.toLocal();
   final d = local.day.toString().padLeft(2, '0');
   final m = local.month.toString().padLeft(2, '0');
-  final y = local.year.toString();
-  return '$d/$m/$y';
+  return '$d/$m/${local.year}';
 }
 
 String _formatDateTime(DateTime? date) {
