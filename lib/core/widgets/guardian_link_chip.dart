@@ -62,13 +62,18 @@ class _GuardianLinkChipState extends State<GuardianLinkChip> {
           child: Row(
             mainAxisSize: MainAxisSize.min,
             children: [
-              Text(
-                widget.label,
-                style: TextStyle(
-                  color: fg,
-                  fontWeight: FontWeight.w700,
-                  fontSize: fontSize,
-                  height: 1.1,
+              Flexible(
+                child: Text(
+                  widget.label,
+                  maxLines: 1,
+                  softWrap: false,
+                  overflow: TextOverflow.ellipsis,
+                  style: TextStyle(
+                    color: fg,
+                    fontWeight: FontWeight.w700,
+                    fontSize: fontSize,
+                    height: 1.1,
+                  ),
                 ),
               ),
               const SizedBox(width: 6),

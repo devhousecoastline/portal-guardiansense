@@ -4,7 +4,6 @@ import 'package:guardian_portal/core/navigation/navigation_loading_controller.da
 import 'package:guardian_portal/core/routing/app_routes.dart';
 import 'package:guardian_portal/core/theme/app_colors.dart';
 import 'package:guardian_portal/core/theme/dashboard_typography.dart';
-import 'package:guardian_portal/core/widgets/guardian_link_chip.dart';
 import 'package:guardian_portal/core/widgets/section_card.dart';
 import 'package:guardian_portal/features/dashboard/domain/device_status.dart';
 import 'package:guardian_portal/features/dashboard/domain/protection_snapshot.dart';
@@ -99,6 +98,34 @@ class _ChecklistBody extends StatelessWidget {
   /// Empurra "Último evento" (fullWidth) para a base do card.
   final bool pinFooter;
 
+  /// Largura mínima do card para os blocos de rodapé caberem lado a lado.
+  static const _sideBySideFooterWidth = 300.0;
+
+  /// Sem altura fixa há espaço para empilhar; só divide em cards realmente largos.
+  static const _sideBySideFooterWidthLoose = 560.0;
+
+  bool _sideBySideFooter(double maxWidth) {
+    if (layout.fullWidth.length < 2) return false;
+    return maxWidth >=
+        (pinFooter ? _sideBySideFooterWidth : _sideBySideFooterWidthLoose);
+  }
+
+  VoidCallback? _onDetails(
+    BuildContext context,
+    ProtectionChecklistEntry entry,
+  ) {
+    if (entry.question.startsWith('Último evento')) {
+      if (entry.answer == 'Nenhuma registrada') return null;
+      return () =>
+          NavigationLoadingScope.of(context).go(context, AppRoutes.events);
+    }
+    if (entry.question.startsWith('Apps fora')) {
+      return () =>
+          NavigationLoadingScope.of(context).go(context, AppRoutes.settings);
+    }
+    return null;
+  }
+
   @override
   Widget build(BuildContext context) {
     final iconEntries = [...layout.left, ...layout.right];
@@ -124,51 +151,187 @@ class _ChecklistBody extends StatelessWidget {
               )
             : _ChecklistColumn(entries: iconEntries, compact: compact);
 
-    final footer = layout.fullWidth.isEmpty
-        ? null
-        : Column(
+    return LayoutBuilder(
+      builder: (context, constraints) {
+        final footer = _buildFooter(
+          context,
+          sideBySide: _sideBySideFooter(constraints.maxWidth),
+        );
+
+        if (!pinFooter) {
+          return Column(
             crossAxisAlignment: CrossAxisAlignment.stretch,
             children: [
-              for (final entry in layout.fullWidth)
-                _ChecklistRow(
-                  entry: entry,
-                  fullWidth: true,
-                  compact: compact,
-                  onDetails: entry.question.startsWith('Último evento') &&
-                          entry.answer != 'Nenhuma registrada'
-                      ? () => NavigationLoadingScope.of(context)
-                          .go(context, AppRoutes.events)
-                      : entry.question.startsWith('Apps fora')
-                          ? () => NavigationLoadingScope.of(context)
-                              .go(context, AppRoutes.settings)
-                          : null,
-                ),
+              grid,
+              if (footer != null) ...[
+                SizedBox(height: compact ? 8 : 10),
+                footer,
+              ],
             ],
           );
+        }
 
-    if (!pinFooter) {
-      return Column(
-        crossAxisAlignment: CrossAxisAlignment.stretch,
-        children: [
-          grid,
-          if (footer != null) ...[
-            SizedBox(height: compact ? 8 : 10),
-            footer,
-          ],
-        ],
+        // Altura fixa da célula: preenche quando sobra espaço, rola quando falta.
+        return SingleChildScrollView(
+          physics: const ClampingScrollPhysics(),
+          child: ConstrainedBox(
+            constraints: BoxConstraints(minHeight: constraints.maxHeight),
+            child: IntrinsicHeight(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.stretch,
+                children: [
+                  grid,
+                  if (footer != null) ...[
+                    const Spacer(),
+                    SizedBox(height: compact ? 8 : 10),
+                    footer,
+                  ],
+                ],
+              ),
+            ),
+          ),
+        );
+      },
+    );
+  }
+
+  Widget? _buildFooter(BuildContext context, {required bool sideBySide}) {
+    if (layout.fullWidth.isEmpty) return null;
+
+    final gap = compact ? 8.0 : 10.0;
+    final row = <Widget>[];
+    final column = <Widget>[];
+
+    for (final entry in layout.fullWidth) {
+      final tile = _ChecklistFooterTile(
+        entry: entry,
+        compact: compact,
+        onTap: _onDetails(context, entry),
       );
+      if (row.isNotEmpty) {
+        row.add(SizedBox(width: gap));
+        column.add(SizedBox(height: gap));
+      }
+      row.add(Expanded(child: tile));
+      column.add(tile);
     }
 
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.stretch,
-      children: [
-        grid,
-        if (footer != null) ...[
-          const Spacer(),
-          SizedBox(height: compact ? 8 : 10),
-          footer,
-        ],
-      ],
+    return Padding(
+      padding: EdgeInsets.only(top: compact ? 4 : 6),
+      child: sideBySide
+          ? IntrinsicHeight(
+              child: Row(
+                crossAxisAlignment: CrossAxisAlignment.stretch,
+                children: row,
+              ),
+            )
+          : Column(
+              crossAxisAlignment: CrossAxisAlignment.stretch,
+              children: column,
+            ),
+    );
+  }
+}
+
+/// Bloco de rodapé — tile inteiro clicável, com chevron à direita.
+class _ChecklistFooterTile extends StatelessWidget {
+  const _ChecklistFooterTile({
+    required this.entry,
+    required this.compact,
+    this.onTap,
+  });
+
+  final ProtectionChecklistEntry entry;
+  final bool compact;
+  final VoidCallback? onTap;
+
+  /// Espaço das duas linhas que o texto ocupa nas colunas estreitas — reservá-lo
+  /// mantém a mesma altura quando o bloco aparece sozinho em largura total.
+  static double _textBlockHeight(TextStyle question, TextStyle answer) {
+    double twoLines(TextStyle style) =>
+        (style.fontSize ?? 12) * (style.height ?? 1.2) * 2;
+    return twoLines(question) + 2 + twoLines(answer);
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final color = switch (entry.signal) {
+      ChecklistSignal.ok => AppColors.trustHigh,
+      ChecklistSignal.warn => AppColors.trustMedium,
+      ChecklistSignal.alert => AppColors.riskCritical,
+      ChecklistSignal.muted => AppColors.textMuted,
+    };
+    final icon = _ChecklistRow._iconFor(entry.question);
+    final radius = BorderRadius.circular(10);
+    final questionStyle = DashboardTypography.mutedLabel(context);
+    final answerStyle = DashboardTypography.emphasis(context, color: color);
+
+    return Container(
+      decoration: BoxDecoration(
+        color: color.withValues(alpha: 0.06),
+        borderRadius: radius,
+        border: Border.all(color: color.withValues(alpha: 0.18)),
+      ),
+      child: Material(
+        color: Colors.transparent,
+        child: InkWell(
+          onTap: onTap,
+          borderRadius: radius,
+          child: Padding(
+            padding: EdgeInsets.symmetric(
+              horizontal: compact ? 10 : 12,
+              vertical: compact ? 8 : 10,
+            ),
+            child: ConstrainedBox(
+              constraints: BoxConstraints(
+                minHeight: _textBlockHeight(questionStyle, answerStyle),
+              ),
+              child: Row(
+                children: [
+                  icon != null
+                      ? Icon(icon, size: 16, color: color.withValues(alpha: 0.9))
+                      : Container(
+                          width: 8,
+                          height: 8,
+                          decoration: BoxDecoration(
+                            color: color,
+                            shape: BoxShape.circle,
+                          ),
+                        ),
+                  const SizedBox(width: 8),
+                  Expanded(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        Text(
+                          entry.question,
+                          style: questionStyle,
+                          maxLines: 2,
+                          overflow: TextOverflow.ellipsis,
+                        ),
+                        const SizedBox(height: 2),
+                        Text(
+                          entry.answer,
+                          style: answerStyle,
+                          maxLines: 2,
+                          overflow: TextOverflow.ellipsis,
+                        ),
+                      ],
+                    ),
+                  ),
+                  if (onTap != null)
+                    Icon(
+                      Icons.chevron_right_rounded,
+                      size: 18,
+                      color: AppColors.textMuted,
+                    ),
+                ],
+              ),
+            ),
+          ),
+        ),
+      ),
     );
   }
 }
@@ -336,15 +499,11 @@ class _ChecklistColumn extends StatelessWidget {
 class _ChecklistRow extends StatelessWidget {
   const _ChecklistRow({
     required this.entry,
-    this.fullWidth = false,
     this.compact = false,
-    this.onDetails,
   });
 
   final ProtectionChecklistEntry entry;
-  final bool fullWidth;
   final bool compact;
-  final VoidCallback? onDetails;
 
   static IconData? _iconFor(String question) {
     if (question.startsWith('Meu celular')) return Icons.shield_outlined;
@@ -373,75 +532,40 @@ class _ChecklistRow extends StatelessWidget {
     const iconSize = 18.0;
 
     return Padding(
-      padding: EdgeInsets.only(
-        bottom: fullWidth ? (compact ? 3 : 4) : (compact ? 6 : 10),
-        top: fullWidth ? (compact ? 4 : 6) : 0,
-      ),
-      child: Container(
-        width: double.infinity,
-        padding: fullWidth
-            ? EdgeInsets.symmetric(
-                horizontal: 12,
-                vertical: compact ? 8 : 10,
-              )
-            : EdgeInsets.zero,
-        decoration: fullWidth
-            ? BoxDecoration(
-                color: color.withValues(alpha: 0.06),
-                borderRadius: BorderRadius.circular(10),
-                border: Border.all(color: color.withValues(alpha: 0.18)),
-              )
-            : null,
-        child: Row(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Padding(
-              padding: const EdgeInsets.only(top: 2),
-              child: icon != null
-                  ? Icon(icon, size: iconSize, color: color.withValues(alpha: 0.9))
-                  : Container(
-                      width: 8,
-                      height: 8,
-                      margin: const EdgeInsets.only(top: 4),
-                      decoration:
-                          BoxDecoration(color: color, shape: BoxShape.circle),
-                    ),
-            ),
-            const SizedBox(width: 10),
-            Expanded(
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text(
-                    entry.question,
-                    style: DashboardTypography.mutedLabel(context),
+      padding: EdgeInsets.only(bottom: compact ? 6 : 10),
+      child: Row(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Padding(
+            padding: const EdgeInsets.only(top: 2),
+            child: icon != null
+                ? Icon(icon, size: iconSize, color: color.withValues(alpha: 0.9))
+                : Container(
+                    width: 8,
+                    height: 8,
+                    margin: const EdgeInsets.only(top: 4),
+                    decoration:
+                        BoxDecoration(color: color, shape: BoxShape.circle),
                   ),
-                  const SizedBox(height: 2),
-                  Text(
-                    entry.answer,
-                    style: DashboardTypography.emphasis(context, color: color),
-                  ),
-                  if (onDetails != null) ...[
-                    const SizedBox(height: 8),
-                    Align(
-                      alignment: Alignment.centerLeft,
-                      child: GuardianLinkChip(
-                        label: entry.question.startsWith('Apps fora')
-                            ? 'Ajustar em Configurações'
-                            : 'Ver detalhes',
-                        onPressed: onDetails,
-                        compact: compact,
-                        icon: entry.question.startsWith('Apps fora')
-                            ? Icons.settings_outlined
-                            : Icons.arrow_forward_rounded,
-                      ),
-                    ),
-                  ],
-                ],
-              ),
+          ),
+          const SizedBox(width: 10),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  entry.question,
+                  style: DashboardTypography.mutedLabel(context),
+                ),
+                const SizedBox(height: 2),
+                Text(
+                  entry.answer,
+                  style: DashboardTypography.emphasis(context, color: color),
+                ),
+              ],
             ),
-          ],
-        ),
+          ),
+        ],
       ),
     );
   }

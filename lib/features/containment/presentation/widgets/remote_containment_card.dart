@@ -422,69 +422,136 @@ class _TintedPanel extends StatelessWidget {
         borderRadius: BorderRadius.circular(10),
         border: Border.all(color: color.withValues(alpha: 0.2)),
       ),
-      child: sideBySide
-          ? Row(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Expanded(
-                  child: _PanelContent(
-                    color: color,
-                    icon: icon,
-                    title: title,
-                    subtitle: subtitle,
-                    compact: compact,
-                  ),
-                ),
-                const SizedBox(width: 16),
-                action!,
-              ],
-            )
-          : Column(
-              crossAxisAlignment: CrossAxisAlignment.stretch,
-              children: [
-                if (fillHeight) ...[
-                  _PanelContent(
-                    color: color,
-                    icon: icon,
-                    title: title,
-                    subtitle: subtitle,
-                    compact: compact,
-                    trailing: trailing,
-                  ),
-                  if (action != null) ...[
-                    SizedBox(height: compact ? 6 : 8),
-                    Align(
-                      alignment: Alignment.centerLeft,
-                      child: action,
-                    ),
-                  ],
-                  const Spacer(),
-                ] else ...[
-                  Row(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Expanded(
-                        child: _PanelContent(
-                          color: color,
-                          icon: icon,
-                          title: title,
-                          subtitle: subtitle,
-                          compact: compact,
-                        ),
+      child: fillHeight
+          ? LayoutBuilder(
+              builder: (context, constraints) {
+                return Center(
+                  child: FittedBox(
+                    fit: BoxFit.scaleDown,
+                    child: SizedBox(
+                      width: constraints.maxWidth,
+                      child: _ContainmentHero(
+                        color: color,
+                        icon: icon,
+                        title: title,
+                        subtitle: subtitle,
+                        action: action,
+                        trailing: trailing,
+                        compact: compact,
                       ),
-                      if (trailing != null) trailing!,
-                    ],
-                  ),
-                  if (action != null) ...[
-                    SizedBox(height: compact ? 8 : 12),
-                    Align(
-                      alignment: Alignment.centerLeft,
-                      child: action,
                     ),
+                  ),
+                );
+              },
+            )
+          : sideBySide
+              ? Row(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Expanded(
+                      child: _PanelContent(
+                        color: color,
+                        icon: icon,
+                        title: title,
+                        subtitle: subtitle,
+                        compact: compact,
+                      ),
+                    ),
+                    const SizedBox(width: 16),
+                    action!,
                   ],
-                ],
-              ],
-            ),
+                )
+              : Column(
+                  crossAxisAlignment: CrossAxisAlignment.stretch,
+                  children: [
+                    Row(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Expanded(
+                          child: _PanelContent(
+                            color: color,
+                            icon: icon,
+                            title: title,
+                            subtitle: subtitle,
+                            compact: compact,
+                          ),
+                        ),
+                        ?trailing,
+                      ],
+                    ),
+                    if (action != null) ...[
+                      SizedBox(height: compact ? 8 : 12),
+                      Align(
+                        alignment: Alignment.centerLeft,
+                        child: action,
+                      ),
+                    ],
+                  ],
+                ),
+    );
+  }
+}
+
+/// Conteúdo centralizado do painel quando o card ocupa a altura da célula —
+/// mesmo desenho do estado "Ostra fechada".
+class _ContainmentHero extends StatelessWidget {
+  const _ContainmentHero({
+    required this.color,
+    required this.icon,
+    required this.title,
+    required this.subtitle,
+    required this.compact,
+    this.action,
+    this.trailing,
+  });
+
+  final Color color;
+  final IconData icon;
+  final String title;
+  final String subtitle;
+  final bool compact;
+  final Widget? action;
+  final Widget? trailing;
+
+  @override
+  Widget build(BuildContext context) {
+    final ring = compact ? 40.0 : 48.0;
+    final iconSize = compact ? 22.0 : 28.0;
+
+    return Column(
+      mainAxisSize: MainAxisSize.min,
+      children: [
+        Container(
+          width: ring,
+          height: ring,
+          decoration: BoxDecoration(
+            color: color.withValues(alpha: 0.12),
+            shape: BoxShape.circle,
+            border: Border.all(color: color.withValues(alpha: 0.28)),
+          ),
+          child: Icon(icon, size: iconSize, color: color),
+        ),
+        SizedBox(height: compact ? 8 : 10),
+        Text(
+          title,
+          textAlign: TextAlign.center,
+          style: DashboardTypography.panelTitle(context, color: color),
+        ),
+        SizedBox(height: compact ? 4 : 6),
+        Text(
+          subtitle,
+          textAlign: TextAlign.center,
+          style: DashboardTypography.panelSubtitle(context),
+        ),
+        if (trailing != null) ...[
+          SizedBox(height: compact ? 8 : 10),
+          trailing!,
+        ],
+        if (action != null) ...[
+          SizedBox(height: compact ? 10 : 14),
+          action!,
+        ],
+      ],
     );
   }
 }
@@ -496,7 +563,6 @@ class _PanelContent extends StatelessWidget {
     required this.title,
     required this.subtitle,
     this.compact = false,
-    this.trailing,
   });
 
   final Color color;
@@ -504,7 +570,6 @@ class _PanelContent extends StatelessWidget {
   final String title;
   final String subtitle;
   final bool compact;
-  final Widget? trailing;
 
   @override
   Widget build(BuildContext context) {
@@ -536,7 +601,6 @@ class _PanelContent extends StatelessWidget {
             ],
           ),
         ),
-        if (trailing != null) trailing!,
       ],
     );
   }

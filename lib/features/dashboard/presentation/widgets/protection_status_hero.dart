@@ -39,8 +39,8 @@ class ProtectionStatusHero extends StatelessWidget {
         padding: EdgeInsets.all(cardPadding),
         decoration: BoxDecoration(
           color: AppColors.card,
-          borderRadius: BorderRadius.circular(compact ? 16 : 20),
-          border: Border.all(color: accent.withValues(alpha: 0.35), width: 1.5),
+          borderRadius: BorderRadius.circular(16),
+          border: Border.all(color: AppColors.divider),
         ),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,

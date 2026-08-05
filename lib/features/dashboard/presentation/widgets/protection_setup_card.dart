@@ -75,6 +75,8 @@ class ProtectionSetupCard extends StatelessWidget {
                 ),
               ),
               SizedBox(height: compact ? 10 : 14),
+              // Divide a folga entre topo e base para centrar a timeline no card.
+              if (fillHeight) const Spacer(),
               _SetupTimeline(
                 items: status.protectionSetupItems,
                 muted: muted,
@@ -164,6 +166,7 @@ class _SetupTimeline extends StatelessWidget {
                       iconSize: iconSize,
                       stemHeight: stemH,
                       iconFor: _iconFor,
+                      colorFor: _colorFor,
                       index: i,
                       total: n,
                     ),
@@ -176,38 +179,63 @@ class _SetupTimeline extends StatelessWidget {
     );
   }
 
-  static IconData _iconFor(ProtectionSetupItem item) {
+  static IconData _iconFor(ProtectionSetupItem item) => switch (_kindOf(item)) {
+        _SetupKind.notifications => Icons.notifications_outlined,
+        _SetupKind.accessibility => Icons.accessibility_new_rounded,
+        _SetupKind.battery => Icons.battery_charging_full_rounded,
+        _SetupKind.protectedLayers => Icons.layers_outlined,
+        _SetupKind.recovery => Icons.fingerprint,
+        _SetupKind.unknown => Icons.check_circle_outline,
+      };
+
+  /// Cores decorativas — dão identidade a cada requisito sem invadir a escala
+  /// semântica de risco (verde/âmbar/vermelho), reservada para estado.
+  static Color _colorFor(ProtectionSetupItem item) => switch (_kindOf(item)) {
+        _SetupKind.notifications => const Color(0xFF4C9AFF),
+        _SetupKind.accessibility => const Color(0xFF9B7BFF),
+        _SetupKind.battery => const Color(0xFF2BB8A3),
+        _SetupKind.protectedLayers => const Color(0xFF35B6D8),
+        _SetupKind.recovery => const Color(0xFFE573B5),
+        _SetupKind.unknown => AppColors.primary,
+      };
+
+  static _SetupKind _kindOf(ProtectionSetupItem item) {
     switch (item.id) {
       case 'notifications':
-        return Icons.notifications_outlined;
+        return _SetupKind.notifications;
       case 'accessibility':
-        return Icons.accessibility_new_rounded;
+        return _SetupKind.accessibility;
       case 'battery':
-        return Icons.battery_charging_full_rounded;
+        return _SetupKind.battery;
       case 'protected_layers':
-        return Icons.layers_outlined;
+        return _SetupKind.protectedLayers;
       case 'recovery':
-        return Icons.fingerprint;
-      default:
-        return _iconFromLabel(item.label);
+        return _SetupKind.recovery;
     }
-  }
 
-  static IconData _iconFromLabel(String label) {
-    final l = label.toLowerCase();
-    if (l.contains('notif')) return Icons.notifications_outlined;
+    final l = item.label.toLowerCase();
+    if (l.contains('notif')) return _SetupKind.notifications;
     if (l.contains('acessib') || l.contains('access')) {
-      return Icons.accessibility_new_rounded;
+      return _SetupKind.accessibility;
     }
-    if (l.contains('bater')) return Icons.battery_charging_full_rounded;
+    if (l.contains('bater')) return _SetupKind.battery;
     if (l.contains('camada') || l.contains('layer')) {
-      return Icons.layers_outlined;
+      return _SetupKind.protectedLayers;
     }
     if (l.contains('biom') || l.contains('pin') || l.contains('recup')) {
-      return Icons.fingerprint;
+      return _SetupKind.recovery;
     }
-    return Icons.check_circle_outline;
+    return _SetupKind.unknown;
   }
+}
+
+enum _SetupKind {
+  notifications,
+  accessibility,
+  battery,
+  protectedLayers,
+  recovery,
+  unknown,
 }
 
 class _TimelineStep extends StatelessWidget {
@@ -218,6 +246,7 @@ class _TimelineStep extends StatelessWidget {
     required this.iconSize,
     required this.stemHeight,
     required this.iconFor,
+    required this.colorFor,
     required this.index,
     required this.total,
   });
@@ -228,14 +257,13 @@ class _TimelineStep extends StatelessWidget {
   final double iconSize;
   final double stemHeight;
   final IconData Function(ProtectionSetupItem) iconFor;
+  final Color Function(ProtectionSetupItem) colorFor;
   final int index;
   final int total;
 
   @override
   Widget build(BuildContext context) {
-    final accent = item.done && !muted
-        ? AppColors.trustHigh
-        : AppColors.textMuted;
+    final accent = item.done && !muted ? colorFor(item) : AppColors.textMuted;
 
     // Preferir tooltip para dentro do card (baixo) e afastar das bordas laterais.
     final edgePad = index == 0
@@ -287,7 +315,7 @@ class _TimelineStep extends StatelessWidget {
             iconFor(item),
             size: iconSize,
             color: item.done && !muted
-                ? AppColors.trustHigh
+                ? accent
                 : AppColors.textMuted.withValues(alpha: 0.85),
           ),
         ],
