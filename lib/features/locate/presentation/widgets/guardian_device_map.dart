@@ -9,11 +9,13 @@ class GuardianDeviceMap extends StatefulWidget {
   const GuardianDeviceMap({
     super.key,
     required this.location,
-    this.height = 420,
+    this.height,
   });
 
   final DeviceLocation location;
-  final double height;
+
+  /// Null preenche a altura disponível — usado no split com viewport fixo.
+  final double? height;
 
   @override
   State<GuardianDeviceMap> createState() => _GuardianDeviceMapState();
@@ -26,7 +28,18 @@ double _accuracyRadiusM(double? accuracyM) {
 
 class _GuardianDeviceMapState extends State<GuardianDeviceMap> {
   late final MapController _controller = MapController();
-  late final LatLng _point = LatLng(widget.location.lat, widget.location.lng);
+
+  LatLng get _point => LatLng(widget.location.lat, widget.location.lng);
+
+  @override
+  void didUpdateWidget(covariant GuardianDeviceMap oldWidget) {
+    super.didUpdateWidget(oldWidget);
+    final old = oldWidget.location;
+    final now = widget.location;
+    if (old.lat != now.lat || old.lng != now.lng) {
+      _controller.move(_point, _controller.camera.zoom);
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
