@@ -38,23 +38,39 @@ class SubscriptionRepository {
     final trial = SubscriptionEntitlement.newTrial(DateTime.now());
     await ref.set(
       {
-        'subscription': {
-          'status': trial.status.name,
-          'trialStartedAt': Timestamp.fromDate(trial.trialStartedAt),
-          'trialEndsAt': Timestamp.fromDate(trial.trialEndsAt),
-          'plan': trial.plan,
-          'startedAt': null,
-          'expiresAt': null,
-          'store': null,
-          'productId': null,
-          'purchaseTokenFingerprint': null,
-          'pixPaymentId': null,
-          'updatedAt': FieldValue.serverTimestamp(),
-        },
+        'subscription': _trialWriteMap(trial),
       },
       SetOptions(merge: true),
     );
     return trial;
+  }
+
+  /// Reinicia 7 dias de trial — uso em desenvolvimento / QA.
+  Future<SubscriptionEntitlement> resetTrial(String uid) async {
+    final trial = SubscriptionEntitlement.newTrial(DateTime.now());
+    await _userRef(uid).set(
+      {
+        'subscription': _trialWriteMap(trial),
+      },
+      SetOptions(merge: true),
+    );
+    return trial;
+  }
+
+  static Map<String, dynamic> _trialWriteMap(SubscriptionEntitlement trial) {
+    return {
+      'status': trial.status.name,
+      'trialStartedAt': Timestamp.fromDate(trial.trialStartedAt),
+      'trialEndsAt': Timestamp.fromDate(trial.trialEndsAt),
+      'plan': trial.plan,
+      'startedAt': null,
+      'expiresAt': null,
+      'store': null,
+      'productId': null,
+      'purchaseTokenFingerprint': null,
+      'pixPaymentId': null,
+      'updatedAt': FieldValue.serverTimestamp(),
+    };
   }
 
   static SubscriptionEntitlement? fromFirestoreMap(Map<String, dynamic> map) {

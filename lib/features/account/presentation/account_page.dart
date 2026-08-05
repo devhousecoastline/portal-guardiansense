@@ -1,4 +1,5 @@
 import 'package:firebase_auth/firebase_auth.dart';
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 import 'package:guardian_portal/core/routing/app_routes.dart';
@@ -270,15 +271,41 @@ class _ProvidersRow extends StatelessWidget {
   }
 }
 
-class _PlanCard extends StatelessWidget {
+class _PlanCard extends StatefulWidget {
   const _PlanCard({required this.uid});
 
   final String uid;
 
   @override
+  State<_PlanCard> createState() => _PlanCardState();
+}
+
+class _PlanCardState extends State<_PlanCard> {
+  bool _resetting = false;
+
+  Future<void> _resetTrial() async {
+    if (_resetting) return;
+    setState(() => _resetting = true);
+    try {
+      await SubscriptionRepository().resetTrial(widget.uid);
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Trial reiniciado: +7 dias.')),
+      );
+    } catch (error) {
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('Não foi possível resetar o trial: $error')),
+      );
+    } finally {
+      if (mounted) setState(() => _resetting = false);
+    }
+  }
+
+  @override
   Widget build(BuildContext context) {
     return StreamBuilder<SubscriptionEntitlement?>(
-      stream: SubscriptionRepository().watchEntitlement(uid),
+      stream: SubscriptionRepository().watchEntitlement(widget.uid),
       builder: (context, snap) {
         final entitlement = snap.data;
         final now = DateTime.now();
@@ -350,6 +377,22 @@ class _PlanCard extends StatelessWidget {
                       ),
                     ),
                   ),
+                  if (kDebugMode) ...[
+                    const SizedBox(height: 12),
+                    OutlinedButton.icon(
+                      onPressed: _resetting ? null : _resetTrial,
+                      icon: _resetting
+                          ? const SizedBox(
+                              width: 16,
+                              height: 16,
+                              child: CircularProgressIndicator(strokeWidth: 2),
+                            )
+                          : const Icon(Icons.refresh_rounded, size: 18),
+                      label: Text(
+                        _resetting ? 'Reiniciando…' : 'Resetar trial (teste)',
+                      ),
+                    ),
+                  ],
                 ],
               ),
             ),
