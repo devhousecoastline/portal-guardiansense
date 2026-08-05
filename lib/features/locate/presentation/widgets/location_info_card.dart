@@ -96,61 +96,97 @@ class _LocationInfoCardState extends State<LocationInfoCard> {
         : stale
             ? 'POSIÇÃO ANTIGA'
             : 'POSIÇÃO ATUAL';
-    final narrow = MediaQuery.sizeOf(context).width < 560;
-
     return SectionCard(
       padding: EdgeInsets.zero,
-      child: ClipRRect(
-        borderRadius: BorderRadius.circular(16),
-        child: IntrinsicHeight(
-          child: Row(
-            crossAxisAlignment: CrossAxisAlignment.stretch,
-            children: [
-              Container(width: 4, color: color),
-              Expanded(
-                child: Padding(
-                  padding: const EdgeInsets.fromLTRB(12, 10, 12, 10),
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    mainAxisSize: MainAxisSize.min,
-                    children: [
-                      _Header(
-                        status: status,
+      // LayoutBuilder fora do IntrinsicHeight: um não mede o outro.
+      child: LayoutBuilder(
+        builder: (context, constraints) {
+          final wide = constraints.maxWidth >= _sideBySideWidth;
+          final header = _Header(
+            status: status,
+            location: location,
+            color: color,
+            statusLine: statusLine,
+            showPill: !wide && constraints.maxWidth >= 520,
+          );
+
+          return ClipRRect(
+            borderRadius: BorderRadius.circular(16),
+            child: IntrinsicHeight(
+              child: Row(
+                crossAxisAlignment: CrossAxisAlignment.stretch,
+                children: [
+                  Container(width: 4, color: color),
+                  Expanded(
+                    child: Padding(
+                      padding: const EdgeInsets.fromLTRB(12, 10, 12, 10),
+                      child: _body(
                         location: location,
+                        staleMessage: staleMessage,
+                        header: header,
+                        wide: wide,
+                        online: status.isOnline,
                         color: color,
-                        statusLine: statusLine,
-                        showPill: !narrow,
                       ),
-                      if (location != null) ...[
-                        Divider(
-                          height: 18,
-                          color: AppColors.divider.withValues(alpha: 0.9),
-                        ),
-                        _AddressRow(
-                          address: _address,
-                          loading: _loadingAddress,
-                        ),
-                        if (staleMessage != null) ...[
-                          const SizedBox(height: 6),
-                          _StaleRow(message: staleMessage),
-                        ],
-                        const SizedBox(height: 8),
-                        _CoordsRow(
-                          coords: _coordsOf(location),
-                          source: location.sourceLabel,
-                          onCopy: () => _copyCoordinates(location),
-                        ),
-                      ],
-                    ],
+                    ),
                   ),
-                ),
+                ],
               ),
-            ],
-          ),
-        ),
+            ),
+          );
+        },
       ),
     );
   }
+
+  Widget _body({
+    required DeviceLocation? location,
+    required String? staleMessage,
+    required Widget header,
+    required bool wide,
+    required bool online,
+    required Color color,
+  }) {
+    if (location == null) return header;
+
+    final address = _AddressRow(address: _address, loading: _loadingAddress);
+    final coords = _CoordsRow(
+      coords: _coordsOf(location),
+      source: location.sourceLabel,
+      onCopy: () => _copyCoordinates(location),
+    );
+    final stale =
+        staleMessage == null ? null : _StaleRow(message: staleMessage);
+
+    if (wide) {
+      return _WideBody(
+        header: header,
+        address: address,
+        coords: coords,
+        stale: stale,
+        pill: StatusPill(
+          label: online ? 'ONLINE' : 'OFFLINE',
+          color: color,
+        ),
+      );
+    }
+
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      mainAxisSize: MainAxisSize.min,
+      children: [
+        header,
+        Divider(height: 18, color: AppColors.divider.withValues(alpha: 0.9)),
+        address,
+        if (stale != null) ...[const SizedBox(height: 6), stale],
+        const SizedBox(height: 8),
+        coords,
+      ],
+    );
+  }
+
+  /// A partir daqui os três blocos cabem lado a lado sem quebrar.
+  static const double _sideBySideWidth = 760;
 
   static Color _toneColor({
     required bool online,
@@ -159,6 +195,66 @@ class _LocationInfoCardState extends State<LocationInfoCard> {
   }) {
     if (!online || !hasLocation) return AppColors.textMuted;
     return stale ? AppColors.riskElevated : AppColors.trustHigh;
+  }
+}
+
+/// Distribui identificação, endereço e coordenadas em colunas.
+class _WideBody extends StatelessWidget {
+  const _WideBody({
+    required this.header,
+    required this.address,
+    required this.coords,
+    required this.stale,
+    required this.pill,
+  });
+
+  final Widget header;
+  final Widget address;
+  final Widget coords;
+  final Widget? stale;
+  final Widget pill;
+
+  @override
+  Widget build(BuildContext context) {
+    return IntrinsicHeight(
+      child: Row(
+        crossAxisAlignment: CrossAxisAlignment.center,
+        children: [
+          Expanded(flex: 4, child: header),
+          const _ColumnDivider(),
+          Expanded(
+            flex: 4,
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                address,
+                if (stale != null) ...[const SizedBox(height: 6), stale!],
+              ],
+            ),
+          ),
+          const _ColumnDivider(),
+          Expanded(flex: 3, child: coords),
+          const SizedBox(width: 12),
+          pill,
+        ],
+      ),
+    );
+  }
+}
+
+class _ColumnDivider extends StatelessWidget {
+  const _ColumnDivider();
+
+  @override
+  Widget build(BuildContext context) {
+    return VerticalDivider(
+      width: 24,
+      thickness: 1,
+      indent: 2,
+      endIndent: 2,
+      color: AppColors.divider.withValues(alpha: 0.9),
+    );
   }
 }
 

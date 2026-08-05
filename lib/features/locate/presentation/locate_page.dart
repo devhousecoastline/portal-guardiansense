@@ -85,43 +85,20 @@ class _LocateBody extends StatelessWidget {
     final location = status.location;
     final info = LocationInfoCard(status: status);
 
-    if (split) {
-      return Row(
-        crossAxisAlignment: CrossAxisAlignment.stretch,
-        children: [
-          Expanded(
-            flex: 35,
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.stretch,
-              children: [
-                info,
-                const SizedBox(height: 10),
-                const _LocationFootnote(),
-              ],
-            ),
-          ),
-          const SizedBox(width: 16),
-          Expanded(
-            flex: 65,
-            child: location != null
-                ? GuardianDeviceMap(location: location)
-                : const _LocateEmpty.noLocation(),
-          ),
-        ],
-      );
-    }
-
     return Column(
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
         info,
-        const SizedBox(height: 12),
-        if (location != null)
-          GuardianDeviceMap(location: location, height: 420)
-        else
-          const _LocateEmpty.noLocation(),
-        const SizedBox(height: 10),
+        const SizedBox(height: 8),
         const _LocationFootnote(),
+        const SizedBox(height: 12),
+        if (location == null)
+          const _LocateEmpty.noLocation()
+        // Com viewport fixo o mapa fica com toda a altura restante.
+        else if (split)
+          Expanded(child: GuardianDeviceMap(location: location))
+        else
+          GuardianDeviceMap(location: location, height: 420),
       ],
     );
   }

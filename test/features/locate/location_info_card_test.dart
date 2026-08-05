@@ -90,6 +90,36 @@ void main() {
     expect(find.textContaining('pode não refletir'), findsOneWidget);
   });
 
+  testWidgets('card largo distribui os blocos em colunas', (tester) async {
+    tester.view.physicalSize = const Size(1280, 700);
+    tester.view.devicePixelRatio = 1;
+    addTearDown(tester.view.reset);
+
+    await _pump(
+      tester,
+      _status(
+        location: DeviceLocation(
+          lat: -23.55052,
+          lng: -46.63331,
+          accuracyM: 25,
+          updatedAt: DateTime.now().subtract(const Duration(minutes: 2)),
+        ),
+      ),
+    );
+
+    final model = tester.getTopLeft(find.text('Samsung SM-A226BR'));
+    final address = tester.getTopLeft(
+      find.textContaining('Endereço aproximado'),
+    );
+    final coords = tester.getTopLeft(
+      find.textContaining('-23.55052, -46.63331'),
+    );
+
+    expect(model.dx, lessThan(address.dx));
+    expect(address.dx, lessThan(coords.dx));
+    expect(find.text('ONLINE'), findsOneWidget);
+  });
+
   testWidgets('sem posição esconde coordenadas', (tester) async {
     tester.view.physicalSize = const Size(900, 700);
     tester.view.devicePixelRatio = 1;
