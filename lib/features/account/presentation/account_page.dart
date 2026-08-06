@@ -65,9 +65,8 @@ class _ProfileView extends StatelessWidget {
         _AccountInfoCard(user: user),
         const SizedBox(height: 10),
         const _AccountFootnote(),
-        const SizedBox(height: 12),
-        Align(
-          alignment: Alignment.centerLeft,
+        const SizedBox(height: 24),
+        Center(
           child: TextButton.icon(
             onPressed: onSignOut,
             icon: const Icon(Icons.logout_outlined, size: 18),
@@ -369,11 +368,6 @@ class _AccountInfoCard extends StatelessWidget {
         icon: Icons.smartphone_outlined,
         label: 'Aparelho',
         valueWidget: _LinkedDeviceValue(uid: user.uid),
-      ),
-      _InfoTile(
-        icon: Icons.mail_outline,
-        label: 'E-mail',
-        value: user.email ?? '—',
       ),
       _InfoTile(
         icon: verified
