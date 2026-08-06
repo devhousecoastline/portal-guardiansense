@@ -7,6 +7,9 @@ import 'package:guardian_portal/features/dashboard/domain/protection_setup_item.
 /// Estado de proteção sincronizado pelo app mobile (read-only no portal).
 enum ProtectionLevel { protected, partial, alert, offline, unknown }
 
+/// Vínculo do doc em `users/{uid}/devices/{deviceId}.status`.
+enum DeviceBindingStatus { active, released, unknown }
+
 class DeviceStatus {
   const DeviceStatus({
     required this.deviceId,
@@ -26,6 +29,8 @@ class DeviceStatus {
     required this.fingerprint,
     required this.protectionSetupItems,
     required this.protectedLayers,
+    this.bindingStatus = DeviceBindingStatus.active,
+    this.releasedAt,
   });
 
   final String deviceId;
@@ -45,6 +50,10 @@ class DeviceStatus {
   final String? fingerprint;
   final List<ProtectionSetupItem> protectionSetupItems;
   final List<ProtectedLayerSummary> protectedLayers;
+  final DeviceBindingStatus bindingStatus;
+  final DateTime? releasedAt;
+
+  bool get isReleased => bindingStatus == DeviceBindingStatus.released;
 
   bool get hasSetupChecklist => protectionSetupItems.isNotEmpty;
 
@@ -58,6 +67,7 @@ class DeviceStatus {
 
   /// Online se houve sync recente (recalculado a cada build/tick).
   bool get isOnline {
+    if (isReleased) return false;
     final seen = lastSeen;
     if (seen == null) return false;
     return DateTime.now().difference(seen) < AppConstants.deviceOnlineThreshold;
@@ -105,7 +115,19 @@ class DeviceStatus {
           ProtectionSetupItem.fromFirestoreList(data['protectionChecklist']),
       protectedLayers:
           ProtectedLayerSummary.fromFirestoreList(data['protectedLayers']),
+      bindingStatus: _bindingStatus(data['status']),
+      releasedAt: _timestamp(data['releasedAt']),
     );
+  }
+
+  static DeviceBindingStatus _bindingStatus(Object? value) {
+    final raw = (value as String?)?.trim().toLowerCase();
+    return switch (raw) {
+      'released' => DeviceBindingStatus.released,
+      'active' => DeviceBindingStatus.active,
+      null || '' => DeviceBindingStatus.active, // legado sem campo
+      _ => DeviceBindingStatus.unknown,
+    };
   }
 
   static int _protectionIndex(

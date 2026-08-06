@@ -6,7 +6,9 @@ import 'package:guardian_portal/core/widgets/online_refresh.dart';
 import 'package:guardian_portal/core/widgets/section_card.dart';
 import 'package:guardian_portal/features/devices/data/device_repository.dart';
 import 'package:guardian_portal/features/devices/domain/device_registry.dart';
+import 'package:guardian_portal/features/devices/domain/guardian_device.dart';
 import 'package:guardian_portal/features/devices/presentation/widgets/device_plan_banner.dart';
+import 'package:guardian_portal/features/devices/presentation/widgets/device_switches_card.dart';
 import 'package:guardian_portal/features/devices/presentation/widgets/device_tile.dart';
 
 class DevicesPage extends StatefulWidget {
@@ -39,7 +41,7 @@ class _DevicesPageState extends State<DevicesPage> {
           builder: (context, isRefreshing) {
             return GuardianScaffold(
               title: 'Dispositivos',
-              subtitle: 'Aparelhos vinculados à sua conta',
+              subtitle: 'Aparelho vinculado e histórico de trocas',
               onRefresh: _refreshController.refresh,
               fitViewport: true,
               child: Column(
@@ -80,7 +82,8 @@ class _DevicesBody extends StatelessWidget {
       );
     }
 
-    if (list!.visible.isEmpty) {
+    final snapshot = list!;
+    if (!snapshot.hasActive && !snapshot.hasReleased) {
       return SectionCard(
         child: Column(
           mainAxisSize: MainAxisSize.min,
@@ -111,44 +114,86 @@ class _DevicesBody extends StatelessWidget {
       );
     }
 
-    final devices = list!.visible;
-    final count = devices.length;
-    final countLabel =
-        '$count ${count == 1 ? 'aparelho' : 'aparelhos'} neste portal';
-
     return Column(
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
-        DevicePlanBanner(snapshot: list!),
-        Padding(
-          padding: const EdgeInsets.only(bottom: 10),
-          child: Row(
-            children: [
-              Icon(Icons.insights_outlined, size: 16, color: AppColors.primary),
-              const SizedBox(width: 8),
-              Expanded(
-                child: Text(
-                  countLabel,
-                  style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                        color: AppColors.textMuted,
-                        fontWeight: FontWeight.w600,
-                      ),
-                ),
-              ),
-            ],
-          ),
-        ),
+        DeviceSwitchesCard(switches: snapshot.switches),
+        DevicePlanBanner(snapshot: snapshot),
         Expanded(
           child: Scrollbar(
-            thumbVisibility: devices.length > 4,
-            child: ListView.separated(
+            thumbVisibility:
+                snapshot.visible.length + snapshot.released.length > 3,
+            child: ListView(
               padding: const EdgeInsets.only(right: 14, bottom: 28),
-              itemCount: devices.length,
-              separatorBuilder: (_, _) => const SizedBox(height: 10),
-              itemBuilder: (context, index) {
-                return DeviceTile(device: devices[index]);
-              },
+              children: [
+                if (snapshot.hasActive) ...[
+                  _SectionLabel(
+                    icon: Icons.link,
+                    label: snapshot.visible.length == 1
+                        ? 'Aparelho vinculado'
+                        : 'Aparelhos vinculados',
+                  ),
+                  const SizedBox(height: 8),
+                  ..._tileList(snapshot.visible),
+                ] else ...[
+                  SectionCard(
+                    child: Text(
+                      'Nenhum aparelho vinculado no momento. '
+                      'Você pode vincular outro celular no app '
+                      '(sujeito à cota de trocas).',
+                      style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                            color: AppColors.textMuted,
+                            height: 1.35,
+                          ),
+                    ),
+                  ),
+                ],
+                if (snapshot.hasReleased) ...[
+                  const SizedBox(height: 18),
+                  _SectionLabel(
+                    icon: Icons.history,
+                    label: 'Histórico',
+                  ),
+                  const SizedBox(height: 8),
+                  ..._tileList(snapshot.released),
+                ],
+              ],
             ),
+          ),
+        ),
+      ],
+    );
+  }
+
+  List<Widget> _tileList(List<GuardianDevice> devices) {
+    final widgets = <Widget>[];
+    for (var i = 0; i < devices.length; i++) {
+      if (i > 0) widgets.add(const SizedBox(height: 10));
+      widgets.add(DeviceTile(device: devices[i]));
+    }
+    return widgets;
+  }
+}
+
+class _SectionLabel extends StatelessWidget {
+  const _SectionLabel({required this.icon, required this.label});
+
+  final IconData icon;
+  final String label;
+
+  @override
+  Widget build(BuildContext context) {
+    return Row(
+      children: [
+        Icon(icon, size: 16, color: AppColors.primary),
+        const SizedBox(width: 8),
+        Expanded(
+          child: Text(
+            label,
+            style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                  color: AppColors.textMuted,
+                  fontWeight: FontWeight.w600,
+                ),
           ),
         ),
       ],

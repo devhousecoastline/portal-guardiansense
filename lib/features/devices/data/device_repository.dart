@@ -19,8 +19,8 @@ class DeviceRepository {
   CollectionReference<Map<String, dynamic>> _devices(String uid) =>
       _firestore.collection('users').doc(uid).collection('devices');
 
-  /// Limite alinhado ao máximo visível por plano — evita ler docs órfãos.
-  static const deviceListenLimit = 5;
+  /// Inclui ativos + histórico released (app mantém docs ao desvincular).
+  static const deviceListenLimit = 20;
 
   Stream<List<GuardianDevice>> watchDevices(String uid) {
     return _devices(uid)
@@ -30,19 +30,21 @@ class DeviceRepository {
         .map((snap) => snap.docs.map(GuardianDevice.fromDoc).toList());
   }
 
-  /// Lista deduplicada por aparelho físico, respeitando o limite do plano.
+  /// Lista deduplicada: ativos no plano + released + cota `deviceSwitches`.
   Stream<DeviceListSnapshot> watchDeviceList(String uid) {
-    return _users.watchPlan(uid).asyncExpand((plan) {
+    return _users.watchDevicesMeta(uid).asyncExpand((meta) {
       return watchDevices(uid).map(
-        (devices) => DeviceRegistry.apply(devices, plan),
+        (devices) => DeviceRegistry.apply(
+          devices,
+          meta.plan,
+          boundDeviceId: meta.boundDeviceId,
+          switches: meta.switches,
+        ),
       );
     });
   }
 
   Stream<GuardianDevice?> watchPrimaryDevice(String uid) {
-    return watchDeviceList(uid).map((snapshot) {
-      if (snapshot.visible.isEmpty) return null;
-      return snapshot.visible.first;
-    });
+    return watchDeviceList(uid).map((snapshot) => snapshot.primary);
   }
 }

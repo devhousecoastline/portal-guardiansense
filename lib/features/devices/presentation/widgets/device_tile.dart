@@ -14,16 +14,26 @@ class DeviceTile extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final status = device.status;
+    final released = status.isReleased;
     final color = _toneColor(status);
     final theme = Theme.of(context);
-    final statusLine = status.isOnline
-        ? status.protectionLabel.toUpperCase()
-        : 'OFFLINE';
-    final syncLabel = _syncLabel(status.lastSeen);
+    final statusLine = released
+        ? 'DESVINCULADO'
+        : status.isOnline
+            ? status.protectionLabel.toUpperCase()
+            : 'OFFLINE';
+    final syncLabel = released
+        ? _releasedLabel(status.releasedAt)
+        : _syncLabel(status.lastSeen);
     final version = status.appVersion.trim().isEmpty
         ? null
         : 'v${status.appVersion}';
     final narrow = MediaQuery.sizeOf(context).width < 560;
+    final presenceLabel = released
+        ? 'Anterior'
+        : status.isOnline
+            ? 'Online'
+            : 'Offline';
 
     return SectionCard(
       padding: EdgeInsets.zero,
@@ -68,7 +78,7 @@ class DeviceTile extends StatelessWidget {
                               TextSpan(
                                 children: [
                                   TextSpan(
-                                    text: status.isOnline ? 'Online' : 'Offline',
+                                    text: presenceLabel,
                                     style: theme.textTheme.bodySmall?.copyWith(
                                       color: AppColors.textMuted,
                                     ),
@@ -103,7 +113,10 @@ class DeviceTile extends StatelessWidget {
                             ),
                             const SizedBox(height: 2),
                             Text(
-                              [syncLabel, ?version].join(' · '),
+                              [
+                                syncLabel,
+                                if (!released && version != null) version,
+                              ].join(' · '),
                               maxLines: 1,
                               overflow: TextOverflow.ellipsis,
                               style: theme.textTheme.bodySmall?.copyWith(
@@ -130,6 +143,7 @@ class DeviceTile extends StatelessWidget {
   }
 
   static Color _toneColor(DeviceStatus status) {
+    if (status.isReleased) return AppColors.textMuted;
     if (!status.isOnline) return AppColors.textMuted;
     return switch (status.level) {
       ProtectionLevel.protected => AppColors.trustHigh,
@@ -145,5 +159,12 @@ class DeviceTile extends StatelessWidget {
     if (relative == '—') return 'Sem sincronização';
     if (relative == 'agora') return 'Sincronizado agora';
     return 'Sincronizado $relative';
+  }
+
+  static String _releasedLabel(DateTime? releasedAt) {
+    final relative = formatRelativeTime(releasedAt);
+    if (relative == '—') return 'Desvinculado';
+    if (relative == 'agora') return 'Desvinculado agora';
+    return 'Desvinculado $relative';
   }
 }
