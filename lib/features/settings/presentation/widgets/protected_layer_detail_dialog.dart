@@ -202,7 +202,7 @@ class _ProtectedLayerDetailDialogState extends State<_ProtectedLayerDetailDialog
                   child: ListView.separated(
                     shrinkWrap: true,
                     itemCount: widget.layer.apps.length,
-                    separatorBuilder: (_, __) => const SizedBox(height: 6),
+                    separatorBuilder: (_, _) => const SizedBox(height: 6),
                     itemBuilder: (_, index) {
                       final app = widget.layer.apps[index];
                       return _AppRow(
