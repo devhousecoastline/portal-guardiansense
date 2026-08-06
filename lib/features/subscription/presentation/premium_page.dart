@@ -6,6 +6,8 @@ import 'package:flutter/services.dart';
 import 'package:guardian_portal/core/theme/app_colors.dart';
 import 'package:guardian_portal/core/widgets/guardian_pill_button.dart';
 import 'package:guardian_portal/core/widgets/guardian_scaffold.dart';
+import 'package:guardian_portal/core/widgets/section_card.dart';
+import 'package:guardian_portal/core/widgets/status_pill.dart';
 import 'package:guardian_portal/features/auth/presentation/widgets/auth_scope.dart';
 import 'package:guardian_portal/features/subscription/data/pix_billing_service.dart';
 import 'package:guardian_portal/features/subscription/data/subscription_repository.dart';
@@ -92,9 +94,23 @@ class _PremiumPageState extends State<PremiumPage> {
       builder: (context, _) {
         final user = auth.user;
         if (user == null) {
-          return const GuardianScaffold(
+          return GuardianScaffold(
             title: 'Guardian Premium',
-            child: Center(child: Text('Faça login para assinar.')),
+            subtitle: 'Assinatura anual · PIX',
+            child: Align(
+              alignment: Alignment.topCenter,
+              child: ConstrainedBox(
+                constraints: const BoxConstraints(maxWidth: 640),
+                child: SectionCard(
+                  child: Text(
+                    'Faça login para assinar.',
+                    style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                          color: AppColors.textMuted,
+                        ),
+                  ),
+                ),
+              ),
+            ),
           );
         }
 
@@ -109,25 +125,22 @@ class _PremiumPageState extends State<PremiumPage> {
             return GuardianScaffold(
               title: 'Guardian Premium',
               subtitle: active
-                  ? 'Assinatura ativa'
-                  : 'Assinatura anual · PIX',
+                  ? 'Assinatura ativa na sua conta'
+                  : 'Assinatura anual · pagamento via PIX',
               child: Align(
                 alignment: Alignment.topCenter,
                 child: ConstrainedBox(
-                  constraints: const BoxConstraints(maxWidth: 520),
-                  child: Padding(
-                    padding: const EdgeInsets.fromLTRB(0, 8, 0, 24),
-                    child: active
-                        ? _ActiveCard(entitlement: entitlement!)
-                        : _CheckoutColumn(
-                            entitlement: entitlement,
-                            charge: _charge,
-                            creating: _creating,
-                            error: _error,
-                            onGenerate: _generatePix,
-                            onCopy: _copyPix,
-                          ),
-                  ),
+                  constraints: const BoxConstraints(maxWidth: 640),
+                  child: active
+                      ? _ActiveView(entitlement: entitlement!)
+                      : _CheckoutView(
+                          entitlement: entitlement,
+                          charge: _charge,
+                          creating: _creating,
+                          error: _error,
+                          onGenerate: _generatePix,
+                          onCopy: _copyPix,
+                        ),
                 ),
               ),
             );
@@ -138,13 +151,14 @@ class _PremiumPageState extends State<PremiumPage> {
   }
 }
 
-class _ActiveCard extends StatelessWidget {
-  const _ActiveCard({required this.entitlement});
+class _ActiveView extends StatelessWidget {
+  const _ActiveView({required this.entitlement});
 
   final SubscriptionEntitlement entitlement;
 
   @override
   Widget build(BuildContext context) {
+    final theme = Theme.of(context);
     final expires = entitlement.expiresAt;
     final df = DateFormat('dd/MM/yyyy');
     final store = entitlement.store == 'pix'
@@ -153,53 +167,80 @@ class _ActiveCard extends StatelessWidget {
             ? 'Google Play'
             : entitlement.store ?? '—';
 
-    return _Surface(
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Row(
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.stretch,
+      children: [
+        SectionCard(
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.stretch,
             children: [
-              Icon(Icons.verified_outlined, color: AppColors.trustHigh),
-              const SizedBox(width: 10),
+              _CardTitle(
+                icon: Icons.verified_outlined,
+                label: 'Proteção ativa',
+                trailing: StatusPill(
+                  label: 'ATIVO',
+                  color: AppColors.trustHigh,
+                ),
+              ),
+              const SizedBox(height: 12),
               Text(
-                'Proteção ativa',
-                style: Theme.of(context).textTheme.titleMedium?.copyWith(
-                      fontWeight: FontWeight.w700,
+                expires != null
+                    ? 'Válida até ${df.format(expires.toLocal())}.'
+                    : 'Assinatura anual ativa.',
+                style: theme.textTheme.bodyMedium,
+              ),
+              const SizedBox(height: 12),
+              LayoutBuilder(
+                builder: (context, constraints) {
+                  final tiles = [
+                    _InfoTile(
+                      icon: Icons.calendar_today_outlined,
+                      label: 'Válida até',
+                      value: expires != null
+                          ? df.format(expires.toLocal())
+                          : '—',
                     ),
+                    _InfoTile(
+                      icon: Icons.storefront_outlined,
+                      label: 'Canal',
+                      value: store,
+                    ),
+                  ];
+                  if (constraints.maxWidth < 560) {
+                    return Column(
+                      crossAxisAlignment: CrossAxisAlignment.stretch,
+                      children: [
+                        tiles[0],
+                        const SizedBox(height: 8),
+                        tiles[1],
+                      ],
+                    );
+                  }
+                  return Row(
+                    children: [
+                      Expanded(child: tiles[0]),
+                      const SizedBox(width: 8),
+                      Expanded(child: tiles[1]),
+                    ],
+                  );
+                },
               ),
             ],
           ),
-          const SizedBox(height: 12),
-          Text(
-            expires != null
-                ? 'Válida até ${df.format(expires.toLocal())}.'
-                : 'Assinatura anual ativa.',
-            style: Theme.of(context).textTheme.bodyLarge?.copyWith(height: 1.45),
-          ),
-          const SizedBox(height: 8),
-          Text(
-            'Canal: $store',
-            style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                  color: AppColors.textMuted,
-                ),
-          ),
-          const SizedBox(height: 16),
-          Text(
-            'A assinatura fica na sua conta. Trocar de aparelho não cancela '
-            'o período pago.',
-            style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                  color: AppColors.textMuted,
-                  height: 1.45,
-                ),
-          ),
-        ],
-      ),
+        ),
+        const SizedBox(height: 10),
+        const _Footnote(
+          text:
+              'A assinatura fica na sua conta. Trocar de aparelho não cancela '
+              'o período pago.',
+        ),
+      ],
     );
   }
 }
 
-class _CheckoutColumn extends StatelessWidget {
-  const _CheckoutColumn({
+class _CheckoutView extends StatelessWidget {
+  const _CheckoutView({
     required this.entitlement,
     required this.charge,
     required this.creating,
@@ -217,195 +258,281 @@ class _CheckoutColumn extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final theme = Theme.of(context);
     final now = DateTime.now();
     final status = entitlement?.effectiveStatusAt(now);
     final trialDays = entitlement?.trialDaysLeftCeil(now) ?? 0;
 
-    String statusLine;
-    switch (status) {
-      case SubscriptionStatus.trial:
-        statusLine = 'Trial: restam $trialDays dia${trialDays == 1 ? '' : 's'}.';
-      case SubscriptionStatus.expired:
-        statusLine = 'Trial encerrado — assine para continuar protegido.';
-      case SubscriptionStatus.lapsed:
-        statusLine = 'Assinatura vencida — renove com PIX.';
-      case SubscriptionStatus.active:
-        statusLine = '';
-      case null:
-        statusLine = 'Gere o PIX para ativar 12 meses na conta.';
-    }
+    final (pillLabel, statusLine, color) = switch (status) {
+      SubscriptionStatus.trial => (
+          'TRIAL',
+          'Restam $trialDays dia${trialDays == 1 ? '' : 's'} grátis.',
+          AppColors.trustMedium,
+        ),
+      SubscriptionStatus.expired => (
+          'TRIAL ENCERRADO',
+          'Assine para continuar com a proteção completa.',
+          AppColors.riskCritical,
+        ),
+      SubscriptionStatus.lapsed => (
+          'VENCIDA',
+          'Renove com PIX para reativar.',
+          AppColors.riskCritical,
+        ),
+      SubscriptionStatus.active => (
+          'ATIVO',
+          '',
+          AppColors.trustHigh,
+        ),
+      null => (
+          'PLANO',
+          'Gere o PIX para ativar 12 meses na conta.',
+          AppColors.primary,
+        ),
+    };
+
+    final showingPix = charge != null;
 
     return Column(
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
-        _Surface(
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Text(
-                'Guardian Premium',
-                style: Theme.of(context).textTheme.titleLarge?.copyWith(
-                      fontWeight: FontWeight.w700,
-                    ),
-              ),
-              const SizedBox(height: 8),
-              Text(
-                '12 meses à vista. Sem plano mensal.',
-                style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                      color: AppColors.textMuted,
-                      height: 1.4,
-                    ),
-              ),
-              const SizedBox(height: 16),
-              Text(
-                SubscriptionPricing.yearlyLabelBr,
-                style: Theme.of(context).textTheme.headlineSmall?.copyWith(
-                      fontWeight: FontWeight.w800,
-                      color: AppColors.trustHigh,
-                    ),
-              ),
-              const SizedBox(height: 4),
-              Text(
-                SubscriptionPricing.monthlyLabelBr,
-                style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                      color: AppColors.textMuted,
-                    ),
-              ),
-              if (statusLine.isNotEmpty) ...[
+        if (!showingPix)
+          SectionCard(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.stretch,
+              children: [
+                _CardTitle(
+                  icon: Icons.workspace_premium_outlined,
+                  label: 'Assinatura anual',
+                  trailing: StatusPill(label: pillLabel, color: color),
+                ),
+                const SizedBox(height: 12),
+                Text(
+                  '12 meses à vista. Sem plano mensal.',
+                  style: theme.textTheme.bodyMedium?.copyWith(
+                    color: AppColors.textMuted,
+                  ),
+                ),
                 const SizedBox(height: 14),
                 Text(
-                  statusLine,
-                  style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                        height: 1.4,
-                      ),
+                  SubscriptionPricing.yearlyLabelBr,
+                  style: theme.textTheme.headlineSmall?.copyWith(
+                    fontWeight: FontWeight.w800,
+                    color: AppColors.trustHigh,
+                  ),
+                ),
+                const SizedBox(height: 4),
+                Text(
+                  SubscriptionPricing.monthlyLabelBr,
+                  style: theme.textTheme.bodyMedium?.copyWith(
+                    color: AppColors.textMuted,
+                  ),
+                ),
+                if (statusLine.isNotEmpty) ...[
+                  const SizedBox(height: 14),
+                  Text(statusLine, style: theme.textTheme.bodyMedium),
+                ],
+              ],
+            ),
+          )
+        else
+          SectionCard(
+            padding: const EdgeInsets.fromLTRB(16, 12, 16, 12),
+            child: Row(
+              children: [
+                Icon(
+                  Icons.workspace_premium_outlined,
+                  color: AppColors.primary,
+                  size: 20,
+                ),
+                const SizedBox(width: 10),
+                Expanded(
+                  child: Text(
+                    statusLine.isNotEmpty
+                        ? statusLine
+                        : SubscriptionPricing.yearlyLabelBr,
+                    style: theme.textTheme.bodyMedium,
+                  ),
+                ),
+                const SizedBox(width: 10),
+                StatusPill(label: pillLabel, color: color),
+              ],
+            ),
+          ),
+        const SizedBox(height: 16),
+        if (!showingPix)
+          SectionCard(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.stretch,
+              children: [
+                const _CardTitle(
+                  icon: Icons.qr_code_2_rounded,
+                  label: 'Pagamento PIX',
+                ),
+                const SizedBox(height: 12),
+                Text(
+                  'Gere o QR Code para pagar à vista e ativar 12 meses '
+                  'na sua conta.',
+                  style: theme.textTheme.bodyMedium?.copyWith(
+                    color: AppColors.textMuted,
+                  ),
+                ),
+                const SizedBox(height: 16),
+                Center(
+                  child: GuardianPillButton(
+                    label: 'Pagar com PIX',
+                    icon: Icons.qr_code_2_rounded,
+                    iconLeading: true,
+                    busy: creating,
+                    onPressed: creating ? null : onGenerate,
+                  ),
                 ),
               ],
-              const SizedBox(height: 12),
-              Text(
-                'O Guardian não processa reembolso pelo portal. '
-                'Estornos do provedor PIX invalidam a assinatura automaticamente.',
-                style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                      color: AppColors.textMuted,
-                      height: 1.45,
-                    ),
-              ),
-            ],
-          ),
-        ),
-        const SizedBox(height: 16),
-        if (charge == null) ...[
-          Center(
-            child: GuardianPillButton(
-              label: 'Pagar com PIX',
-              icon: Icons.qr_code_2_rounded,
-              iconLeading: true,
-              busy: creating,
-              onPressed: creating ? null : onGenerate,
             ),
+          )
+        else
+          _PixPanel(
+            charge: charge!,
+            creating: creating,
+            onCopy: onCopy,
+            onRegenerate: onGenerate,
           ),
-        ] else ...[
-          _PixPanel(charge: charge!, onCopy: onCopy),
-          const SizedBox(height: 12),
-          Text(
-            'Após o pagamento, a assinatura ativa sozinha nesta página. '
-            'O app libera no próximo sync.',
-            textAlign: TextAlign.center,
-            style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                  color: AppColors.textMuted,
-                  height: 1.45,
-                ),
-          ),
-          const SizedBox(height: 12),
-          Center(
-            child: TextButton(
-              onPressed: creating ? null : onGenerate,
-              child: Text(creating ? 'Gerando…' : 'Gerar novo QR'),
-            ),
-          ),
-        ],
         if (error != null) ...[
           const SizedBox(height: 12),
           Text(
             error!,
-            textAlign: TextAlign.center,
-            style: TextStyle(color: AppColors.riskCritical, height: 1.4),
+            style: theme.textTheme.bodyMedium?.copyWith(
+              color: AppColors.riskCritical,
+              height: 1.4,
+            ),
           ),
         ],
+        const SizedBox(height: 10),
+        const _Footnote(
+          text:
+              'Após o pagamento, a assinatura ativa sozinha. Estornos PIX '
+              'cancelam o plano automaticamente.',
+        ),
       ],
     );
   }
 }
 
 class _PixPanel extends StatelessWidget {
-  const _PixPanel({required this.charge, required this.onCopy});
+  const _PixPanel({
+    required this.charge,
+    required this.creating,
+    required this.onCopy,
+    required this.onRegenerate,
+  });
 
   final PixCharge charge;
+  final bool creating;
   final VoidCallback onCopy;
+  final VoidCallback onRegenerate;
 
   @override
   Widget build(BuildContext context) {
+    final theme = Theme.of(context);
     final bytes = _decodeQr(charge.encodedImage);
+    final expiresLabel = _formatExpiration(charge.expirationDate);
 
-    return _Surface(
+    return SectionCard(
       child: Column(
+        crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
+          const _CardTitle(
+            icon: Icons.qr_code_2_rounded,
+            label: 'Pagar com PIX',
+          ),
+          const SizedBox(height: 6),
           Text(
             'Escaneie o QR ou use o copia e cola',
-            style: Theme.of(context).textTheme.titleMedium?.copyWith(
-                  fontWeight: FontWeight.w600,
-                ),
+            style: theme.textTheme.bodyMedium?.copyWith(
+              color: AppColors.textMuted,
+            ),
           ),
           const SizedBox(height: 16),
-          if (bytes != null)
-            Container(
-              padding: const EdgeInsets.all(12),
-              decoration: BoxDecoration(
-                color: Colors.white,
-                borderRadius: BorderRadius.circular(12),
-                border: Border.all(color: AppColors.divider),
-              ),
-              child: Image.memory(
-                bytes,
-                width: 220,
-                height: 220,
-                fit: BoxFit.contain,
-                gaplessPlayback: true,
-              ),
-            )
-          else
-            Icon(
-              Icons.qr_code_2_rounded,
-              size: 120,
-              color: AppColors.textMuted.withValues(alpha: 0.5),
-            ),
+          Center(
+            child: bytes != null
+                ? Container(
+                    padding: const EdgeInsets.all(12),
+                    decoration: BoxDecoration(
+                      color: Colors.white,
+                      borderRadius: BorderRadius.circular(12),
+                      border: Border.all(color: AppColors.divider),
+                    ),
+                    child: Image.memory(
+                      bytes,
+                      width: 220,
+                      height: 220,
+                      fit: BoxFit.contain,
+                      gaplessPlayback: true,
+                    ),
+                  )
+                : Icon(
+                    Icons.qr_code_2_rounded,
+                    size: 120,
+                    color: AppColors.textMuted.withValues(alpha: 0.5),
+                  ),
+          ),
           const SizedBox(height: 16),
-          SelectableText(
-            charge.copyPaste,
-            textAlign: TextAlign.center,
-            style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                  fontFamily: 'monospace',
-                  height: 1.35,
-                ),
+          Container(
+            width: double.infinity,
+            padding: const EdgeInsets.fromLTRB(12, 10, 12, 10),
+            decoration: BoxDecoration(
+              color: AppColors.surface.withValues(alpha: 0.55),
+              borderRadius: BorderRadius.circular(10),
+              border: Border.all(
+                color: AppColors.divider.withValues(alpha: 0.9),
+              ),
+            ),
+            child: SelectableText(
+              charge.copyPaste,
+              textAlign: TextAlign.center,
+              style: theme.textTheme.bodySmall?.copyWith(
+                fontFamily: 'monospace',
+                height: 1.35,
+                color: AppColors.textMuted,
+              ),
+            ),
           ),
           const SizedBox(height: 14),
-          GuardianPillButton(
-            label: 'Copiar código PIX',
-            icon: Icons.copy_rounded,
-            iconLeading: true,
-            onPressed: onCopy,
+          Center(
+            child: GuardianPillButton(
+              label: 'Copiar código PIX',
+              icon: Icons.copy_rounded,
+              iconLeading: true,
+              onPressed: onCopy,
+            ),
           ),
-          if (charge.expirationDate != null) ...[
+          if (expiresLabel != null) ...[
             const SizedBox(height: 10),
             Text(
-              'QR válido até ${charge.expirationDate}',
-              style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                    color: AppColors.textMuted,
-                  ),
+              'QR válido até $expiresLabel',
+              textAlign: TextAlign.center,
+              style: theme.textTheme.bodySmall?.copyWith(
+                color: AppColors.textMuted,
+              ),
             ),
           ],
+          const SizedBox(height: 8),
+          Center(
+            child: TextButton(
+              onPressed: creating ? null : onRegenerate,
+              child: Text(creating ? 'Gerando…' : 'Gerar novo QR'),
+            ),
+          ),
         ],
       ),
     );
+  }
+
+  static String? _formatExpiration(String? raw) {
+    if (raw == null || raw.trim().isEmpty) return null;
+    final parsed = DateTime.tryParse(raw.trim());
+    if (parsed == null) return raw.trim();
+    return DateFormat("dd/MM/yyyy 'às' HH:mm").format(parsed.toLocal());
   }
 
   static Uint8List? _decodeQr(String? encoded) {
@@ -423,22 +550,115 @@ class _PixPanel extends StatelessWidget {
   }
 }
 
-class _Surface extends StatelessWidget {
-  const _Surface({required this.child});
+class _CardTitle extends StatelessWidget {
+  const _CardTitle({required this.icon, required this.label, this.trailing});
 
-  final Widget child;
+  final IconData icon;
+  final String label;
+  final Widget? trailing;
 
   @override
   Widget build(BuildContext context) {
+    return Row(
+      children: [
+        Icon(icon, color: AppColors.primary, size: 22),
+        const SizedBox(width: 10),
+        Expanded(
+          child: Text(
+            label,
+            style: Theme.of(context).textTheme.titleMedium?.copyWith(
+                  fontWeight: FontWeight.w600,
+                ),
+          ),
+        ),
+        ?trailing,
+      ],
+    );
+  }
+}
+
+class _InfoTile extends StatelessWidget {
+  const _InfoTile({
+    required this.icon,
+    required this.label,
+    required this.value,
+  });
+
+  final IconData icon;
+  final String label;
+  final String value;
+
+  @override
+  Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+
     return Container(
-      width: double.infinity,
-      padding: const EdgeInsets.fromLTRB(20, 18, 20, 18),
+      padding: const EdgeInsets.fromLTRB(10, 8, 10, 8),
       decoration: BoxDecoration(
-        color: AppColors.card,
-        borderRadius: BorderRadius.circular(14),
-        border: Border.all(color: AppColors.divider.withValues(alpha: 0.8)),
+        color: AppColors.surface.withValues(alpha: 0.55),
+        borderRadius: BorderRadius.circular(10),
+        border: Border.all(color: AppColors.divider.withValues(alpha: 0.9)),
       ),
-      child: child,
+      child: Row(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Padding(
+            padding: const EdgeInsets.only(top: 1),
+            child: Icon(icon, size: 16, color: AppColors.textMuted),
+          ),
+          const SizedBox(width: 8),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Text(
+                  label,
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                  style: theme.textTheme.bodySmall?.copyWith(
+                    color: AppColors.textMuted,
+                  ),
+                ),
+                const SizedBox(height: 2),
+                Text(
+                  value,
+                  maxLines: 2,
+                  overflow: TextOverflow.ellipsis,
+                  style: theme.textTheme.bodyMedium?.copyWith(
+                    fontWeight: FontWeight.w600,
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+class _Footnote extends StatelessWidget {
+  const _Footnote({required this.text});
+
+  final String text;
+
+  @override
+  Widget build(BuildContext context) {
+    return Row(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Icon(Icons.info_outline, size: 14, color: AppColors.textMuted),
+        const SizedBox(width: 8),
+        Expanded(
+          child: Text(
+            text,
+            style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                  color: AppColors.textMuted,
+                ),
+          ),
+        ),
+      ],
     );
   }
 }
