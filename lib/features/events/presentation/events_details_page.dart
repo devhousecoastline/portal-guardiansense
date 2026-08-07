@@ -98,7 +98,7 @@ class _EventsDetailsPageState extends State<EventsDetailsPage> {
   }
 }
 
-class _DayDetailsBody extends StatelessWidget {
+class _DayDetailsBody extends StatefulWidget {
   const _DayDetailsBody({
     required this.day,
     required this.dayLabel,
@@ -110,11 +110,27 @@ class _DayDetailsBody extends StatelessWidget {
   final List<SecurityEvent> rawEvents;
 
   @override
+  State<_DayDetailsBody> createState() => _DayDetailsBodyState();
+}
+
+class _DayDetailsBodyState extends State<_DayDetailsBody> {
+  final _scrollController = ScrollController();
+
+  @override
+  void dispose() {
+    _scrollController.dispose();
+    super.dispose();
+  }
+
+  @override
   Widget build(BuildContext context) {
-    final timeline = EventsTimelineBuilder.build(rawEvents);
+    final timeline = EventsTimelineBuilder.build(widget.rawEvents);
     EventTimelineEntry? entry;
     for (final candidate in timeline) {
-      if (EventFilters.isSameCalendarDay(candidate.summary.occurredAt, day)) {
+      if (EventFilters.isSameCalendarDay(
+        candidate.summary.occurredAt,
+        widget.day,
+      )) {
         entry = candidate;
         break;
       }
@@ -133,7 +149,7 @@ class _DayDetailsBody extends StatelessWidget {
               ),
               const SizedBox(height: 12),
               Text(
-                'Nenhum evento em $dayLabel.',
+                'Nenhum evento em ${widget.dayLabel}.',
                 style: Theme.of(context).textTheme.titleMedium,
                 textAlign: TextAlign.center,
               ),
@@ -176,8 +192,11 @@ class _DayDetailsBody extends StatelessWidget {
         ),
         Expanded(
           child: Scrollbar(
+            controller: _scrollController,
             thumbVisibility: true,
             child: ListView.separated(
+              controller: _scrollController,
+              primary: false,
               padding: const EdgeInsets.only(right: 14, bottom: 28),
               itemCount: dayEvents.length,
               separatorBuilder: (_, _) => const SizedBox(height: 10),

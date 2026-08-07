@@ -63,13 +63,27 @@ class _DevicesPageState extends State<DevicesPage> {
   }
 }
 
-class _DevicesBody extends StatelessWidget {
+class _DevicesBody extends StatefulWidget {
   const _DevicesBody({required this.list});
 
   final DeviceListSnapshot? list;
 
   @override
+  State<_DevicesBody> createState() => _DevicesBodyState();
+}
+
+class _DevicesBodyState extends State<_DevicesBody> {
+  final _scrollController = ScrollController();
+
+  @override
+  void dispose() {
+    _scrollController.dispose();
+    super.dispose();
+  }
+
+  @override
   Widget build(BuildContext context) {
+    final list = widget.list;
     if (list == null) {
       return SectionCard(
         child: Text(
@@ -82,7 +96,7 @@ class _DevicesBody extends StatelessWidget {
       );
     }
 
-    final snapshot = list!;
+    final snapshot = list;
     if (!snapshot.hasActive && !snapshot.hasReleased) {
       return SectionCard(
         child: Column(
@@ -121,9 +135,12 @@ class _DevicesBody extends StatelessWidget {
         DevicePlanBanner(snapshot: snapshot),
         Expanded(
           child: Scrollbar(
+            controller: _scrollController,
             thumbVisibility:
                 snapshot.visible.length + snapshot.released.length > 3,
             child: ListView(
+              controller: _scrollController,
+              primary: false,
               padding: const EdgeInsets.only(right: 14, bottom: 28),
               children: [
                 if (snapshot.hasActive) ...[
