@@ -28,7 +28,9 @@ class ProtectionStatusHero extends StatelessWidget {
     final offline = !status.isOnline;
     final cardPadding = compact ? 12.0 : 24.0;
     final indexSize = compact ? 32.0 : 52.0;
-    final expands = stretchVertically || fillHeight;
+    // Só [fillHeight] (notebook) força altura infinita. Em desktop,
+    // [stretchVertically] usa IntrinsicHeight — infinity/Spacer quebram o layout.
+    final expands = fillHeight;
 
     return SizedBox(
       width: double.infinity,
@@ -123,8 +125,7 @@ class ProtectionStatusHero extends StatelessWidget {
                       ),
                 ),
               ],
-              if (stretchVertically) const Spacer(),
-              if (!stretchVertically) SizedBox(height: compact ? 10 : 16),
+              SizedBox(height: compact ? 10 : 16),
               if (stretchVertically)
                 Divider(
                   height: compact ? 16 : 20,

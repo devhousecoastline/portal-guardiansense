@@ -18,6 +18,7 @@ class SectionCard extends StatelessWidget {
     return Container(
       width: double.infinity,
       height: expandVertically ? double.infinity : null,
+      alignment: Alignment.topLeft,
       clipBehavior: Clip.none,
       padding: padding,
       decoration: BoxDecoration(
@@ -45,7 +46,7 @@ class MetricRow extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Padding(
-      padding:  EdgeInsets.symmetric(vertical: 8),
+      padding: const EdgeInsets.symmetric(vertical: 8),
       child: Row(
         children: [
           Expanded(

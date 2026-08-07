@@ -48,7 +48,8 @@ class ProtectionChecklistCard extends StatelessWidget {
             'Respostas em segundos',
             style: DashboardTypography.cardTitle(context, compact: compact),
           ),
-          if (!compact) ...[
+          // Grade de tiles (notebook/desktop): sem subtítulo — igual ao compact.
+          if (!compact && !pairGrid) ...[
             const SizedBox(height: 4),
             Text(
               status.isOnline
@@ -57,7 +58,7 @@ class ProtectionChecklistCard extends StatelessWidget {
               style: DashboardTypography.cardSubtitle(context),
             ),
           ],
-          SizedBox(height: compact ? 8 : 12),
+          SizedBox(height: compact || pairGrid ? 8 : 12),
           if (expandVertically)
             Expanded(
               child: _ChecklistBody(
@@ -151,6 +152,28 @@ class _ChecklistBody extends StatelessWidget {
               )
             : _ChecklistColumn(entries: iconEntries, compact: compact);
 
+    // Desktop (sem pinFooter): evita LayoutBuilder — IntrinsicHeight do Centro
+    // precisa de dimensões intrínsecas. Notebook mantém LayoutBuilder + scroll.
+    if (!pinFooter) {
+      final mainWidth =
+          AppLayout.mainAreaWidth(MediaQuery.sizeOf(context).width);
+      final estimatedCardWidth = (mainWidth - 20) / 2;
+      final footer = _buildFooter(
+        context,
+        sideBySide: _sideBySideFooter(estimatedCardWidth),
+      );
+      return Column(
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        children: [
+          grid,
+          if (footer != null) ...[
+            SizedBox(height: compact ? 8 : 10),
+            footer,
+          ],
+        ],
+      );
+    }
+
     return LayoutBuilder(
       builder: (context, constraints) {
         final footer = _buildFooter(
@@ -158,11 +181,18 @@ class _ChecklistBody extends StatelessWidget {
           sideBySide: _sideBySideFooter(constraints.maxWidth),
         );
 
-        if (!pinFooter) {
+        final bounded = constraints.hasBoundedHeight &&
+            constraints.maxHeight.isFinite &&
+            constraints.maxHeight > 0;
+
+        // Célula com altura fixa (desktop/notebook): Spacers funcionam sem ScrollView.
+        if (bounded) {
           return Column(
             crossAxisAlignment: CrossAxisAlignment.stretch,
             children: [
+              const Spacer(flex: 2),
               grid,
+              const Spacer(flex: 1),
               if (footer != null) ...[
                 SizedBox(height: compact ? 8 : 10),
                 footer,
@@ -171,25 +201,16 @@ class _ChecklistBody extends StatelessWidget {
           );
         }
 
-        // Altura fixa da célula: preenche quando sobra espaço, rola quando falta.
-        return SingleChildScrollView(
-          physics: const ClampingScrollPhysics(),
-          child: ConstrainedBox(
-            constraints: BoxConstraints(minHeight: constraints.maxHeight),
-            child: IntrinsicHeight(
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.stretch,
-                children: [
-                  grid,
-                  if (footer != null) ...[
-                    const Spacer(),
-                    SizedBox(height: compact ? 8 : 10),
-                    footer,
-                  ],
-                ],
-              ),
-            ),
-          ),
+        // Fallback se a altura vier ilimitada.
+        return Column(
+          crossAxisAlignment: CrossAxisAlignment.stretch,
+          children: [
+            grid,
+            if (footer != null) ...[
+              SizedBox(height: compact ? 8 : 10),
+              footer,
+            ],
+          ],
         );
       },
     );

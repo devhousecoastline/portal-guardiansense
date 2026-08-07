@@ -128,17 +128,19 @@ class _DashboardBody extends StatelessWidget {
   Widget build(BuildContext context) {
     final tone = ProtectionSnapshot.tone(status);
 
+    final fillCells = layout.isNotebook || layout.isDesktop;
+
     final hero = ProtectionStatusHero(
       status: status,
       tone: tone,
-      stretchVertically: layout.stretchTopRow,
-      fillHeight: layout.isNotebook,
+      stretchVertically: layout.stretchTopRow && !layout.isDesktop,
+      fillHeight: fillCells,
       compact: layout.compact,
     );
     final setup = ProtectionSetupCard(
       status: status,
-      stretchVertically: layout.stretchTopRow,
-      fillHeight: layout.isNotebook,
+      stretchVertically: layout.stretchTopRow && !layout.isDesktop,
+      fillHeight: fillCells,
       compact: layout.compact,
     );
     final checklist = ProtectionChecklistCard(
@@ -146,14 +148,14 @@ class _DashboardBody extends StatelessWidget {
       compact: layout.compact,
       twoColumns: layout.checklistTwoColumns,
       pairGrid: layout.checklistPairGrid,
-      expandVertically: layout.isNotebook,
+      expandVertically: fillCells,
     );
     final containment = RemoteContainmentCard(
       uid: uid,
       deviceId: device.id,
       status: status,
       compact: layout.compact,
-      expandVertically: layout.isNotebook,
+      expandVertically: fillCells,
     );
 
     if (layout.isNotebook) {
@@ -209,33 +211,32 @@ class _DashboardBody extends StatelessWidget {
       );
     }
 
+    // Desktop (notebook retorna cedo acima). Mobile empilha.
+    final rowHeight = layout.isDesktop
+        ? DashboardLayoutSpec.desktopRowHeight(
+            MediaQuery.sizeOf(context).height,
+          )
+        : null;
+
     return Column(
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
-        if (!layout.isMobile) ...[
-          if (layout.stretchTopRow)
-            IntrinsicHeight(
-              child: Row(
-                crossAxisAlignment: CrossAxisAlignment.stretch,
-                children: [
-                  Expanded(flex: layout.topRowHeroFlex, child: hero),
-                  SizedBox(width: layout.columnGap),
-                  Expanded(flex: layout.topRowSetupFlex, child: setup),
-                ],
-              ),
-            )
-          else
-            Row(
-              crossAxisAlignment: CrossAxisAlignment.start,
+        if (layout.isDesktop && rowHeight != null) ...[
+          SizedBox(
+            height: rowHeight,
+            child: Row(
+              crossAxisAlignment: CrossAxisAlignment.stretch,
               children: [
                 Expanded(flex: layout.topRowHeroFlex, child: hero),
                 SizedBox(width: layout.columnGap),
                 Expanded(flex: layout.topRowSetupFlex, child: setup),
               ],
             ),
+          ),
           SizedBox(height: layout.sectionGap),
-          if (layout.useBottomRowSplit)
-            Row(
+          SizedBox(
+            height: rowHeight,
+            child: Row(
               crossAxisAlignment: CrossAxisAlignment.stretch,
               children: [
                 Expanded(
@@ -248,14 +249,9 @@ class _DashboardBody extends StatelessWidget {
                   child: checklist,
                 ),
               ],
-            )
-          else ...[
-            containment,
-            SizedBox(height: layout.sectionGap),
-            checklist,
-          ],
-        ]
-        else ...[
+            ),
+          ),
+        ] else ...[
           hero,
           SizedBox(height: layout.sectionGap),
           setup,

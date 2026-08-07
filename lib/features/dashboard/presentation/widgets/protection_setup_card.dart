@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:guardian_portal/core/theme/app_colors.dart';
 import 'package:guardian_portal/core/theme/dashboard_typography.dart';
+import 'package:guardian_portal/core/widgets/celular_seguro_link.dart';
 import 'package:guardian_portal/core/widgets/section_card.dart';
 import 'package:guardian_portal/features/dashboard/domain/device_status.dart';
 import 'package:guardian_portal/features/dashboard/domain/protection_setup_item.dart';
@@ -26,7 +27,8 @@ class ProtectionSetupCard extends StatelessWidget {
     final complete = status.hasSetupChecklist &&
         status.pendingSetupItems.isEmpty &&
         status.configuredSetupItems.isNotEmpty;
-    final expands = stretchVertically || fillHeight;
+    // Mesma regra do hero: infinity só no notebook ([fillHeight]).
+    final expands = fillHeight;
 
     return SizedBox(
       width: double.infinity,
@@ -136,46 +138,27 @@ class _SetupTimeline extends StatelessWidget {
     final stemH = compact ? 16.0 : 20.0;
     final lineH = compact ? 2.0 : 2.5;
 
-    return LayoutBuilder(
-      builder: (context, constraints) {
-        final inset = constraints.maxWidth / (2 * n);
-        return Stack(
-          clipBehavior: Clip.none,
-          children: [
-            Positioned(
-              top: (dot - lineH) / 2,
-              left: inset,
-              right: inset,
-              child: Container(
-                height: lineH,
-                decoration: BoxDecoration(
-                  color: AppColors.divider.withValues(alpha: 0.95),
-                  borderRadius: BorderRadius.circular(99),
-                ),
-              ),
+    // Linha entre pontos fica em cada step (sem LayoutBuilder/Stack) para
+    // o IntrinsicHeight do Centro desktop funcionar.
+    return Row(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        for (var i = 0; i < items.length; i++)
+          Expanded(
+            child: _TimelineStep(
+              item: items[i],
+              muted: muted,
+              dotSize: dot,
+              iconSize: iconSize,
+              stemHeight: stemH,
+              lineHeight: lineH,
+              iconFor: _iconFor,
+              colorFor: _colorFor,
+              index: i,
+              total: n,
             ),
-            Row(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                for (var i = 0; i < items.length; i++)
-                  Expanded(
-                    child: _TimelineStep(
-                      item: items[i],
-                      muted: muted,
-                      dotSize: dot,
-                      iconSize: iconSize,
-                      stemHeight: stemH,
-                      iconFor: _iconFor,
-                      colorFor: _colorFor,
-                      index: i,
-                      total: n,
-                    ),
-                  ),
-              ],
-            ),
-          ],
-        );
-      },
+          ),
+      ],
     );
   }
 
@@ -245,6 +228,7 @@ class _TimelineStep extends StatelessWidget {
     required this.dotSize,
     required this.iconSize,
     required this.stemHeight,
+    required this.lineHeight,
     required this.iconFor,
     required this.colorFor,
     required this.index,
@@ -256,6 +240,7 @@ class _TimelineStep extends StatelessWidget {
   final double dotSize;
   final double iconSize;
   final double stemHeight;
+  final double lineHeight;
   final IconData Function(ProtectionSetupItem) iconFor;
   final Color Function(ProtectionSetupItem) colorFor;
   final int index;
@@ -264,6 +249,7 @@ class _TimelineStep extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final accent = item.done && !muted ? colorFor(item) : AppColors.textMuted;
+    final lineColor = AppColors.divider.withValues(alpha: 0.95);
 
     // Preferir tooltip para dentro do card (baixo) e afastar das bordas laterais.
     final edgePad = index == 0
@@ -298,10 +284,33 @@ class _TimelineStep extends StatelessWidget {
       child: Column(
         mainAxisSize: MainAxisSize.min,
         children: [
-          _TimelineDot(
-            done: item.done,
-            muted: muted,
-            size: dotSize,
+          SizedBox(
+            height: dotSize,
+            child: Row(
+              children: [
+                Expanded(
+                  child: index == 0
+                      ? const SizedBox.shrink()
+                      : Container(
+                          height: lineHeight,
+                          color: lineColor,
+                        ),
+                ),
+                _TimelineDot(
+                  done: item.done,
+                  muted: muted,
+                  size: dotSize,
+                ),
+                Expanded(
+                  child: index == total - 1
+                      ? const SizedBox.shrink()
+                      : Container(
+                          height: lineHeight,
+                          color: lineColor,
+                        ),
+                ),
+              ],
+            ),
           ),
           Container(
             width: 2.5,
@@ -457,8 +466,11 @@ class _CompleteBanner extends StatelessWidget {
 
     return Container(
       width: double.infinity,
+      constraints: BoxConstraints(
+        minHeight: CelularSeguroCallout.minHeight(compact: compact),
+      ),
       padding: EdgeInsets.symmetric(
-        horizontal: 12,
+        horizontal: compact ? 10 : 12,
         vertical: compact ? 8 : 10,
       ),
       decoration: BoxDecoration(
@@ -467,13 +479,14 @@ class _CompleteBanner extends StatelessWidget {
         border: Border.all(color: accent.withValues(alpha: 0.22)),
       ),
       child: Row(
+        crossAxisAlignment: CrossAxisAlignment.center,
         children: [
           Icon(
             muted ? Icons.history_rounded : Icons.verified_rounded,
-            size: 20,
+            size: compact ? 18 : 20,
             color: accent,
           ),
-          const SizedBox(width: 10),
+          SizedBox(width: compact ? 8 : 10),
           Expanded(
             child: Text(
               muted

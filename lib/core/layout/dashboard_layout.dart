@@ -8,7 +8,7 @@ enum DashboardLayoutProfile {
   /// Grade 2×2 compacta (notebook / janela baixa).
   notebook,
 
-  /// Hero + setup em linha; contenção e checklist empilhados (desktop).
+  /// Hero + setup em linha; contenção e checklist lado a lado (desktop).
   desktop,
 }
 
@@ -67,6 +67,12 @@ final class DashboardLayoutSpec {
     return (grid / 2 * 0.9).clamp(186.0, 262.0);
   }
 
+  /// Altura de cada linha 1×2 no desktop (hero|setup e contenção|checklist).
+  /// Mesma lógica do notebook: [SizedBox] + stretch + cards com fill/expand.
+  static double desktopRowHeight(double viewportHeight) {
+    return (viewportHeight * 0.38).clamp(320.0, 460.0);
+  }
+
   static DashboardLayoutSpec resolve({
     required double viewportWidth,
     required double viewportHeight,
@@ -109,22 +115,21 @@ final class DashboardLayoutSpec {
       );
     }
 
-    final checklistTwoColumns =
-        mainWidth >= AppLayout.checklistTwoColBreakpoint;
-
     return DashboardLayoutSpec._(
       profile: DashboardLayoutProfile.desktop,
       compact: false,
       stretchTopRow: true,
-      useBottomRowSplit: false,
+      useBottomRowSplit: true,
+      // Grade 2×2 alinhada (iguais ao notebook).
       topRowHeroFlex: 5,
-      topRowSetupFlex: 6,
-      bottomRowContainmentFlex: 1,
-      bottomRowChecklistFlex: 1,
+      topRowSetupFlex: 5,
+      bottomRowContainmentFlex: 5,
+      bottomRowChecklistFlex: 5,
       sectionGap: 18,
       columnGap: 20,
-      checklistTwoColumns: checklistTwoColumns,
-      checklistPairGrid: false,
+      checklistTwoColumns: false,
+      // Mesmo visual do notebook: tiles em grade 2×2 + rodapé.
+      checklistPairGrid: true,
       footerFontSize: 14,
     );
   }

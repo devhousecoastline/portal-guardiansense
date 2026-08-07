@@ -61,6 +61,9 @@ class CelularSeguroCallout extends StatelessWidget {
 
   final bool compact;
 
+  /// Altura alinhada ao banner "Todos os requisitos…" do card de setup.
+  static double minHeight({required bool compact}) => compact ? 56.0 : 64.0;
+
   @override
   Widget build(BuildContext context) {
     final titleStyle = Theme.of(context).textTheme.labelLarge?.copyWith(
@@ -77,6 +80,7 @@ class CelularSeguroCallout extends StatelessWidget {
 
     return Container(
       width: double.infinity,
+      constraints: BoxConstraints(minHeight: minHeight(compact: compact)),
       decoration: BoxDecoration(
         color: AppColors.primary.withValues(alpha: 0.07),
         borderRadius: radius,
@@ -92,9 +96,10 @@ class CelularSeguroCallout extends StatelessWidget {
           child: Padding(
             padding: EdgeInsets.symmetric(
               horizontal: compact ? 10 : 12,
-              vertical: compact ? 8 : 12,
+              vertical: compact ? 8 : 10,
             ),
             child: Row(
+              crossAxisAlignment: CrossAxisAlignment.center,
               children: [
                 Icon(
                   Icons.phonelink_lock_rounded,
@@ -105,6 +110,7 @@ class CelularSeguroCallout extends StatelessWidget {
                 Expanded(
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
+                    mainAxisAlignment: MainAxisAlignment.center,
                     mainAxisSize: MainAxisSize.min,
                     children: [
                       Text('Roubo ou furto?', style: titleStyle),
@@ -115,7 +121,7 @@ class CelularSeguroCallout extends StatelessWidget {
                             : 'Bloqueie IMEI/linha na operadora pelo programa '
                                 'do governo.',
                         style: bodyStyle,
-                        maxLines: compact ? 2 : 3,
+                        maxLines: 2,
                         overflow: TextOverflow.ellipsis,
                       ),
                     ],
