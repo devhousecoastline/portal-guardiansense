@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:guardian_portal/core/theme/app_colors.dart';
 import 'package:guardian_portal/core/theme/dashboard_typography.dart';
+import 'package:guardian_portal/core/widgets/section_card.dart';
 import 'package:guardian_portal/core/widgets/status_badge.dart';
 import 'package:guardian_portal/features/dashboard/domain/device_status.dart';
 import 'package:guardian_portal/features/dashboard/domain/protection_snapshot.dart';
@@ -26,7 +27,10 @@ class ProtectionStatusHero extends StatelessWidget {
     final accent = _accent(tone);
     final headline = ProtectionSnapshot.headline(status);
     final offline = !status.isOnline;
-    final cardPadding = compact ? 12.0 : 24.0;
+    // Badge (e banner offline) já cobrem esses estados — a frase só repete.
+    final showHeadline = status.level == ProtectionLevel.partial ||
+        status.level == ProtectionLevel.alert ||
+        status.level == ProtectionLevel.unknown;
     final indexSize = compact ? 32.0 : 52.0;
     // Só [fillHeight] (notebook) força altura infinita. Em desktop,
     // [stretchVertically] usa IntrinsicHeight — infinity/Spacer quebram o layout.
@@ -35,153 +39,72 @@ class ProtectionStatusHero extends StatelessWidget {
     return SizedBox(
       width: double.infinity,
       height: expands ? double.infinity : null,
-      child: Container(
-        width: double.infinity,
-        height: expands ? double.infinity : null,
-        padding: EdgeInsets.all(cardPadding),
-        decoration: BoxDecoration(
-          color: AppColors.card,
-          borderRadius: BorderRadius.circular(16),
-          border: Border.all(color: AppColors.divider),
+      child: SectionCard(
+        expandVertically: expands,
+        padding: EdgeInsets.fromLTRB(
+          20,
+          compact ? 12 : 18,
+          20,
+          compact ? 10 : 14,
         ),
         child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
+          crossAxisAlignment: CrossAxisAlignment.stretch,
           children: [
-            StatusBadge(
-              label: status.protectionLabel.toUpperCase(),
-              tone: tone,
+            Text(
+              'Índice de proteção',
+              style: DashboardTypography.cardTitle(context, compact: compact),
             ),
-            if (offline) ...[
-              SizedBox(height: compact ? 6 : 12),
-              _OfflineBanner(compact: compact),
-            ],
-            if (fillHeight) ...[
-              Expanded(
-                // Centralizado: sem o vazio entre o badge e a frase.
-                child: Align(
-                  alignment: Alignment.centerLeft,
-                  child: Padding(
-                    padding: EdgeInsets.symmetric(vertical: compact ? 6 : 8),
-                    child: Text(
-                      headline,
-                      style: Theme.of(context).textTheme.titleMedium?.copyWith(
-                            color: AppColors.textMuted,
-                            height: 1.3,
-                            fontWeight: FontWeight.w500,
-                            fontSize: compact ? 13.5 : 15,
-                          ),
-                      maxLines: compact ? 2 : 3,
-                      overflow: TextOverflow.ellipsis,
-                    ),
-                  ),
-                ),
-              ),
-              Divider(
-                height: compact ? 12 : 14,
-                thickness: 1,
-                color: AppColors.divider.withValues(alpha: 0.9),
-              ),
-              SizedBox(height: compact ? 6 : 8),
-              Row(
-                crossAxisAlignment: CrossAxisAlignment.end,
-                children: [
-                  Expanded(
-                    child: Text(
-                      status.modelLabel,
-                      style: DashboardTypography.deviceName(
-                        context,
-                        compact: compact,
-                      ),
-                      maxLines: 2,
-                      overflow: TextOverflow.ellipsis,
-                    ),
-                  ),
-                  const SizedBox(width: 12),
-                  _IndexBlock(
-                    status: status,
-                    accent: accent,
-                    offline: offline,
-                    indexSize: indexSize,
-                    compact: compact,
-                    alignEnd: true,
-                  ),
-                ],
-              ),
-            ] else ...[
-              SizedBox(height: compact ? 6 : 16),
+            // Só alerta/parcial no subtítulo — o aparelho fica no painel (igual notebook).
+            if (!compact && showHeadline) ...[
+              const SizedBox(height: 4),
               Text(
-                status.modelLabel,
-                style: DashboardTypography.deviceName(context, compact: compact),
-                maxLines: compact ? 2 : null,
-                overflow: compact ? TextOverflow.ellipsis : null,
+                headline,
+                style: DashboardTypography.cardSubtitle(context),
+                maxLines: 2,
+                overflow: TextOverflow.ellipsis,
               ),
-              if (!compact) ...[
-                const SizedBox(height: 8),
-                Text(
-                  headline,
-                  style: Theme.of(context).textTheme.bodyLarge?.copyWith(
-                        color: AppColors.textMuted,
-                        height: 1.4,
-                      ),
+            ],
+            SizedBox(height: compact ? 8 : 12),
+            // No layout em grade o badge OFFLINE no painel basta;
+            // o banner ocupava altura e empurrava o índice.
+            if (offline && !fillHeight) ...[
+              _OfflineBanner(compact: compact),
+              SizedBox(height: compact ? 8 : 10),
+            ],
+            if (fillHeight)
+              Expanded(
+                child: _IndexPanel(
+                  status: status,
+                  tone: tone,
+                  accent: accent,
+                  offline: offline,
+                  indexSize: indexSize,
+                  compact: compact,
+                  fillHeight: true,
+                  showDeviceName: true,
                 ),
-              ],
-              SizedBox(height: compact ? 10 : 16),
+              )
+            else ...[
               if (stretchVertically)
                 Divider(
                   height: compact ? 16 : 20,
                   thickness: 1,
                   color: AppColors.divider.withValues(alpha: 0.9),
                 ),
-              _indexRow(
-                context,
+              _IndexPanel(
+                status: status,
+                tone: tone,
                 accent: accent,
                 offline: offline,
                 indexSize: indexSize,
+                compact: compact,
+                fillHeight: false,
+                showDeviceName: true,
               ),
             ],
           ],
         ),
       ),
-    );
-  }
-
-  Widget _indexRow(
-    BuildContext context, {
-    required Color accent,
-    required bool offline,
-    required double indexSize,
-  }) {
-    return Row(
-      crossAxisAlignment: CrossAxisAlignment.end,
-      children: [
-        _IndexBlock(
-          status: status,
-          accent: accent,
-          offline: offline,
-          indexSize: indexSize,
-          compact: compact,
-          alignEnd: false,
-        ),
-        const Spacer(),
-        Column(
-          crossAxisAlignment: CrossAxisAlignment.end,
-          children: [
-            Text(
-              'Índice de Proteção',
-              style: compact
-                  ? DashboardTypography.mutedLabel(context)
-                  : Theme.of(context).textTheme.bodyMedium,
-            ),
-            if (offline && status.hasSetupChecklist) ...[
-              const SizedBox(height: 4),
-              Text(
-                'Último: ${status.storedProtectionIndex}%',
-                style: DashboardTypography.mutedLabel(context),
-              ),
-            ],
-          ],
-        ),
-      ],
     );
   }
 
@@ -194,6 +117,90 @@ class ProtectionStatusHero extends StatelessWidget {
       };
 }
 
+/// Painel interno no mesmo idioma da Contenção remota.
+class _IndexPanel extends StatelessWidget {
+  const _IndexPanel({
+    required this.status,
+    required this.tone,
+    required this.accent,
+    required this.offline,
+    required this.indexSize,
+    required this.compact,
+    required this.fillHeight,
+    required this.showDeviceName,
+  });
+
+  final DeviceStatus status;
+  final StatusTone tone;
+  final Color accent;
+  final bool offline;
+  final double indexSize;
+  final bool compact;
+  final bool fillHeight;
+  final bool showDeviceName;
+
+  @override
+  Widget build(BuildContext context) {
+    final body = Column(
+      mainAxisSize: MainAxisSize.min,
+      children: [
+        StatusBadge(
+          label: status.protectionLabel.toUpperCase(),
+          tone: tone,
+        ),
+        SizedBox(height: compact ? 10 : 14),
+        _IndexBlock(
+          status: status,
+          accent: accent,
+          offline: offline,
+          indexSize: indexSize,
+          compact: compact,
+        ),
+        if (showDeviceName) ...[
+          SizedBox(height: compact ? 6 : 8),
+          Text(
+            status.modelLabel,
+            textAlign: TextAlign.center,
+            style: DashboardTypography.deviceName(context, compact: compact),
+            maxLines: 2,
+            overflow: TextOverflow.ellipsis,
+          ),
+        ],
+        if (offline) ...[
+          const SizedBox(height: 4),
+          Text(
+            'na última sincronização',
+            textAlign: TextAlign.center,
+            style: DashboardTypography.mutedLabel(context),
+          ),
+        ],
+      ],
+    );
+
+    return Container(
+      width: double.infinity,
+      height: fillHeight ? double.infinity : null,
+      padding: EdgeInsets.symmetric(
+        horizontal: compact ? 10 : 14,
+        vertical: compact || fillHeight ? 8 : 14,
+      ),
+      decoration: BoxDecoration(
+        color: accent.withValues(alpha: 0.06),
+        borderRadius: BorderRadius.circular(10),
+        border: Border.all(color: accent.withValues(alpha: 0.2)),
+      ),
+      child: fillHeight
+          ? Center(
+              child: FittedBox(
+                fit: BoxFit.scaleDown,
+                child: body,
+              ),
+            )
+          : body,
+    );
+  }
+}
+
 class _IndexBlock extends StatelessWidget {
   const _IndexBlock({
     required this.status,
@@ -201,7 +208,6 @@ class _IndexBlock extends StatelessWidget {
     required this.offline,
     required this.indexSize,
     required this.compact,
-    required this.alignEnd,
   });
 
   final DeviceStatus status;
@@ -209,54 +215,38 @@ class _IndexBlock extends StatelessWidget {
   final bool offline;
   final double indexSize;
   final bool compact;
-  final bool alignEnd;
 
   @override
   Widget build(BuildContext context) {
-    return Column(
+    // Offline: mostra o último índice conhecido (muted), não um traço vazio.
+    final value = offline
+        ? status.storedProtectionIndex
+        : status.protectionIndex;
+
+    return Row(
       mainAxisSize: MainAxisSize.min,
-      crossAxisAlignment:
-          alignEnd ? CrossAxisAlignment.end : CrossAxisAlignment.start,
+      crossAxisAlignment: CrossAxisAlignment.end,
       children: [
-        Row(
-          mainAxisSize: MainAxisSize.min,
-          crossAxisAlignment: CrossAxisAlignment.end,
-          children: [
-            Text(
-              offline ? '—' : '${status.protectionIndex}',
-              style: Theme.of(context).textTheme.headlineLarge?.copyWith(
-                    fontSize: indexSize,
-                    fontWeight: FontWeight.w700,
-                    color: accent,
-                    height: 1,
-                  ),
-            ),
-            if (!offline)
-              Padding(
-                padding: EdgeInsets.only(bottom: compact ? 3 : 6, left: 2),
-                child: Text(
-                  '%',
-                  style: Theme.of(context).textTheme.titleLarge?.copyWith(
-                        color: accent,
-                        fontWeight: FontWeight.w600,
-                        fontSize: compact ? 16 : null,
-                      ),
-                ),
+        Text(
+          '$value',
+          style: Theme.of(context).textTheme.headlineLarge?.copyWith(
+                fontSize: indexSize,
+                fontWeight: FontWeight.w700,
+                color: accent,
+                height: 1,
               ),
-          ],
         ),
-        if (alignEnd) ...[
-          const SizedBox(height: 2),
-          Text(
-            'Índice de Proteção',
-            style: DashboardTypography.mutedLabel(context),
+        Padding(
+          padding: EdgeInsets.only(bottom: compact ? 3 : 6, left: 2),
+          child: Text(
+            '%',
+            style: Theme.of(context).textTheme.titleLarge?.copyWith(
+                  color: accent,
+                  fontWeight: FontWeight.w600,
+                  fontSize: compact ? 16 : null,
+                ),
           ),
-          if (offline && status.hasSetupChecklist)
-            Text(
-              'Último: ${status.storedProtectionIndex}%',
-              style: DashboardTypography.mutedLabel(context),
-            ),
-        ],
+        ),
       ],
     );
   }
