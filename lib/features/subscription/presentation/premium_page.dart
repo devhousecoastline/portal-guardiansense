@@ -61,15 +61,32 @@ class _PremiumPageState extends State<PremiumPage> {
       if (!mounted) return;
       setState(() {
         _creating = false;
-        _error = e.message ?? e.code;
+        _error = _pixErrorMessage(e);
       });
     } catch (e) {
       if (!mounted) return;
       setState(() {
         _creating = false;
-        _error = e.toString();
+        _error =
+            'Não foi possível gerar o PIX. Tente de novo em instantes.';
       });
     }
+  }
+
+  static String _pixErrorMessage(FirebaseFunctionsException e) {
+    final raw = (e.message ?? e.code).trim();
+    final lower = raw.toLowerCase();
+    if (lower == 'internal' ||
+        lower == 'internal_error' ||
+        lower.contains('internal_server_error') ||
+        lower.contains('http is unavailable')) {
+      return 'O Mercado Pago está instável agora. Tente gerar o PIX de novo '
+          'em alguns minutos.';
+    }
+    if (raw.isEmpty) {
+      return 'Não foi possível gerar o PIX. Tente de novo.';
+    }
+    return raw;
   }
 
   Future<void> _copyPix() async {
@@ -97,18 +114,12 @@ class _PremiumPageState extends State<PremiumPage> {
           return GuardianScaffold(
             title: 'Guardian Premium',
             subtitle: 'Assinatura anual · PIX',
-            child: Align(
-              alignment: Alignment.topCenter,
-              child: ConstrainedBox(
-                constraints: const BoxConstraints(maxWidth: 640),
-                child: SectionCard(
-                  child: Text(
-                    'Faça login para assinar.',
-                    style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                          color: AppColors.textMuted,
-                        ),
-                  ),
-                ),
+            child: SectionCard(
+              child: Text(
+                'Faça login para assinar.',
+                style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                      color: AppColors.textMuted,
+                    ),
               ),
             ),
           );
@@ -127,22 +138,16 @@ class _PremiumPageState extends State<PremiumPage> {
               subtitle: active
                   ? 'Assinatura ativa na sua conta'
                   : 'Assinatura anual · pagamento via PIX',
-              child: Align(
-                alignment: Alignment.topCenter,
-                child: ConstrainedBox(
-                  constraints: const BoxConstraints(maxWidth: 640),
-                  child: active
-                      ? _ActiveView(entitlement: entitlement!)
-                      : _CheckoutView(
-                          entitlement: entitlement,
-                          charge: _charge,
-                          creating: _creating,
-                          error: _error,
-                          onGenerate: _generatePix,
-                          onCopy: _copyPix,
-                        ),
-                ),
-              ),
+              child: active
+                  ? _ActiveView(entitlement: entitlement!)
+                  : _CheckoutView(
+                      entitlement: entitlement,
+                      charge: _charge,
+                      creating: _creating,
+                      error: _error,
+                      onGenerate: _generatePix,
+                      onCopy: _copyPix,
+                    ),
             );
           },
         );
@@ -299,16 +304,18 @@ class _CheckoutView extends StatelessWidget {
         if (!showingPix)
           SectionCard(
             child: Column(
-              crossAxisAlignment: CrossAxisAlignment.stretch,
+              crossAxisAlignment: CrossAxisAlignment.center,
               children: [
                 _CardTitle(
                   icon: Icons.workspace_premium_outlined,
                   label: 'Assinatura anual',
                   trailing: StatusPill(label: pillLabel, color: color),
+                  centered: true,
                 ),
                 const SizedBox(height: 12),
                 Text(
                   '12 meses à vista. Sem plano mensal.',
+                  textAlign: TextAlign.center,
                   style: theme.textTheme.bodyMedium?.copyWith(
                     color: AppColors.textMuted,
                   ),
@@ -316,6 +323,7 @@ class _CheckoutView extends StatelessWidget {
                 const SizedBox(height: 14),
                 Text(
                   SubscriptionPricing.yearlyLabelBr,
+                  textAlign: TextAlign.center,
                   style: theme.textTheme.headlineSmall?.copyWith(
                     fontWeight: FontWeight.w800,
                     color: AppColors.trustHigh,
@@ -324,13 +332,18 @@ class _CheckoutView extends StatelessWidget {
                 const SizedBox(height: 4),
                 Text(
                   SubscriptionPricing.monthlyLabelBr,
+                  textAlign: TextAlign.center,
                   style: theme.textTheme.bodyMedium?.copyWith(
                     color: AppColors.textMuted,
                   ),
                 ),
                 if (statusLine.isNotEmpty) ...[
                   const SizedBox(height: 14),
-                  Text(statusLine, style: theme.textTheme.bodyMedium),
+                  Text(
+                    statusLine,
+                    textAlign: TextAlign.center,
+                    style: theme.textTheme.bodyMedium,
+                  ),
                 ],
               ],
             ),
@@ -339,6 +352,7 @@ class _CheckoutView extends StatelessWidget {
           SectionCard(
             padding: const EdgeInsets.fromLTRB(16, 12, 16, 12),
             child: Row(
+              mainAxisAlignment: MainAxisAlignment.center,
               children: [
                 Icon(
                   Icons.workspace_premium_outlined,
@@ -346,11 +360,12 @@ class _CheckoutView extends StatelessWidget {
                   size: 20,
                 ),
                 const SizedBox(width: 10),
-                Expanded(
+                Flexible(
                   child: Text(
                     statusLine.isNotEmpty
                         ? statusLine
                         : SubscriptionPricing.yearlyLabelBr,
+                    textAlign: TextAlign.center,
                     style: theme.textTheme.bodyMedium,
                   ),
                 ),
@@ -363,29 +378,29 @@ class _CheckoutView extends StatelessWidget {
         if (!showingPix)
           SectionCard(
             child: Column(
-              crossAxisAlignment: CrossAxisAlignment.stretch,
+              crossAxisAlignment: CrossAxisAlignment.center,
               children: [
                 const _CardTitle(
                   icon: Icons.qr_code_2_rounded,
                   label: 'Pagamento PIX',
+                  centered: true,
                 ),
                 const SizedBox(height: 12),
                 Text(
                   'Gere o QR Code para pagar à vista e ativar 12 meses '
                   'na sua conta.',
+                  textAlign: TextAlign.center,
                   style: theme.textTheme.bodyMedium?.copyWith(
                     color: AppColors.textMuted,
                   ),
                 ),
                 const SizedBox(height: 16),
-                Center(
-                  child: GuardianPillButton(
-                    label: 'Pagar com PIX',
-                    icon: Icons.qr_code_2_rounded,
-                    iconLeading: true,
-                    busy: creating,
-                    onPressed: creating ? null : onGenerate,
-                  ),
+                GuardianPillButton(
+                  label: 'Pagar com PIX',
+                  icon: Icons.qr_code_2_rounded,
+                  iconLeading: true,
+                  busy: creating,
+                  onPressed: creating ? null : onGenerate,
                 ),
               ],
             ),
@@ -401,6 +416,7 @@ class _CheckoutView extends StatelessWidget {
           const SizedBox(height: 12),
           Text(
             error!,
+            textAlign: TextAlign.center,
             style: theme.textTheme.bodyMedium?.copyWith(
               color: AppColors.riskCritical,
               height: 1.4,
@@ -551,27 +567,38 @@ class _PixPanel extends StatelessWidget {
 }
 
 class _CardTitle extends StatelessWidget {
-  const _CardTitle({required this.icon, required this.label, this.trailing});
+  const _CardTitle({
+    required this.icon,
+    required this.label,
+    this.trailing,
+    this.centered = false,
+  });
 
   final IconData icon;
   final String label;
   final Widget? trailing;
+  final bool centered;
 
   @override
   Widget build(BuildContext context) {
+    final title = Text(
+      label,
+      style: Theme.of(context).textTheme.titleMedium?.copyWith(
+            fontWeight: FontWeight.w600,
+          ),
+    );
+
     return Row(
+      mainAxisAlignment:
+          centered ? MainAxisAlignment.center : MainAxisAlignment.start,
       children: [
         Icon(icon, color: AppColors.primary, size: 22),
         const SizedBox(width: 10),
-        Expanded(
-          child: Text(
-            label,
-            style: Theme.of(context).textTheme.titleMedium?.copyWith(
-                  fontWeight: FontWeight.w600,
-                ),
-          ),
-        ),
-        ?trailing,
+        if (centered) title else Expanded(child: title),
+        if (trailing != null) ...[
+          const SizedBox(width: 10),
+          trailing!,
+        ],
       ],
     );
   }
@@ -645,20 +672,12 @@ class _Footnote extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Row(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        Icon(Icons.info_outline, size: 14, color: AppColors.textMuted),
-        const SizedBox(width: 8),
-        Expanded(
-          child: Text(
-            text,
-            style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                  color: AppColors.textMuted,
-                ),
+    return Text(
+      text,
+      textAlign: TextAlign.center,
+      style: Theme.of(context).textTheme.bodySmall?.copyWith(
+            color: AppColors.textMuted,
           ),
-        ),
-      ],
     );
   }
 }

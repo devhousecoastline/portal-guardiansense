@@ -505,7 +505,7 @@ const _navItems = [
   _NavItem('Localizar', Icons.search_outlined, AppRoutes.locate),
   _NavItem('Eventos', Icons.timeline_outlined, AppRoutes.events),
   _NavItem('Dispositivos', Icons.smartphone_outlined, AppRoutes.devices),
-  _NavItem('Configurações', Icons.tune_outlined, AppRoutes.settings),
+  _NavItem('Configurações', Icons.settings_outlined, AppRoutes.settings),
 ];
 
 bool _isNavSelected(String current, String route) {
