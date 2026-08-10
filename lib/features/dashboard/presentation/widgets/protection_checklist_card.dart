@@ -4,6 +4,7 @@ import 'package:guardian_portal/core/navigation/navigation_loading_controller.da
 import 'package:guardian_portal/core/routing/app_routes.dart';
 import 'package:guardian_portal/core/theme/app_colors.dart';
 import 'package:guardian_portal/core/theme/dashboard_typography.dart';
+import 'package:guardian_portal/core/widgets/celular_seguro_link.dart';
 import 'package:guardian_portal/core/widgets/section_card.dart';
 import 'package:guardian_portal/features/dashboard/domain/device_status.dart';
 import 'package:guardian_portal/features/dashboard/domain/protection_snapshot.dart';
@@ -48,16 +49,13 @@ class ProtectionChecklistCard extends StatelessWidget {
             'Respostas em segundos',
             style: DashboardTypography.cardTitle(context, compact: compact),
           ),
-          // Grade de tiles (notebook/desktop): sem subtítulo — igual ao compact.
-          if (!compact && !pairGrid) ...[
-            const SizedBox(height: 4),
-            Text(
-              status.isOnline
-                  ? 'Status em tempo real do aparelho.'
-                  : 'Último estado conhecido do aparelho.',
-              style: DashboardTypography.cardSubtitle(context),
-            ),
-          ],
+          const SizedBox(height: 4),
+          Text(
+            status.isOnline
+                ? 'Status em tempo real do aparelho.'
+                : 'Último estado conhecido do aparelho.',
+            style: DashboardTypography.cardSubtitle(context),
+          ),
           SizedBox(height: compact || pairGrid ? 8 : 12),
           if (expandVertically)
             Expanded(
@@ -167,7 +165,7 @@ class _ChecklistBody extends StatelessWidget {
         children: [
           grid,
           if (footer != null) ...[
-            SizedBox(height: compact ? 8 : 10),
+            SizedBox(height: compact ? 6 : 10),
             footer,
           ],
         ],
@@ -185,19 +183,59 @@ class _ChecklistBody extends StatelessWidget {
             constraints.maxHeight.isFinite &&
             constraints.maxHeight > 0;
 
-        // Célula com altura fixa (desktop/notebook): Spacers funcionam sem ScrollView.
+        // Célula com altura fixa: grade no topo (encolhe se precisar) e
+        // rodapé colado na base — igual ao callout da Contenção.
         if (bounded) {
-          return Column(
-            crossAxisAlignment: CrossAxisAlignment.stretch,
-            children: [
-              const Spacer(flex: 2),
-              grid,
-              const Spacer(flex: 1),
-              if (footer != null) ...[
-                SizedBox(height: compact ? 8 : 10),
-                footer,
+          final footerGap = compact ? 6.0 : 10.0;
+          // Reserva aproximada: minHeight do callout + gap.
+          final footerReserve = footer == null
+              ? 0.0
+              : CelularSeguroCallout.minHeight(compact: compact) +
+                  footerGap +
+                  (compact ? 2 : 6);
+
+          if (constraints.maxHeight > footerReserve + 48) {
+            return Column(
+              crossAxisAlignment: CrossAxisAlignment.stretch,
+              children: [
+                Expanded(
+                  child: Align(
+                    alignment: Alignment.topCenter,
+                    child: FittedBox(
+                      fit: BoxFit.scaleDown,
+                      alignment: Alignment.topCenter,
+                      child: SizedBox(
+                        width: constraints.maxWidth,
+                        child: grid,
+                      ),
+                    ),
+                  ),
+                ),
+                if (footer != null) ...[
+                  SizedBox(height: footerGap),
+                  footer,
+                ],
               ],
-            ],
+            );
+          }
+
+          return FittedBox(
+            fit: BoxFit.scaleDown,
+            alignment: Alignment.topCenter,
+            child: SizedBox(
+              width: constraints.maxWidth,
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                crossAxisAlignment: CrossAxisAlignment.stretch,
+                children: [
+                  grid,
+                  if (footer != null) ...[
+                    SizedBox(height: footerGap),
+                    footer,
+                  ],
+                ],
+              ),
+            ),
           );
         }
 
@@ -207,7 +245,7 @@ class _ChecklistBody extends StatelessWidget {
           children: [
             grid,
             if (footer != null) ...[
-              SizedBox(height: compact ? 8 : 10),
+              SizedBox(height: compact ? 6 : 10),
               footer,
             ],
           ],
@@ -219,7 +257,7 @@ class _ChecklistBody extends StatelessWidget {
   Widget? _buildFooter(BuildContext context, {required bool sideBySide}) {
     if (layout.fullWidth.isEmpty) return null;
 
-    final gap = compact ? 8.0 : 10.0;
+    final gap = compact ? 6.0 : 10.0;
     final row = <Widget>[];
     final column = <Widget>[];
 
@@ -238,7 +276,7 @@ class _ChecklistBody extends StatelessWidget {
     }
 
     return Padding(
-      padding: EdgeInsets.only(top: compact ? 4 : 6),
+      padding: EdgeInsets.only(top: compact ? 2 : 6),
       child: sideBySide
           ? IntrinsicHeight(
               child: Row(
@@ -266,14 +304,6 @@ class _ChecklistFooterTile extends StatelessWidget {
   final bool compact;
   final VoidCallback? onTap;
 
-  /// Espaço das duas linhas que o texto ocupa nas colunas estreitas — reservá-lo
-  /// mantém a mesma altura quando o bloco aparece sozinho em largura total.
-  static double _textBlockHeight(TextStyle question, TextStyle answer) {
-    double twoLines(TextStyle style) =>
-        (style.fontSize ?? 12) * (style.height ?? 1.2) * 2;
-    return twoLines(question) + 2 + twoLines(answer);
-  }
-
   @override
   Widget build(BuildContext context) {
     final color = switch (entry.signal) {
@@ -288,6 +318,10 @@ class _ChecklistFooterTile extends StatelessWidget {
     final answerStyle = DashboardTypography.emphasis(context, color: color);
 
     return Container(
+      constraints: BoxConstraints(
+        // Mesma altura do callout "Roubo ou furto?" na Contenção.
+        minHeight: CelularSeguroCallout.minHeight(compact: compact),
+      ),
       decoration: BoxDecoration(
         color: color.withValues(alpha: 0.06),
         borderRadius: radius,
@@ -303,52 +337,48 @@ class _ChecklistFooterTile extends StatelessWidget {
               horizontal: compact ? 10 : 12,
               vertical: compact ? 8 : 10,
             ),
-            child: ConstrainedBox(
-              constraints: BoxConstraints(
-                minHeight: _textBlockHeight(questionStyle, answerStyle),
-              ),
-              child: Row(
-                children: [
-                  icon != null
-                      ? Icon(icon, size: 16, color: color.withValues(alpha: 0.9))
-                      : Container(
-                          width: 8,
-                          height: 8,
-                          decoration: BoxDecoration(
-                            color: color,
-                            shape: BoxShape.circle,
-                          ),
+            child: Row(
+              children: [
+                icon != null
+                    ? Icon(icon, size: 16, color: color.withValues(alpha: 0.9))
+                    : Container(
+                        width: 8,
+                        height: 8,
+                        decoration: BoxDecoration(
+                          color: color,
+                          shape: BoxShape.circle,
                         ),
-                  const SizedBox(width: 8),
-                  Expanded(
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      mainAxisSize: MainAxisSize.min,
-                      children: [
-                        Text(
-                          entry.question,
-                          style: questionStyle,
-                          maxLines: 2,
-                          overflow: TextOverflow.ellipsis,
-                        ),
-                        const SizedBox(height: 2),
-                        Text(
-                          entry.answer,
-                          style: answerStyle,
-                          maxLines: 2,
-                          overflow: TextOverflow.ellipsis,
-                        ),
-                      ],
-                    ),
+                      ),
+                const SizedBox(width: 8),
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      Text(
+                        entry.question,
+                        style: questionStyle,
+                        maxLines: 2,
+                        overflow: TextOverflow.ellipsis,
+                      ),
+                      const SizedBox(height: 2),
+                      Text(
+                        entry.answer,
+                        style: answerStyle,
+                        maxLines: 2,
+                        overflow: TextOverflow.ellipsis,
+                      ),
+                    ],
                   ),
-                  if (onTap != null)
-                    Icon(
-                      Icons.chevron_right_rounded,
-                      size: 18,
-                      color: AppColors.textMuted,
-                    ),
-                ],
-              ),
+                ),
+                if (onTap != null)
+                  Icon(
+                    Icons.chevron_right_rounded,
+                    size: 18,
+                    color: AppColors.textMuted,
+                  ),
+              ],
             ),
           ),
         ),

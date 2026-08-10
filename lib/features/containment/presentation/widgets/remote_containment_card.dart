@@ -143,16 +143,14 @@ class _RemoteContainmentCardState extends State<RemoteContainmentCard> {
                   compact: widget.compact,
                 ),
               ),
-              if (!widget.compact) ...[
-                const SizedBox(height: 4),
-                Text(
-                  _headerSubtitle(
-                    oysterClosed: oysterClosed,
-                    command: command,
-                  ),
-                  style: DashboardTypography.cardSubtitle(context),
+              const SizedBox(height: 4),
+              Text(
+                _headerSubtitle(
+                  oysterClosed: oysterClosed,
+                  command: command,
                 ),
-              ],
+                style: DashboardTypography.cardSubtitle(context),
+              ),
               SizedBox(height: widget.compact ? 8 : 12),
               if (widget.expandVertically)
                 Expanded(

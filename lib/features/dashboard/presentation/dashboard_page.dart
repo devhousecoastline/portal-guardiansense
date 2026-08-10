@@ -51,8 +51,7 @@ class _DashboardPageState extends State<DashboardPage> {
           controller: _refreshController,
           builder: (context, isRefreshing) {
             return GuardianScaffold(
-              title: 'Centro',
-              subtitle: 'Status do seu dispositivo',
+              title: 'Proteção',
               subtitleTrailing: device != null
                   ? DeviceOnlineChip(
                       isOnline: device.status.isOnline,

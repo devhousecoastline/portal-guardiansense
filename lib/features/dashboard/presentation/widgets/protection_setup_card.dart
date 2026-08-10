@@ -48,13 +48,11 @@ class ProtectionSetupCard extends StatelessWidget {
               'Configurações do aparelho',
               style: DashboardTypography.cardTitle(context, compact: compact),
             ),
-            if (!compact) ...[
-              const SizedBox(height: 4),
-              Text(
-                ProtectionSnapshot.setupCardSubtitle(status),
-                style: DashboardTypography.cardSubtitle(context),
-              ),
-            ],
+            const SizedBox(height: 4),
+            Text(
+              ProtectionSnapshot.setupCardSubtitle(status),
+              style: DashboardTypography.cardSubtitle(context),
+            ),
             SizedBox(height: compact ? 10 : 14),
             if (!status.hasSetupChecklist)
               Text(

@@ -54,16 +54,13 @@ class ProtectionStatusHero extends StatelessWidget {
               'Índice de proteção',
               style: DashboardTypography.cardTitle(context, compact: compact),
             ),
-            // Só alerta/parcial no subtítulo — o aparelho fica no painel (igual notebook).
-            if (!compact && showHeadline) ...[
-              const SizedBox(height: 4),
-              Text(
-                headline,
-                style: DashboardTypography.cardSubtitle(context),
-                maxLines: 2,
-                overflow: TextOverflow.ellipsis,
-              ),
-            ],
+            const SizedBox(height: 4),
+            Text(
+              showHeadline ? headline : 'Status do seu dispositivo',
+              style: DashboardTypography.cardSubtitle(context),
+              maxLines: 2,
+              overflow: TextOverflow.ellipsis,
+            ),
             SizedBox(height: compact ? 8 : 12),
             // No layout em grade o badge OFFLINE no painel basta;
             // o banner ocupava altura e empurrava o índice.
