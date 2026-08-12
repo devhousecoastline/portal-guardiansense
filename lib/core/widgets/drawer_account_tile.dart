@@ -1,5 +1,6 @@
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
+import 'package:go_router/go_router.dart';
 import 'package:guardian_portal/core/navigation/navigation_loading_controller.dart';
 import 'package:guardian_portal/core/routing/app_routes.dart';
 import 'package:guardian_portal/core/theme/app_colors.dart';
@@ -91,9 +92,11 @@ class DrawerAccountTile extends StatelessWidget {
   }
 
   void _openAccount(BuildContext context) {
+    final loading = NavigationLoadingScope.of(context);
+    final router = GoRouter.of(context);
     onClose?.call();
     if (current != AppRoutes.account) {
-      NavigationLoadingScope.of(context).go(context, AppRoutes.account);
+      loading.goWithRouter(router, AppRoutes.account);
     }
   }
 

@@ -17,9 +17,13 @@ abstract final class AppConstants {
       'Proteção inteligente para seus ativos digitais.';
 
   /// Versão desta Central de Proteção. Independente do app no aparelho.
+  ///
+  /// Convenção de publicação:
+  /// - cada deploy sobe o patch (`1.0.0` → `1.0.1`) e o build (`+1` → `+2`);
+  /// - minor/major só em mudança grande de produto.
   /// Manter igual ao `version:` do pubspec.yaml (`x.y.z+build`).
-  static const String portalVersion = '1.0.0';
-  static const int portalBuild = 1;
+  static const String portalVersion = '1.0.2';
+  static const int portalBuild = 3;
 
   /// Destaques do painel de marca na login (desktop).
   static const List<String> loginHighlights = [

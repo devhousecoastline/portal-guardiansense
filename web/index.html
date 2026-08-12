@@ -13,6 +13,23 @@
   <link rel="icon" type="image/png" href="favicon.png"/>
   <title>Guardian Sense</title>
   <link rel="manifest" href="manifest.json">
+  <!-- Portal atualiza com frequência: remove SW antigo do Flutter (cache teimoso). -->
+  <script>
+    if ('serviceWorker' in navigator) {
+      navigator.serviceWorker.getRegistrations().then(function (regs) {
+        for (var i = 0; i < regs.length; i++) {
+          regs[i].unregister();
+        }
+      });
+      if (window.caches && caches.keys) {
+        caches.keys().then(function (keys) {
+          for (var i = 0; i < keys.length; i++) {
+            caches.delete(keys[i]);
+          }
+        });
+      }
+    }
+  </script>
 </head>
 <body>
   <script src="flutter_bootstrap.js" async></script>

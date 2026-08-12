@@ -7,10 +7,15 @@ class NavigationLoadingController extends ChangeNotifier {
 
   bool get isLoading => _isLoading;
 
-  Future<void> go(BuildContext context, String route) async {
+  Future<void> go(BuildContext context, String route) {
+    return goWithRouter(GoRouter.of(context), route);
+  }
+
+  /// Navega com [GoRouter] já capturado — seguro após fechar o drawer mobile.
+  Future<void> goWithRouter(GoRouter router, String route) async {
     if (_isLoading) return;
 
-    final current = GoRouterState.of(context).matchedLocation;
+    final current = router.state.matchedLocation;
     if (current == route) return;
 
     _isLoading = true;
@@ -18,7 +23,7 @@ class NavigationLoadingController extends ChangeNotifier {
 
     final started = DateTime.now();
     try {
-      context.go(route);
+      router.go(route);
       await WidgetsBinding.instance.endOfFrame;
       const minDisplay = Duration(milliseconds: 320);
       final elapsed = DateTime.now().difference(started);

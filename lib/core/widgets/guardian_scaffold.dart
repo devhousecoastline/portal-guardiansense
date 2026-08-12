@@ -10,6 +10,7 @@ import 'package:guardian_portal/core/widgets/drawer_premium_teaser.dart';
 import 'package:guardian_portal/core/widgets/drawer_account_tile.dart';
 import 'package:guardian_portal/core/widgets/guardian_logo.dart';
 
+
 /// Layout base do portal — sidebar em telas largas, drawer em mobile web.
 class GuardianScaffold extends StatelessWidget {
   const GuardianScaffold({
@@ -266,6 +267,8 @@ class _TopBar extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final isHome = current == AppRoutes.dashboard;
+    // Mobile na home: só menu + chip — o título "Proteção" compete com o status.
+    final hideHomeTitle = isHome && showMenu;
 
     return Container(
       padding: EdgeInsets.fromLTRB(isHome && !showMenu ? 16 : 8, 20, 24, 12),
@@ -273,7 +276,8 @@ class _TopBar extends StatelessWidget {
         border: Border(bottom: BorderSide(color: AppColors.divider)),
       ),
       child: Row(
-        crossAxisAlignment: CrossAxisAlignment.start,
+        crossAxisAlignment:
+            hideHomeTitle ? CrossAxisAlignment.center : CrossAxisAlignment.start,
         children: [
           if (!isHome)
             IconButton(
@@ -287,19 +291,32 @@ class _TopBar extends StatelessWidget {
               tooltip: 'Menu',
               onPressed: () => _openDrawer(context, current),
             ),
-          Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(title, style: Theme.of(context).textTheme.titleLarge),
-                if (subtitle != null) ...[
-                  const SizedBox(height: 2),
-                  Text(subtitle!, style: Theme.of(context).textTheme.bodyMedium),
+          if (!hideHomeTitle)
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(title, style: Theme.of(context).textTheme.titleLarge),
+                  if (subtitle != null) ...[
+                    const SizedBox(height: 2),
+                    Text(
+                      subtitle!,
+                      style: Theme.of(context).textTheme.bodyMedium,
+                    ),
+                  ],
                 ],
-              ],
+              ),
+            )
+          else ...[
+            Expanded(
+              child: Center(
+                child: subtitleTrailing ?? const SizedBox.shrink(),
+              ),
             ),
-          ),
-          if (subtitleTrailing != null) ...[
+            // Espelha a largura do botão do menu para o chip ficar no centro.
+            const SizedBox(width: 48),
+          ],
+          if (!hideHomeTitle && subtitleTrailing != null) ...[
             const SizedBox(width: 12),
             Padding(
               padding: const EdgeInsets.only(top: 4),
@@ -477,9 +494,12 @@ class _NavList extends StatelessWidget {
           item: item,
           selected: _isNavSelected(current, item.route),
           onTap: () {
+            // Captura router antes de fechar o bottom sheet (mobile).
+            final loading = NavigationLoadingScope.of(context);
+            final router = GoRouter.of(context);
             onTap?.call();
             if (current != item.route) {
-              NavigationLoadingScope.of(context).go(context, item.route);
+              loading.goWithRouter(router, item.route);
             }
           },
         );
