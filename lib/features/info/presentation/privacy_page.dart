@@ -72,11 +72,25 @@ class _PrivacySectionCard extends StatelessWidget {
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           if (section.title != null) ...[
-            Text(
-              section.title!,
-              style: theme.textTheme.titleMedium?.copyWith(
-                fontWeight: FontWeight.w600,
-              ),
+            Row(
+              children: [
+                if (section.icon != null) ...[
+                  Icon(
+                    section.icon,
+                    color: AppColors.primary,
+                    size: 22,
+                  ),
+                  const SizedBox(width: 10),
+                ],
+                Expanded(
+                  child: Text(
+                    section.title!,
+                    style: theme.textTheme.titleMedium?.copyWith(
+                      fontWeight: FontWeight.w600,
+                    ),
+                  ),
+                ),
+              ],
             ),
             const SizedBox(height: 8),
           ],

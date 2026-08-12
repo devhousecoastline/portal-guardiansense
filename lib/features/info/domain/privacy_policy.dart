@@ -1,3 +1,5 @@
+import 'package:flutter/material.dart';
+
 /// Política de Privacidade — mesmo conteúdo e versão do app Guardian Sense.
 ///
 /// Ao mudar o conteúdo de forma material, incremente [version] junto com o app.
@@ -20,6 +22,7 @@ abstract final class PrivacyPolicy {
     ),
     PrivacySection(
       title: 'No aparelho',
+      icon: Icons.smartphone_outlined,
       body:
           'Para detectar furto e proteger apps, o motor usa sensores e estado '
           'do dispositivo: aceleração, movimento (parado, caminhando, veículo), '
@@ -28,6 +31,7 @@ abstract final class PrivacyPolicy {
     ),
     PrivacySection(
       title: 'Com conta e portal',
+      icon: Icons.cloud_outlined,
       body:
           'Se você entrar na conta, o app pode sincronizar com o portal: '
           'eventos de proteção, estado do aparelho, comandos remotos e — se '
@@ -36,6 +40,7 @@ abstract final class PrivacyPolicy {
     ),
     PrivacySection(
       title: 'Acessibilidade e contenção',
+      icon: Icons.accessibility_new_outlined,
       body:
           'O serviço de acessibilidade, quando ligado, observa o app em '
           'primeiro plano só para bloquear apps protegidos com a ostra '
@@ -43,6 +48,7 @@ abstract final class PrivacyPolicy {
     ),
     PrivacySection(
       title: 'Seus controles',
+      icon: Icons.tune_outlined,
       body:
           'Você pode limpar o histórico local e, com conta, os dados na nuvem '
           'pelas Configurações. Pode desligar o monitoramento e gerenciar '
@@ -50,6 +56,7 @@ abstract final class PrivacyPolicy {
     ),
     PrivacySection(
       title: 'Limites da proteção e responsabilidade',
+      icon: Icons.gavel_outlined,
       body:
           'O Guardian Sense reduz o risco de uso indevido no aparelho após um '
           'furto detectado, mas não garante segurança absoluta. O app não se '
@@ -62,6 +69,7 @@ abstract final class PrivacyPolicy {
     ),
     PrivacySection(
       title: 'Versão',
+      icon: Icons.history_outlined,
       body:
           'Política versão $version. Texto sujeito a revisão jurídica; '
           'atualizações relevantes pedirão novo aceite no app.',
@@ -72,11 +80,13 @@ abstract final class PrivacyPolicy {
 final class PrivacySection {
   const PrivacySection({
     this.title,
+    this.icon,
     required this.body,
     this.bullets = const [],
   });
 
   final String? title;
+  final IconData? icon;
   final String body;
   final List<String> bullets;
 }

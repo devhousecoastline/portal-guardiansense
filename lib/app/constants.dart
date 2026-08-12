@@ -16,6 +16,11 @@ abstract final class AppConstants {
   static const String footerTagline =
       'Proteção inteligente para seus ativos digitais.';
 
+  /// Versão desta Central de Proteção. Independente do app no aparelho.
+  /// Manter igual ao `version:` do pubspec.yaml (`x.y.z+build`).
+  static const String portalVersion = '1.0.0';
+  static const int portalBuild = 1;
+
   /// Destaques do painel de marca na login (desktop).
   static const List<String> loginHighlights = [
     'Proteção dos seus ativos digitais',

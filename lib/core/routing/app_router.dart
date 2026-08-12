@@ -11,6 +11,7 @@ import 'package:guardian_portal/features/events/presentation/events_details_page
 import 'package:guardian_portal/features/events/presentation/events_page.dart';
 import 'package:guardian_portal/features/info/application/privacy_consent_controller.dart';
 import 'package:guardian_portal/features/info/application/privacy_consent_redirect.dart';
+import 'package:guardian_portal/features/info/presentation/about_page.dart';
 import 'package:guardian_portal/features/info/presentation/privacy_consent_page.dart';
 import 'package:guardian_portal/features/info/presentation/privacy_page.dart';
 import 'package:guardian_portal/features/locate/presentation/locate_page.dart';
@@ -95,6 +96,10 @@ GoRouter createAppRouter({
           GoRoute(
             path: AppRoutes.privacy,
             builder: (context, state) => const PrivacyPage(),
+          ),
+          GoRoute(
+            path: AppRoutes.about,
+            builder: (context, state) => const AboutPage(),
           ),
           GoRoute(
             path: AppRoutes.account,

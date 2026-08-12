@@ -516,6 +516,7 @@ const _navItems = [
 
 const _infoItems = [
   _NavItem('Privacidade', Icons.lock_outline, AppRoutes.privacy),
+  _NavItem('Sobre', Icons.info_outline, AppRoutes.about),
 ];
 
 bool _isNavSelected(String current, String route) {

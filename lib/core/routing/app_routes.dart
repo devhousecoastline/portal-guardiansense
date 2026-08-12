@@ -8,6 +8,7 @@ abstract final class AppRoutes {
   static const devices = '/devices';
   static const settings = '/settings';
   static const privacy = '/privacy';
+  static const about = '/about';
   static const privacyConsent = '/privacy-consent';
   static const account = '/account';
   static const premium = '/premium';
