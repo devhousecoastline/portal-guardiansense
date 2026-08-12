@@ -9,29 +9,28 @@ import 'package:guardian_portal/features/dashboard/presentation/dashboard_page.d
 import 'package:guardian_portal/features/devices/presentation/devices_page.dart';
 import 'package:guardian_portal/features/events/presentation/events_details_page.dart';
 import 'package:guardian_portal/features/events/presentation/events_page.dart';
+import 'package:guardian_portal/features/info/application/privacy_consent_controller.dart';
+import 'package:guardian_portal/features/info/application/privacy_consent_redirect.dart';
+import 'package:guardian_portal/features/info/presentation/privacy_consent_page.dart';
+import 'package:guardian_portal/features/info/presentation/privacy_page.dart';
 import 'package:guardian_portal/features/locate/presentation/locate_page.dart';
 import 'package:guardian_portal/features/settings/presentation/settings_page.dart';
 import 'package:guardian_portal/features/subscription/presentation/premium_page.dart';
 
-bool _isPublicRoute(String path) => path == AppRoutes.login;
-
-GoRouter createAppRouter({required Listenable authListenable}) {
+GoRouter createAppRouter({
+  required Listenable authListenable,
+  required PrivacyConsentController consent,
+}) {
   return GoRouter(
     initialLocation: AppRoutes.login,
-    refreshListenable: authListenable,
+    refreshListenable: Listenable.merge([authListenable, consent]),
     redirect: (context, state) {
-      final user = FirebaseAuth.instance.currentUser;
-      final path = state.matchedLocation;
-
-      if (path == AppRoutes.home) return AppRoutes.login;
-
-      final onPublicRoute = _isPublicRoute(path);
-
-      if (user == null) {
-        return onPublicRoute ? null : AppRoutes.login;
-      }
-      if (onPublicRoute) return AppRoutes.dashboard;
-      return null;
+      return resolveAuthRedirect(
+        signedIn: FirebaseAuth.instance.currentUser != null,
+        consentReady: consent.isReady,
+        hasAcceptedCurrentPolicy: consent.hasAcceptedCurrent,
+        path: state.matchedLocation,
+      );
     },
     routes: [
       GoRoute(
@@ -44,6 +43,10 @@ GoRouter createAppRouter({required Listenable authListenable}) {
           final creating = state.uri.queryParameters['criar'] == '1';
           return LoginPage(initialCreating: creating);
         },
+      ),
+      GoRoute(
+        path: AppRoutes.privacyConsent,
+        builder: (context, state) => const PrivacyConsentPage(),
       ),
       ShellRoute(
         builder: (context, state, child) => NavigationShell(child: child),
@@ -88,6 +91,10 @@ GoRouter createAppRouter({required Listenable authListenable}) {
           GoRoute(
             path: AppRoutes.settings,
             builder: (context, state) => const SettingsPage(),
+          ),
+          GoRoute(
+            path: AppRoutes.privacy,
+            builder: (context, state) => const PrivacyPage(),
           ),
           GoRoute(
             path: AppRoutes.account,

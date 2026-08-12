@@ -473,20 +473,26 @@ class _NavList extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    Widget tile(_NavItem item) => _NavTile(
+          item: item,
+          selected: _isNavSelected(current, item.route),
+          onTap: () {
+            onTap?.call();
+            if (current != item.route) {
+              NavigationLoadingScope.of(context).go(context, item.route);
+            }
+          },
+        );
+
     return ListView(
       padding: const EdgeInsets.symmetric(horizontal: 12),
       children: [
-        for (final item in _navItems)
-          _NavTile(
-            item: item,
-            selected: _isNavSelected(current, item.route),
-            onTap: () {
-              onTap?.call();
-              if (current != item.route) {
-                NavigationLoadingScope.of(context).go(context, item.route);
-              }
-            },
-          ),
+        for (final item in _navItems) tile(item),
+        Padding(
+          padding: const EdgeInsets.fromLTRB(14, 10, 14, 8),
+          child: Divider(height: 1, color: AppColors.divider),
+        ),
+        for (final item in _infoItems) tile(item),
       ],
     );
   }
@@ -506,6 +512,10 @@ const _navItems = [
   _NavItem('Eventos', Icons.timeline_outlined, AppRoutes.events),
   _NavItem('Dispositivos', Icons.smartphone_outlined, AppRoutes.devices),
   _NavItem('Configurações', Icons.settings_outlined, AppRoutes.settings),
+];
+
+const _infoItems = [
+  _NavItem('Privacidade', Icons.lock_outline, AppRoutes.privacy),
 ];
 
 bool _isNavSelected(String current, String route) {

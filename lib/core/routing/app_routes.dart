@@ -7,6 +7,8 @@ abstract final class AppRoutes {
   static const locate = '/locate';
   static const devices = '/devices';
   static const settings = '/settings';
+  static const privacy = '/privacy';
+  static const privacyConsent = '/privacy-consent';
   static const account = '/account';
   static const premium = '/premium';
 

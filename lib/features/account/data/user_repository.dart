@@ -1,6 +1,7 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:guardian_portal/features/account/domain/user_plan.dart';
 import 'package:guardian_portal/features/devices/domain/device_switches.dart';
+import 'package:guardian_portal/features/info/domain/portal_privacy_consent.dart';
 
 /// Metadados de vínculo/cota lidos de `users/{uid}` (sem a coleção devices).
 class UserDevicesMeta {
@@ -38,5 +39,40 @@ class UserRepository {
         boundDeviceId: (bound == null || bound.isEmpty) ? null : bound,
       );
     });
+  }
+
+  Stream<PortalPrivacyConsent> watchPortalPrivacyConsent(String uid) {
+    return _user(uid).snapshots().map((doc) {
+      final data = doc.data();
+      final raw = data?[PortalPrivacyConsent.firestoreField];
+      if (raw is! Map) return const PortalPrivacyConsent();
+      final map = Map<String, dynamic>.from(raw);
+      return PortalPrivacyConsent(
+        version: (map['version'] as String?)?.trim(),
+        acceptedAt: _asDate(map['acceptedAt']),
+      );
+    });
+  }
+
+  Future<void> acceptPortalPrivacyPolicy({
+    required String uid,
+    required String version,
+  }) {
+    return _user(uid).set(
+      {
+        PortalPrivacyConsent.firestoreField: {
+          'version': version,
+          'acceptedAt': FieldValue.serverTimestamp(),
+        },
+      },
+      SetOptions(merge: true),
+    );
+  }
+
+  static DateTime? _asDate(Object? value) {
+    if (value is Timestamp) return value.toDate();
+    if (value is DateTime) return value;
+    if (value is String) return DateTime.tryParse(value);
+    return null;
   }
 }
