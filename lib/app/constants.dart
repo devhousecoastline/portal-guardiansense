@@ -22,8 +22,14 @@ abstract final class AppConstants {
   /// - cada deploy sobe o patch (`1.0.0` → `1.0.1`) e o build (`+1` → `+2`);
   /// - minor/major só em mudança grande de produto.
   /// Manter igual ao `version:` do pubspec.yaml (`x.y.z+build`).
-  static const String portalVersion = '1.0.13';
-  static const int portalBuild = 14;
+  static const String portalVersion = '1.0.14';
+  static const int portalBuild = 15;
+
+  /// Landing "Em desenvolvimento" na `/`.
+  ///
+  /// `false` enquanto testamos o portal (login na home).
+  /// Voltar para `true` antes do próximo deploy público.
+  static const bool showComingSoonLanding = false;
 
   /// Destaques do painel de marca na login (desktop).
   static const List<String> loginHighlights = [

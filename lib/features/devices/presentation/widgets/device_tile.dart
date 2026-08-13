@@ -127,9 +127,22 @@ class DeviceTile extends StatelessWidget {
                           ],
                         ),
                       ),
-                      if (!narrow) ...[
+                        if (!narrow) ...[
                         const SizedBox(width: 12),
-                        StatusPill(label: statusLine, color: color),
+                        Column(
+                          mainAxisSize: MainAxisSize.min,
+                          crossAxisAlignment: CrossAxisAlignment.end,
+                          children: [
+                            StatusPill(label: statusLine, color: color),
+                            if (!released && status.isVerified) ...[
+                              const SizedBox(height: 6),
+                              StatusPill(
+                                label: 'VERIFICADO',
+                                color: AppColors.trustHigh,
+                              ),
+                            ],
+                          ],
+                        ),
                       ],
                     ],
                   ),

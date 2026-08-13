@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import 'package:guardian_portal/core/layout/dashboard_layout.dart';
 import 'package:guardian_portal/core/widgets/celular_seguro_link.dart';
 import 'package:guardian_portal/core/widgets/device_online_chip.dart';
+import 'package:guardian_portal/core/widgets/device_verified_chip.dart';
 import 'package:guardian_portal/core/widgets/guardian_scaffold.dart';
 import 'package:guardian_portal/core/widgets/online_refresh.dart';
 import 'package:guardian_portal/features/containment/presentation/widgets/remote_containment_card.dart';
@@ -53,9 +54,18 @@ class _DashboardPageState extends State<DashboardPage> {
             return GuardianScaffold(
               title: 'Proteção',
               subtitleTrailing: device != null
-                  ? DeviceOnlineChip(
-                      isOnline: device.status.isOnline,
-                      lastSeen: device.status.lastSeen,
+                  ? Wrap(
+                      spacing: 8,
+                      runSpacing: 6,
+                      alignment: WrapAlignment.end,
+                      children: [
+                        DeviceOnlineChip(
+                          isOnline: device.status.isOnline,
+                          lastSeen: device.status.lastSeen,
+                        ),
+                        if (device.status.isVerified)
+                          const DeviceVerifiedChip(compact: true),
+                      ],
                     )
                   : null,
               onRefresh: _refreshController.refresh,
@@ -70,7 +80,7 @@ class _DashboardPageState extends State<DashboardPage> {
                                   child: CircularProgressIndicator(),
                                 )
                               : device == null
-                                  ? const EmptyDevicesCard()
+                                  ? EmptyDevicesCard(uid: uid)
                                   : _DashboardBody(
                                       uid: uid,
                                       device: device,
@@ -90,7 +100,7 @@ class _DashboardPageState extends State<DashboardPage> {
                             child: Center(child: CircularProgressIndicator()),
                           )
                         else if (device == null)
-                          const EmptyDevicesCard()
+                          EmptyDevicesCard(uid: uid)
                         else
                           _DashboardBody(
                             uid: uid,

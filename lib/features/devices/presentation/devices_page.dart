@@ -7,6 +7,7 @@ import 'package:guardian_portal/core/widgets/section_card.dart';
 import 'package:guardian_portal/features/devices/data/device_repository.dart';
 import 'package:guardian_portal/features/devices/domain/device_registry.dart';
 import 'package:guardian_portal/features/devices/domain/guardian_device.dart';
+import 'package:guardian_portal/features/devices/presentation/widgets/device_pairing_card.dart';
 import 'package:guardian_portal/features/devices/presentation/widgets/device_plan_banner.dart';
 import 'package:guardian_portal/features/devices/presentation/widgets/device_switches_card.dart';
 import 'package:guardian_portal/features/devices/presentation/widgets/device_tile.dart';
@@ -51,7 +52,7 @@ class _DevicesPageState extends State<DevicesPage> {
                   Expanded(
                     child: initialLoad
                         ? const Center(child: CircularProgressIndicator())
-                        : _DevicesBody(list: snapshot.data),
+                        : _DevicesBody(uid: uid, list: snapshot.data),
                   ),
                 ],
               ),
@@ -64,8 +65,9 @@ class _DevicesPageState extends State<DevicesPage> {
 }
 
 class _DevicesBody extends StatefulWidget {
-  const _DevicesBody({required this.list});
+  const _DevicesBody({required this.uid, required this.list});
 
+  final String uid;
   final DeviceListSnapshot? list;
 
   @override
@@ -98,34 +100,7 @@ class _DevicesBodyState extends State<_DevicesBody> {
 
     final snapshot = list;
     if (!snapshot.hasActive && !snapshot.hasReleased) {
-      return SectionCard(
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            Icon(
-              Icons.smartphone_outlined,
-              size: 36,
-              color: AppColors.textMuted,
-            ),
-            const SizedBox(height: 12),
-            Text(
-              'Nenhum aparelho vinculado',
-              style: Theme.of(context).textTheme.titleMedium,
-              textAlign: TextAlign.center,
-            ),
-            const SizedBox(height: 6),
-            Text(
-              'Instale o Guardian Sense no celular, entre com a mesma conta '
-              'e conclua o onboarding para sincronizar.',
-              textAlign: TextAlign.center,
-              style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                    color: AppColors.textMuted,
-                    height: 1.35,
-                  ),
-            ),
-          ],
-        ),
-      );
+      return DevicePairingCard(uid: widget.uid);
     }
 
     return Column(
@@ -153,17 +128,7 @@ class _DevicesBodyState extends State<_DevicesBody> {
                   const SizedBox(height: 8),
                   ..._tileList(snapshot.visible),
                 ] else ...[
-                  SectionCard(
-                    child: Text(
-                      'Nenhum aparelho vinculado no momento. '
-                      'Você pode vincular outro celular no app '
-                      '(sujeito à cota de trocas).',
-                      style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                            color: AppColors.textMuted,
-                            height: 1.35,
-                          ),
-                    ),
-                  ),
+                  DevicePairingCard(uid: widget.uid),
                 ],
                 if (snapshot.hasReleased) ...[
                   const SizedBox(height: 18),

@@ -1,12 +1,15 @@
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
+import 'package:guardian_portal/app/constants.dart';
 import 'package:guardian_portal/core/navigation/navigation_shell.dart';
 import 'package:guardian_portal/core/routing/app_routes.dart';
 import 'package:guardian_portal/features/account/presentation/account_page.dart';
 import 'package:guardian_portal/features/auth/application/auth_controller.dart';
 import 'package:guardian_portal/features/auth/presentation/login_page.dart';
 import 'package:guardian_portal/features/dashboard/presentation/dashboard_page.dart';
+import 'package:guardian_portal/features/devices/domain/device_pairing.dart';
 import 'package:guardian_portal/features/devices/presentation/devices_page.dart';
+import 'package:guardian_portal/features/devices/presentation/pair_landing_page.dart';
 import 'package:guardian_portal/features/events/presentation/events_details_page.dart';
 import 'package:guardian_portal/features/events/presentation/events_page.dart';
 import 'package:guardian_portal/features/info/application/privacy_consent_controller.dart';
@@ -38,13 +41,23 @@ GoRouter createAppRouter({
     routes: [
       GoRoute(
         path: AppRoutes.home,
-        builder: (context, state) => const ComingSoonPage(),
+        builder: (context, state) => AppConstants.showComingSoonLanding
+            ? const ComingSoonPage()
+            : const LoginPage(),
       ),
       GoRoute(
         path: AppRoutes.login,
         builder: (context, state) {
           final creating = state.uri.queryParameters['criar'] == '1';
           return LoginPage(initialCreating: creating);
+        },
+      ),
+      GoRoute(
+        path: AppRoutes.pair,
+        builder: (context, state) {
+          return PairLandingPage(
+            code: state.uri.queryParameters[DevicePairing.codeQueryParam],
+          );
         },
       ),
       GoRoute(

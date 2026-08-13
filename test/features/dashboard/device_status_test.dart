@@ -47,4 +47,60 @@ void main() {
   test('isOnline é false sem lastSeen', () {
     expect(_status().isOnline, isFalse);
   });
+
+  test('legado sem verified aparece como verificado', () {
+    expect(_status().isVerified, isTrue);
+    expect(_status().isQrVerified, isFalse);
+  });
+
+  test('verified false bloqueia o portal', () {
+    final status = DeviceStatus(
+      deviceId: 'dev-1',
+      modelLabel: 'Samsung',
+      platform: 'android',
+      appVersion: '1.0',
+      lastSeen: DateTime.now(),
+      storedProtectionIndex: 100,
+      runtimeActive: true,
+      oysterClosed: false,
+      batteryLevel: null,
+      lastAlertAt: null,
+      lastAlertSummary: null,
+      lastEventAt: null,
+      lastEventSummary: null,
+      location: null,
+      fingerprint: 'fp',
+      protectionSetupItems: const [],
+      protectedLayers: const [],
+      verified: false,
+    );
+    expect(status.isVerified, isFalse);
+  });
+
+  test('QR confirmado é ativo e verificado', () {
+    final status = DeviceStatus(
+      deviceId: 'dev-1',
+      modelLabel: 'Samsung',
+      platform: 'android',
+      appVersion: '1.0',
+      lastSeen: DateTime.now(),
+      storedProtectionIndex: 100,
+      runtimeActive: true,
+      oysterClosed: false,
+      batteryLevel: null,
+      lastAlertAt: null,
+      lastAlertSummary: null,
+      lastEventAt: null,
+      lastEventSummary: null,
+      location: null,
+      fingerprint: 'fp',
+      protectionSetupItems: const [],
+      protectedLayers: const [],
+      verified: true,
+      verifiedAt: DateTime.now(),
+      verifiedVia: 'qr',
+    );
+    expect(status.isVerified, isTrue);
+    expect(status.isQrVerified, isTrue);
+  });
 }

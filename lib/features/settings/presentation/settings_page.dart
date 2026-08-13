@@ -62,7 +62,7 @@ class _SettingsPageState extends State<SettingsPage> {
                     const _AppearanceCard(),
                     const SizedBox(height: 16),
                     if (device == null)
-                      const EmptyDevicesCard()
+                      EmptyDevicesCard(uid: uid)
                     else
                       _SettingsBody(uid: uid, status: device.status),
                   ],

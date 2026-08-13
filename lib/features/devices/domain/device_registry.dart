@@ -51,10 +51,15 @@ abstract final class DeviceRegistry {
           included: DeviceSwitches.includedForAnnual,
         );
 
-    final released = raw.where((d) => d.status.isReleased).toList()
+    final released = raw
+        .where((d) => d.status.isReleased && d.status.isVerified)
+        .toList()
       ..sort((a, b) => _compareReleased(b, a));
 
-    final activeRaw = raw.where((d) => !d.status.isReleased).toList();
+    // Sem QR (verified == false) o portal permanece cego — não sincroniza.
+    final activeRaw = raw
+        .where((d) => !d.status.isReleased && d.status.isVerified)
+        .toList();
     final deduped = _dedupeByPhysicalDevice(activeRaw);
     final ordered = _preferBound(deduped, boundDeviceId);
     final visible = ordered.take(plan.deviceLimit).toList();

@@ -53,14 +53,14 @@ void main() {
       );
     });
 
-    test('deslogado permanece na landing e no login', () {
+    test('deslogado permanece no login e no pair', () {
       expect(
         resolveAuthRedirect(
           authReady: true,
           signedIn: false,
           consentReady: true,
           hasAcceptedCurrentPolicy: false,
-          path: AppRoutes.home,
+          path: AppRoutes.login,
         ),
         isNull,
       );
@@ -70,7 +70,35 @@ void main() {
           signedIn: false,
           consentReady: true,
           hasAcceptedCurrentPolicy: false,
-          path: AppRoutes.login,
+          path: AppRoutes.pair,
+        ),
+        isNull,
+      );
+    });
+
+    test('deslogado na home vai ao login quando a landing está desligada', () {
+      expect(
+        resolveAuthRedirect(
+          authReady: true,
+          signedIn: false,
+          consentReady: true,
+          hasAcceptedCurrentPolicy: false,
+          path: AppRoutes.home,
+          showComingSoonLanding: false,
+        ),
+        AppRoutes.login,
+      );
+    });
+
+    test('deslogado permanece na landing quando ela está ligada', () {
+      expect(
+        resolveAuthRedirect(
+          authReady: true,
+          signedIn: false,
+          consentReady: true,
+          hasAcceptedCurrentPolicy: false,
+          path: AppRoutes.home,
+          showComingSoonLanding: true,
         ),
         isNull,
       );
@@ -148,6 +176,19 @@ void main() {
           path: AppRoutes.privacyConsent,
         ),
         AppRoutes.dashboard,
+      );
+    });
+
+    test('logado permanece na landing do QR', () {
+      expect(
+        resolveAuthRedirect(
+          authReady: true,
+          signedIn: true,
+          consentReady: true,
+          hasAcceptedCurrentPolicy: true,
+          path: AppRoutes.pair,
+        ),
+        isNull,
       );
     });
   });

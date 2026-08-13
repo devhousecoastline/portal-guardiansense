@@ -31,6 +31,9 @@ class DeviceStatus {
     required this.protectedLayers,
     this.bindingStatus = DeviceBindingStatus.active,
     this.releasedAt,
+    this.verified,
+    this.verifiedAt,
+    this.verifiedVia,
   });
 
   final String deviceId;
@@ -53,7 +56,18 @@ class DeviceStatus {
   final DeviceBindingStatus bindingStatus;
   final DateTime? releasedAt;
 
+  /// `null` = legado (aparelho anterior ao QR) — o portal trata como verificado.
+  /// `false` = ainda não confirmou identidade; não sincroniza no portal.
+  final bool? verified;
+  final DateTime? verifiedAt;
+  final String? verifiedVia;
+
   bool get isReleased => bindingStatus == DeviceBindingStatus.released;
+
+  /// Portão da nuvem: sem verificação o portal não mostra o aparelho.
+  bool get isVerified => verified != false;
+
+  bool get isQrVerified => verified == true && verifiedVia == 'qr';
 
   bool get hasSetupChecklist => protectionSetupItems.isNotEmpty;
 
@@ -117,6 +131,9 @@ class DeviceStatus {
           ProtectedLayerSummary.fromFirestoreList(data['protectedLayers']),
       bindingStatus: _bindingStatus(data['status']),
       releasedAt: _timestamp(data['releasedAt']),
+      verified: data['verified'] as bool?,
+      verifiedAt: _timestamp(data['verifiedAt']),
+      verifiedVia: data['verifiedVia'] as String?,
     );
   }
 

@@ -133,7 +133,8 @@ class _EventsBody extends StatelessWidget {
             SizedBox(height: 12),
             Text(
               'Nenhum evento sincronizado ainda.\n'
-              'Quando o app enviar alertas à nuvem, eles aparecerão aqui.',
+              'Confirme o aparelho com o QR no Centro; os alertas '
+              'aparecem depois que o app enviar à nuvem.',
               textAlign: TextAlign.center,
             ),
           ],

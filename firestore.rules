@@ -172,6 +172,42 @@ service cloud.firestore {
         );
     }
 
+    function clientCannotSetVerification() {
+      let d = request.resource.data;
+      return (!('verified' in d) || d.verified == false)
+        && !('verifiedAt' in d)
+        && !('verifiedVia' in d);
+    }
+
+    function verificationUnchanged() {
+      let before = resource.data;
+      let after = request.resource.data;
+      return (
+          (!('verified' in before) && !('verified' in after))
+          || (
+            'verified' in before
+            && 'verified' in after
+            && after.verified == before.verified
+          )
+        )
+        && (
+          (!('verifiedAt' in before) && !('verifiedAt' in after))
+          || (
+            'verifiedAt' in before
+            && 'verifiedAt' in after
+            && after.verifiedAt == before.verifiedAt
+          )
+        )
+        && (
+          (!('verifiedVia' in before) && !('verifiedVia' in after))
+          || (
+            'verifiedVia' in before
+            && 'verifiedVia' in after
+            && after.verifiedVia == before.verifiedVia
+          )
+        );
+    }
+
     function validUserCreate() {
       return !subscriptionCreateEscalation();
     }
@@ -188,7 +224,8 @@ service cloud.firestore {
 
       match /devices/{deviceId} {
         allow read: if isOwner(userId);
-        allow create, update: if isOwner(userId);
+        allow create: if isOwner(userId) && clientCannotSetVerification();
+        allow update: if isOwner(userId) && verificationUnchanged();
         allow delete: if false;
 
         match /events/{eventId} {
@@ -209,6 +246,12 @@ service cloud.firestore {
       match /events/{eventId} {
         allow read: if isOwner(userId);
         allow create, update, delete: if isOwner(userId);
+      }
+
+      // QR de vínculo — só Admin SDK (Functions) escreve.
+      match /devicePairings/{pairingId} {
+        allow read: if isOwner(userId);
+        allow write: if false;
       }
     }
 

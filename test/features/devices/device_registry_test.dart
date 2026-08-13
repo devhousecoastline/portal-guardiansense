@@ -12,6 +12,7 @@ GuardianDevice _device({
   DateTime? lastSeen,
   DeviceBindingStatus bindingStatus = DeviceBindingStatus.active,
   DateTime? releasedAt,
+  bool? verified,
 }) {
   return GuardianDevice(
     id: id,
@@ -35,6 +36,7 @@ GuardianDevice _device({
       protectedLayers: const [],
       bindingStatus: bindingStatus,
       releasedAt: releasedAt,
+      verified: verified,
     ),
   );
 }
@@ -183,5 +185,26 @@ void main() {
     );
 
     expect(result.visible.first.id, 'bound');
+  });
+
+  test('aparelho sem QR (verified false) não entra no portal', () {
+    final raw = [
+      _device(
+        id: 'pending',
+        fingerprint: 'fp-p',
+        lastSeen: now,
+        verified: false,
+      ),
+      _device(
+        id: 'legacy',
+        fingerprint: 'fp-l',
+        lastSeen: now.subtract(const Duration(minutes: 1)),
+      ),
+    ];
+
+    final result = DeviceRegistry.apply(raw, UserPlan.free, switches: switches);
+
+    expect(result.visible.map((d) => d.id), ['legacy']);
+    expect(result.released, isEmpty);
   });
 }

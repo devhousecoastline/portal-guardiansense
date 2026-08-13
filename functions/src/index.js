@@ -7,6 +7,7 @@ const admin = require("firebase-admin");
 
 const mp = require("./mercadopago");
 const sub = require("./subscription");
+const pairing = require("./device_pairing");
 
 admin.initializeApp();
 
@@ -187,6 +188,53 @@ exports.mercadopagoPixWebhook = onRequest(
     } catch (e) {
       console.error("mercadopagoPixWebhook", e);
       res.status(500).send("Error");
+    }
+  },
+);
+
+/**
+ * Portal autenticado: gera QR de verificação de identidade do aparelho.
+ */
+exports.createDevicePairing = onCall(
+  { invoker: "public" },
+  async (request) => {
+    if (!request.auth?.uid) {
+      throw new HttpsError("unauthenticated", "Faça login para vincular.");
+    }
+    try {
+      return await pairing.createDevicePairing(request.auth.uid, {
+        refresh: request.data?.refresh === true,
+      });
+    } catch (e) {
+      console.error("createDevicePairing", e);
+      if (e instanceof HttpsError) throw e;
+      throw new HttpsError(
+        "internal",
+        e.message || "Não foi possível gerar o QR.",
+      );
+    }
+  },
+);
+
+/**
+ * App autenticado na mesma conta: confirma o QR e marca o aparelho
+ * como ativo e verificado. Sem isso o portal não sincroniza.
+ */
+exports.confirmDevicePairing = onCall(
+  { invoker: "public" },
+  async (request) => {
+    if (!request.auth?.uid) {
+      throw new HttpsError("unauthenticated", "Entre no app com a mesma conta.");
+    }
+    try {
+      return await pairing.confirmDevicePairing(request.auth.uid, request.data);
+    } catch (e) {
+      console.error("confirmDevicePairing", e);
+      if (e instanceof HttpsError) throw e;
+      throw new HttpsError(
+        "internal",
+        e.message || "Não foi possível confirmar o aparelho.",
+      );
     }
   },
 );

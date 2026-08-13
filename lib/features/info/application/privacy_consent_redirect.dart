@@ -1,3 +1,4 @@
+import 'package:guardian_portal/app/constants.dart';
 import 'package:guardian_portal/core/routing/app_routes.dart';
 
 /// Redirect de auth + consentimento. Puro, para testar sem GoRouter.
@@ -7,6 +8,7 @@ String? resolveAuthRedirect({
   required bool consentReady,
   required bool hasAcceptedCurrentPolicy,
   required String path,
+  bool showComingSoonLanding = AppConstants.showComingSoonLanding,
 }) {
   // Sessão Firebase ainda não restaurou — não manda para login no refresh.
   if (!authReady) {
@@ -14,8 +16,10 @@ String? resolveAuthRedirect({
   }
 
   if (!signedIn) {
-    // Home = landing pública; /login fica acessível (testers).
-    if (path == AppRoutes.home || path == AppRoutes.login) {
+    if (path == AppRoutes.login || path == AppRoutes.pair) {
+      return null;
+    }
+    if (showComingSoonLanding && path == AppRoutes.home) {
       return null;
     }
     return AppRoutes.login;
@@ -29,7 +33,12 @@ String? resolveAuthRedirect({
   }
 
   if (!hasAcceptedCurrentPolicy) {
+    if (path == AppRoutes.pair) return null;
     return path == AppRoutes.privacyConsent ? null : AppRoutes.privacyConsent;
+  }
+
+  if (path == AppRoutes.pair) {
+    return null;
   }
 
   if (path == AppRoutes.home ||

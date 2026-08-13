@@ -76,7 +76,7 @@ class _LocateBody extends StatelessWidget {
       return const _LocateEmpty(
         icon: Icons.smartphone_outlined,
         title: 'Nenhum aparelho sincronizado',
-        message: 'Abra o Guardian Sense no celular com a mesma conta para '
+        message: 'Confirme o aparelho com o QR no Centro para '
             'enviar a primeira posição.',
       );
     }
