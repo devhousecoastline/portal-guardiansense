@@ -75,7 +75,11 @@ class LoginFormCard extends StatelessWidget {
             mainAxisSize: MainAxisSize.min,
             children: [
               Text(
-                creating ? 'Nova conta' : AppConstants.loginCardTitle,
+                creating
+                    ? 'Nova conta'
+                    : (narrow
+                        ? AppConstants.portalTitle
+                        : AppConstants.loginCardTitle),
                 textAlign: narrow ? TextAlign.center : TextAlign.start,
                 style: Theme.of(context).textTheme.headlineMedium?.copyWith(
                       fontWeight: FontWeight.w700,
