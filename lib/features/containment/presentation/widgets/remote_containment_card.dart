@@ -480,7 +480,7 @@ class _TintedPanel extends StatelessWidget {
                     if (action != null) ...[
                       SizedBox(height: compact ? 8 : 12),
                       Align(
-                        alignment: Alignment.centerLeft,
+                        alignment: Alignment.center,
                         child: action,
                       ),
                     ],
