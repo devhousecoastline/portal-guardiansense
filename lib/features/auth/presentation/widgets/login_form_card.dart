@@ -63,7 +63,7 @@ class LoginFormCard extends StatelessWidget {
         ),
         padding: const EdgeInsets.all(1.1),
         child: Container(
-          padding: const EdgeInsets.fromLTRB(28, 28, 28, 24),
+          padding: const EdgeInsets.fromLTRB(28, 28, 28, 28),
           decoration: BoxDecoration(
             color: AppColors.card.withValues(alpha: 0.92),
             borderRadius: BorderRadius.circular(19),

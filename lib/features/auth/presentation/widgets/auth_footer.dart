@@ -7,13 +7,14 @@ class AuthFooter extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final narrow = MediaQuery.sizeOf(context).width < 900;
     final copyright = Theme.of(context).textTheme.bodyMedium?.copyWith(
-          fontSize: 15,
+          fontSize: narrow ? 13 : 15,
           color: AppColors.textMuted.withValues(alpha: 0.55),
         );
 
     return Padding(
-      padding: const EdgeInsets.fromLTRB(24, 16, 24, 24),
+      padding: EdgeInsets.fromLTRB(24, narrow ? 12 : 16, 24, narrow ? 16 : 24),
       child: Text(
         '© ${DateTime.now().year} ${AppConstants.appName} · '
         'Todos os direitos reservados.',

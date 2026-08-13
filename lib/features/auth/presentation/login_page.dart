@@ -8,6 +8,7 @@ import 'package:guardian_portal/core/widgets/guardian_logo.dart';
 import 'package:guardian_portal/features/auth/application/auth_controller.dart';
 import 'package:guardian_portal/app/constants.dart';
 import 'package:guardian_portal/core/theme/app_colors.dart';
+import 'package:guardian_portal/features/auth/presentation/widgets/auth_footer.dart';
 import 'package:guardian_portal/features/auth/presentation/widgets/auth_page_shell.dart';
 import 'package:guardian_portal/features/auth/presentation/widgets/auth_scope.dart';
 import 'package:guardian_portal/features/auth/presentation/widgets/login_brand_panel.dart';
@@ -192,6 +193,7 @@ class _LoginPageState extends State<LoginPage> {
     final form = _formCard(auth, busy: busy);
 
     return AuthPageShell(
+      stickyFooter: wide,
       body: wide
           ? _DesktopLoginBody(form: form)
           : _MobileLoginBody(form: form),
@@ -251,44 +253,41 @@ class _MobileLoginBody extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return LayoutBuilder(
-      builder: (context, constraints) {
-        return SingleChildScrollView(
-          padding: const EdgeInsets.fromLTRB(24, 20, 24, 16),
-          child: ConstrainedBox(
-            constraints: BoxConstraints(minHeight: constraints.maxHeight - 16),
-            child: Column(
-              mainAxisAlignment: MainAxisAlignment.center,
-              children: [
-                const GuardianLogo(size: 72, breathe: true),
-                Transform.translate(
-                  offset: const Offset(0, -6),
-                  child: Text(
-                    AppConstants.appName,
-                    textAlign: TextAlign.center,
-                    style: Theme.of(context).textTheme.titleLarge?.copyWith(
-                          fontWeight: FontWeight.w700,
-                        ),
+    final short = MediaQuery.sizeOf(context).height < 760;
+    final logoSize = short ? 56.0 : 72.0;
+
+    return SingleChildScrollView(
+      padding: EdgeInsets.fromLTRB(24, short ? 8 : 20, 24, 12),
+      child: Column(
+        children: [
+          GuardianLogo(size: logoSize, breathe: true),
+          Transform.translate(
+            offset: const Offset(0, -6),
+            child: Text(
+              AppConstants.appName,
+              textAlign: TextAlign.center,
+              style: Theme.of(context).textTheme.titleLarge?.copyWith(
+                    fontWeight: FontWeight.w700,
                   ),
-                ),
-                const SizedBox(height: 4),
-                Text(
-                  AppConstants.portalTitle,
-                  textAlign: TextAlign.center,
-                  style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                        color: AppColors.textMuted,
-                      ),
-                ),
-                const SizedBox(height: 24),
-                ConstrainedBox(
-                  constraints: const BoxConstraints(maxWidth: 420),
-                  child: form,
-                ),
-              ],
             ),
           ),
-        );
-      },
+          const SizedBox(height: 4),
+          Text(
+            AppConstants.portalTitle,
+            textAlign: TextAlign.center,
+            style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                  color: AppColors.textMuted,
+                ),
+          ),
+          SizedBox(height: short ? 16 : 24),
+          ConstrainedBox(
+            constraints: const BoxConstraints(maxWidth: 420),
+            child: form,
+          ),
+          const SizedBox(height: 8),
+          const AuthFooter(),
+        ],
+      ),
     );
   }
 }

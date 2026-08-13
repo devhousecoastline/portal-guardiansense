@@ -7,9 +7,14 @@ class AuthPageShell extends StatelessWidget {
   const AuthPageShell({
     super.key,
     required this.body,
+    this.stickyFooter = true,
   });
 
   final Widget body;
+
+  /// Rodapé fixo abaixo do body (desktop). No mobile do login, o body
+  /// inclui o rodapé no scroll para não clipar o card.
+  final bool stickyFooter;
 
   @override
   Widget build(BuildContext context) {
@@ -69,12 +74,14 @@ class AuthPageShell extends StatelessWidget {
               ),
           ],
           SafeArea(
-            child: Column(
-              children: [
-                Expanded(child: body),
-                const AuthFooter(),
-              ],
-            ),
+            child: stickyFooter
+                ? Column(
+                    children: [
+                      Expanded(child: body),
+                      const AuthFooter(),
+                    ],
+                  )
+                : body,
           ),
         ],
       ),
