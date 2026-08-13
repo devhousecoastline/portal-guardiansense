@@ -253,9 +253,9 @@ class _DashboardBody extends StatelessWidget {
         ] else ...[
           hero,
           SizedBox(height: layout.sectionGap),
-          setup,
-          SizedBox(height: layout.sectionGap),
           containment,
+          SizedBox(height: layout.sectionGap),
+          setup,
           SizedBox(height: layout.sectionGap),
           checklist,
         ],
