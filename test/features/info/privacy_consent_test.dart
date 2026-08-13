@@ -40,7 +40,7 @@ void main() {
       );
     });
 
-    test('deslogado vai para login', () {
+    test('deslogado em rotas do app vai para login', () {
       expect(
         resolveAuthRedirect(
           authReady: true,
@@ -50,6 +50,29 @@ void main() {
           path: AppRoutes.dashboard,
         ),
         AppRoutes.login,
+      );
+    });
+
+    test('deslogado permanece na landing e no login', () {
+      expect(
+        resolveAuthRedirect(
+          authReady: true,
+          signedIn: false,
+          consentReady: true,
+          hasAcceptedCurrentPolicy: false,
+          path: AppRoutes.home,
+        ),
+        isNull,
+      );
+      expect(
+        resolveAuthRedirect(
+          authReady: true,
+          signedIn: false,
+          consentReady: true,
+          hasAcceptedCurrentPolicy: false,
+          path: AppRoutes.login,
+        ),
+        isNull,
       );
     });
 
@@ -97,6 +120,19 @@ void main() {
           consentReady: true,
           hasAcceptedCurrentPolicy: true,
           path: AppRoutes.login,
+        ),
+        AppRoutes.dashboard,
+      );
+    });
+
+    test('com aceite deixa a landing e vai ao dashboard', () {
+      expect(
+        resolveAuthRedirect(
+          authReady: true,
+          signedIn: true,
+          consentReady: true,
+          hasAcceptedCurrentPolicy: true,
+          path: AppRoutes.home,
         ),
         AppRoutes.dashboard,
       );

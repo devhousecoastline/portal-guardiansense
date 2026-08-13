@@ -8,15 +8,17 @@ String? resolveAuthRedirect({
   required bool hasAcceptedCurrentPolicy,
   required String path,
 }) {
-  if (path == AppRoutes.home) return AppRoutes.login;
-
   // Sessão Firebase ainda não restaurou — não manda para login no refresh.
   if (!authReady) {
     return null;
   }
 
   if (!signedIn) {
-    return path == AppRoutes.login ? null : AppRoutes.login;
+    // Home = landing pública; /login fica acessível (testers).
+    if (path == AppRoutes.home || path == AppRoutes.login) {
+      return null;
+    }
+    return AppRoutes.login;
   }
 
   // Firestore ainda não respondeu: fica na rota atual.
@@ -30,7 +32,9 @@ String? resolveAuthRedirect({
     return path == AppRoutes.privacyConsent ? null : AppRoutes.privacyConsent;
   }
 
-  if (path == AppRoutes.login || path == AppRoutes.privacyConsent) {
+  if (path == AppRoutes.home ||
+      path == AppRoutes.login ||
+      path == AppRoutes.privacyConsent) {
     return AppRoutes.dashboard;
   }
   return null;

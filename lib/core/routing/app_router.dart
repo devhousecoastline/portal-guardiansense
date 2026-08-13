@@ -12,6 +12,7 @@ import 'package:guardian_portal/features/events/presentation/events_page.dart';
 import 'package:guardian_portal/features/info/application/privacy_consent_controller.dart';
 import 'package:guardian_portal/features/info/application/privacy_consent_redirect.dart';
 import 'package:guardian_portal/features/info/presentation/about_page.dart';
+import 'package:guardian_portal/features/info/presentation/coming_soon_page.dart';
 import 'package:guardian_portal/features/info/presentation/privacy_consent_page.dart';
 import 'package:guardian_portal/features/info/presentation/privacy_page.dart';
 import 'package:guardian_portal/features/locate/presentation/locate_page.dart';
@@ -23,7 +24,7 @@ GoRouter createAppRouter({
   required PrivacyConsentController consent,
 }) {
   return GoRouter(
-    initialLocation: AppRoutes.login,
+    initialLocation: AppRoutes.home,
     refreshListenable: Listenable.merge([auth, consent]),
     redirect: (context, state) {
       return resolveAuthRedirect(
@@ -37,7 +38,7 @@ GoRouter createAppRouter({
     routes: [
       GoRoute(
         path: AppRoutes.home,
-        redirect: (context, state) => AppRoutes.login,
+        builder: (context, state) => const ComingSoonPage(),
       ),
       GoRoute(
         path: AppRoutes.login,
