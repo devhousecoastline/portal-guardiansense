@@ -51,7 +51,7 @@ void main() {
       );
     });
 
-    test('logado aguardando Firestore fica no gate', () {
+    test('logado aguardando Firestore não monta o gate', () {
       expect(
         resolveAuthRedirect(
           signedIn: true,
@@ -59,7 +59,16 @@ void main() {
           hasAcceptedCurrentPolicy: false,
           path: AppRoutes.events,
         ),
-        AppRoutes.privacyConsent,
+        AppRoutes.login,
+      );
+      expect(
+        resolveAuthRedirect(
+          signedIn: true,
+          consentReady: false,
+          hasAcceptedCurrentPolicy: false,
+          path: AppRoutes.login,
+        ),
+        isNull,
       );
     });
 

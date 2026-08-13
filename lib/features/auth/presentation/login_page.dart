@@ -12,6 +12,7 @@ import 'package:guardian_portal/features/auth/presentation/widgets/auth_page_she
 import 'package:guardian_portal/features/auth/presentation/widgets/auth_scope.dart';
 import 'package:guardian_portal/features/auth/presentation/widgets/login_brand_panel.dart';
 import 'package:guardian_portal/features/auth/presentation/widgets/login_form_card.dart';
+import 'package:guardian_portal/features/info/presentation/privacy_consent_scope.dart';
 
 class LoginPage extends StatefulWidget {
   const LoginPage({super.key, this.initialCreating = false});
@@ -164,13 +165,13 @@ class _LoginPageState extends State<LoginPage> {
     context.go(uri);
   }
 
-  Widget _formCard(AuthController auth) {
+  Widget _formCard(AuthController auth, {required bool busy}) {
     return LoginFormCard(
       formKey: _formKey,
       email: _email,
       password: _password,
       creating: _creating,
-      busy: _busy,
+      busy: busy,
       error: _error,
       onSubmit: () => _submit(auth),
       onGoogleSignIn: () => _signInWithGoogle(auth),
@@ -182,12 +183,18 @@ class _LoginPageState extends State<LoginPage> {
   @override
   Widget build(BuildContext context) {
     final auth = AuthScope.of(context);
+    final consent = PrivacyConsentScope.of(context);
+    // Após o login, segura o busy até o Firestore do aceite responder —
+    // evita flash do formulário antes do redirect.
+    final waitingConsent = auth.user != null && !consent.isReady;
+    final busy = _busy || waitingConsent;
     final wide = MediaQuery.sizeOf(context).width >= 900;
+    final form = _formCard(auth, busy: busy);
 
     return AuthPageShell(
       body: wide
-          ? _DesktopLoginBody(form: _formCard(auth))
-          : _MobileLoginBody(form: _formCard(auth)),
+          ? _DesktopLoginBody(form: form)
+          : _MobileLoginBody(form: form),
     );
   }
 }

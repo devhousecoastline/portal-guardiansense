@@ -13,7 +13,16 @@ String? resolveAuthRedirect({
     return path == AppRoutes.login ? null : AppRoutes.login;
   }
 
-  if (!consentReady || !hasAcceptedCurrentPolicy) {
+  // Sem resposta do Firestore ainda: não monta o gate — evita flash da
+  // tela de aceite para quem já aceitou a versão atual.
+  if (!consentReady) {
+    if (path == AppRoutes.login || path == AppRoutes.privacyConsent) {
+      return null;
+    }
+    return AppRoutes.login;
+  }
+
+  if (!hasAcceptedCurrentPolicy) {
     return path == AppRoutes.privacyConsent ? null : AppRoutes.privacyConsent;
   }
 
