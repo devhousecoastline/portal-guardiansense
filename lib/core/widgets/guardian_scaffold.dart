@@ -267,8 +267,9 @@ class _TopBar extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final isHome = current == AppRoutes.dashboard;
-    // Mobile na home: só menu + chip — o título "Proteção" compete com o status.
+    // Mobile: sem subtítulo. Home mobile: sem título "Proteção" — só menu + chip.
     final hideHomeTitle = isHome && showMenu;
+    final showSubtitle = !showMenu && subtitle != null;
 
     return Container(
       padding: EdgeInsets.fromLTRB(isHome && !showMenu ? 16 : 8, 20, 24, 12),
@@ -277,7 +278,7 @@ class _TopBar extends StatelessWidget {
       ),
       child: Row(
         crossAxisAlignment:
-            hideHomeTitle ? CrossAxisAlignment.center : CrossAxisAlignment.start,
+            showSubtitle ? CrossAxisAlignment.start : CrossAxisAlignment.center,
         children: [
           if (!isHome)
             IconButton(
@@ -291,13 +292,20 @@ class _TopBar extends StatelessWidget {
               tooltip: 'Menu',
               onPressed: () => _openDrawer(context, current),
             ),
-          if (!hideHomeTitle)
+          if (hideHomeTitle) ...[
+            Expanded(
+              child: Center(
+                child: subtitleTrailing ?? const SizedBox.shrink(),
+              ),
+            ),
+            const SizedBox(width: 48),
+          ] else ...[
             Expanded(
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   Text(title, style: Theme.of(context).textTheme.titleLarge),
-                  if (subtitle != null) ...[
+                  if (showSubtitle) ...[
                     const SizedBox(height: 2),
                     Text(
                       subtitle!,
@@ -306,22 +314,11 @@ class _TopBar extends StatelessWidget {
                   ],
                 ],
               ),
-            )
-          else ...[
-            Expanded(
-              child: Center(
-                child: subtitleTrailing ?? const SizedBox.shrink(),
-              ),
             ),
-            // Espelha a largura do botão do menu para o chip ficar no centro.
-            const SizedBox(width: 48),
-          ],
-          if (!hideHomeTitle && subtitleTrailing != null) ...[
-            const SizedBox(width: 12),
-            Padding(
-              padding: const EdgeInsets.only(top: 4),
-              child: subtitleTrailing!,
-            ),
+            if (subtitleTrailing != null) ...[
+              const SizedBox(width: 12),
+              subtitleTrailing!,
+            ],
           ],
         ],
       ),
