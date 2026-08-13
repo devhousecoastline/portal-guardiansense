@@ -1,8 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:guardian_portal/core/theme/app_colors.dart';
+import 'package:guardian_portal/core/widgets/device_verified_chip.dart';
+import 'package:guardian_portal/core/widgets/guardian_header_chip.dart';
 import 'package:guardian_portal/core/widgets/relative_time.dart';
 import 'package:guardian_portal/core/widgets/section_card.dart';
-import 'package:guardian_portal/core/widgets/status_pill.dart';
 import 'package:guardian_portal/features/dashboard/domain/device_status.dart';
 import 'package:guardian_portal/features/devices/domain/guardian_device.dart';
 
@@ -18,10 +19,10 @@ class DeviceTile extends StatelessWidget {
     final color = _toneColor(status);
     final theme = Theme.of(context);
     final statusLine = released
-        ? 'DESVINCULADO'
+        ? 'Desvinculado'
         : status.isOnline
-            ? status.protectionLabel.toUpperCase()
-            : 'OFFLINE';
+            ? status.protectionLabel
+            : 'Offline';
     final syncLabel = released
         ? _releasedLabel(status.releasedAt)
         : _syncLabel(status.lastSeen);
@@ -127,19 +128,20 @@ class DeviceTile extends StatelessWidget {
                           ],
                         ),
                       ),
-                        if (!narrow) ...[
+                      if (!narrow) ...[
                         const SizedBox(width: 12),
                         Column(
                           mainAxisSize: MainAxisSize.min,
                           crossAxisAlignment: CrossAxisAlignment.end,
                           children: [
-                            StatusPill(label: statusLine, color: color),
+                            GuardianHeaderChip(
+                              label: statusLine,
+                              color: color,
+                              icon: _statusIcon(status, released: released),
+                            ),
                             if (!released && status.isVerified) ...[
                               const SizedBox(height: 6),
-                              StatusPill(
-                                label: 'VERIFICADO',
-                                color: AppColors.trustHigh,
-                              ),
+                              const DeviceVerifiedChip(compact: true),
                             ],
                           ],
                         ),
@@ -153,6 +155,21 @@ class DeviceTile extends StatelessWidget {
         ),
       ),
     );
+  }
+
+  static IconData _statusIcon(
+    DeviceStatus status, {
+    required bool released,
+  }) {
+    if (released) return Icons.link_off_rounded;
+    if (!status.isOnline) return Icons.cloud_off_outlined;
+    return switch (status.level) {
+      ProtectionLevel.protected => Icons.shield_outlined,
+      ProtectionLevel.partial => Icons.shield_moon_outlined,
+      ProtectionLevel.alert => Icons.warning_amber_rounded,
+      ProtectionLevel.offline => Icons.cloud_off_outlined,
+      ProtectionLevel.unknown => Icons.hourglass_empty_rounded,
+    };
   }
 
   static Color _toneColor(DeviceStatus status) {
