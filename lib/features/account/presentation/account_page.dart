@@ -362,6 +362,21 @@ class _PlanCardState extends State<_PlanCard> {
           null => AppColors.primary,
         };
 
+        final startAt = switch (status) {
+          SubscriptionStatus.active || SubscriptionStatus.lapsed =>
+            entitlement?.startedAt ?? entitlement?.trialStartedAt,
+          SubscriptionStatus.trial || SubscriptionStatus.expired =>
+            entitlement?.trialStartedAt,
+          null => null,
+        };
+        final endsAt = switch (status) {
+          SubscriptionStatus.active || SubscriptionStatus.lapsed =>
+            entitlement?.expiresAt ?? entitlement?.trialEndsAt,
+          SubscriptionStatus.trial || SubscriptionStatus.expired =>
+            entitlement?.trialEndsAt,
+          null => null,
+        };
+
         return SectionCard(
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.stretch,
@@ -377,6 +392,41 @@ class _PlanCardState extends State<_PlanCard> {
               ),
               const SizedBox(height: 12),
               Text(detail, style: theme.textTheme.bodyMedium),
+              if (startAt != null || endsAt != null) ...[
+                const SizedBox(height: 12),
+                LayoutBuilder(
+                  builder: (context, constraints) {
+                    final tiles = <Widget>[
+                      if (startAt != null)
+                        _InfoTile(
+                          icon: Icons.play_circle_outline,
+                          label: 'Início',
+                          value: _formatDateTime(startAt),
+                          iconColor: AppColors.trustHigh,
+                        ),
+                      if (endsAt != null)
+                        _InfoTile(
+                          icon: Icons.event_outlined,
+                          label: 'Vence em',
+                          value: _formatDateTime(endsAt),
+                          iconColor: AppColors.trustHigh,
+                        ),
+                    ];
+                    if (constraints.maxWidth < 560 || tiles.length == 1) {
+                      return Column(
+                        crossAxisAlignment: CrossAxisAlignment.stretch,
+                        children: [
+                          for (var i = 0; i < tiles.length; i++) ...[
+                            if (i > 0) const SizedBox(height: 8),
+                            tiles[i],
+                          ],
+                        ],
+                      );
+                    }
+                    return _PairGrid(tiles: tiles);
+                  },
+                ),
+              ],
               const SizedBox(height: 12),
               Wrap(
                 spacing: 10,
@@ -551,6 +601,7 @@ class _InfoTile extends StatelessWidget {
     this.value,
     this.valueWidget,
     this.valueColor,
+    this.iconColor,
   }) : assert(value != null || valueWidget != null);
 
   final IconData icon;
@@ -558,6 +609,7 @@ class _InfoTile extends StatelessWidget {
   final String? value;
   final Widget? valueWidget;
   final Color? valueColor;
+  final Color? iconColor;
 
   @override
   Widget build(BuildContext context) {
@@ -575,7 +627,11 @@ class _InfoTile extends StatelessWidget {
         children: [
           Padding(
             padding: const EdgeInsets.only(top: 1),
-            child: Icon(icon, size: 16, color: AppColors.textMuted),
+            child: Icon(
+              icon,
+              size: 16,
+              color: iconColor ?? AppColors.textMuted,
+            ),
           ),
           const SizedBox(width: 8),
           Expanded(
@@ -647,13 +703,19 @@ class _AccountFootnote extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Row(
+      mainAxisAlignment: MainAxisAlignment.center,
+      crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        Icon(Icons.info_outline, size: 14, color: AppColors.textMuted),
+        Padding(
+          padding: const EdgeInsets.only(top: 1),
+          child: Icon(Icons.info_outline, size: 14, color: AppColors.textMuted),
+        ),
         const SizedBox(width: 8),
-        Expanded(
+        Flexible(
           child: Text(
             'A conta mantém o aparelho vinculado e prepara os recursos de '
             'nuvem. A proteção anti-furto funciona no próprio aparelho.',
+            textAlign: TextAlign.center,
             style: Theme.of(context).textTheme.bodySmall?.copyWith(
                   color: AppColors.textMuted,
                 ),
