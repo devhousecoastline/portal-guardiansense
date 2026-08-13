@@ -36,7 +36,7 @@ class _GuardianPortalAppState extends State<GuardianPortalApp> {
     _theme = ThemeController();
     AppColorScope.current = _theme.palette;
     _router = createAppRouter(
-      authListenable: _auth,
+      auth: _auth,
       consent: _consent,
     );
     _theme.load();

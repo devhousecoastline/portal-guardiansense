@@ -27,9 +27,23 @@ void main() {
   });
 
   group('resolveAuthRedirect', () {
+    test('auth ainda não pronto não redireciona', () {
+      expect(
+        resolveAuthRedirect(
+          authReady: false,
+          signedIn: false,
+          consentReady: false,
+          hasAcceptedCurrentPolicy: false,
+          path: AppRoutes.dashboard,
+        ),
+        isNull,
+      );
+    });
+
     test('deslogado vai para login', () {
       expect(
         resolveAuthRedirect(
+          authReady: true,
           signedIn: false,
           consentReady: true,
           hasAcceptedCurrentPolicy: false,
@@ -42,6 +56,7 @@ void main() {
     test('logado sem aceite vai para o gate', () {
       expect(
         resolveAuthRedirect(
+          authReady: true,
           signedIn: true,
           consentReady: true,
           hasAcceptedCurrentPolicy: false,
@@ -51,18 +66,20 @@ void main() {
       );
     });
 
-    test('logado aguardando Firestore não monta o gate', () {
+    test('logado aguardando Firestore permanece na rota atual', () {
       expect(
         resolveAuthRedirect(
+          authReady: true,
           signedIn: true,
           consentReady: false,
           hasAcceptedCurrentPolicy: false,
           path: AppRoutes.events,
         ),
-        AppRoutes.login,
+        isNull,
       );
       expect(
         resolveAuthRedirect(
+          authReady: true,
           signedIn: true,
           consentReady: false,
           hasAcceptedCurrentPolicy: false,
@@ -75,6 +92,7 @@ void main() {
     test('com aceite segue para o dashboard após o login', () {
       expect(
         resolveAuthRedirect(
+          authReady: true,
           signedIn: true,
           consentReady: true,
           hasAcceptedCurrentPolicy: true,
@@ -87,6 +105,7 @@ void main() {
     test('com aceite não volta ao gate', () {
       expect(
         resolveAuthRedirect(
+          authReady: true,
           signedIn: true,
           consentReady: true,
           hasAcceptedCurrentPolicy: true,

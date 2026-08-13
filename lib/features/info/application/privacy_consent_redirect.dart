@@ -2,6 +2,7 @@ import 'package:guardian_portal/core/routing/app_routes.dart';
 
 /// Redirect de auth + consentimento. Puro, para testar sem GoRouter.
 String? resolveAuthRedirect({
+  required bool authReady,
   required bool signedIn,
   required bool consentReady,
   required bool hasAcceptedCurrentPolicy,
@@ -9,17 +10,20 @@ String? resolveAuthRedirect({
 }) {
   if (path == AppRoutes.home) return AppRoutes.login;
 
+  // Sessão Firebase ainda não restaurou — não manda para login no refresh.
+  if (!authReady) {
+    return null;
+  }
+
   if (!signedIn) {
     return path == AppRoutes.login ? null : AppRoutes.login;
   }
 
-  // Sem resposta do Firestore ainda: não monta o gate — evita flash da
-  // tela de aceite para quem já aceitou a versão atual.
+  // Firestore ainda não respondeu: fica na rota atual.
+  // Não manda para login nem monta o gate — evita flash no refresh
+  // e o flash do aceite para quem já aceitou.
   if (!consentReady) {
-    if (path == AppRoutes.login || path == AppRoutes.privacyConsent) {
-      return null;
-    }
-    return AppRoutes.login;
+    return null;
   }
 
   if (!hasAcceptedCurrentPolicy) {

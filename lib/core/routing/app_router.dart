@@ -1,9 +1,9 @@
-import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 import 'package:guardian_portal/core/navigation/navigation_shell.dart';
 import 'package:guardian_portal/core/routing/app_routes.dart';
 import 'package:guardian_portal/features/account/presentation/account_page.dart';
+import 'package:guardian_portal/features/auth/application/auth_controller.dart';
 import 'package:guardian_portal/features/auth/presentation/login_page.dart';
 import 'package:guardian_portal/features/dashboard/presentation/dashboard_page.dart';
 import 'package:guardian_portal/features/devices/presentation/devices_page.dart';
@@ -19,15 +19,16 @@ import 'package:guardian_portal/features/settings/presentation/settings_page.dar
 import 'package:guardian_portal/features/subscription/presentation/premium_page.dart';
 
 GoRouter createAppRouter({
-  required Listenable authListenable,
+  required AuthController auth,
   required PrivacyConsentController consent,
 }) {
   return GoRouter(
     initialLocation: AppRoutes.login,
-    refreshListenable: Listenable.merge([authListenable, consent]),
+    refreshListenable: Listenable.merge([auth, consent]),
     redirect: (context, state) {
       return resolveAuthRedirect(
-        signedIn: FirebaseAuth.instance.currentUser != null,
+        authReady: auth.isReady,
+        signedIn: auth.isSignedIn,
         consentReady: consent.isReady,
         hasAcceptedCurrentPolicy: consent.hasAcceptedCurrent,
         path: state.matchedLocation,

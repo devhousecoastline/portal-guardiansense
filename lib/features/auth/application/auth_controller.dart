@@ -5,11 +5,18 @@ import 'package:flutter/foundation.dart';
 
 class AuthController extends ChangeNotifier {
   AuthController({FirebaseAuth? auth}) : _auth = auth ?? FirebaseAuth.instance {
-    _subscription = _auth.authStateChanges().listen((_) => notifyListeners());
+    _subscription = _auth.authStateChanges().listen((_) {
+      _ready = true;
+      notifyListeners();
+    });
   }
 
   final FirebaseAuth _auth;
   late final StreamSubscription<User?> _subscription;
+  bool _ready = false;
+
+  /// Primeira emissão de [authStateChanges] — evita flash de login no refresh.
+  bool get isReady => _ready;
 
   User? get user => _auth.currentUser;
   bool get isSignedIn => user != null;
