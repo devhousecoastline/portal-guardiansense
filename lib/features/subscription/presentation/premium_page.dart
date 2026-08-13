@@ -4,10 +4,10 @@ import 'package:cloud_functions/cloud_functions.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:guardian_portal/core/theme/app_colors.dart';
+import 'package:guardian_portal/core/widgets/guardian_header_chip.dart';
 import 'package:guardian_portal/core/widgets/guardian_pill_button.dart';
 import 'package:guardian_portal/core/widgets/guardian_scaffold.dart';
 import 'package:guardian_portal/core/widgets/section_card.dart';
-import 'package:guardian_portal/core/widgets/status_pill.dart';
 import 'package:guardian_portal/features/auth/presentation/widgets/auth_scope.dart';
 import 'package:guardian_portal/features/subscription/data/pix_billing_service.dart';
 import 'package:guardian_portal/features/subscription/data/subscription_repository.dart';
@@ -182,9 +182,10 @@ class _ActiveView extends StatelessWidget {
               _CardTitle(
                 icon: Icons.verified_outlined,
                 label: 'Proteção ativa',
-                trailing: StatusPill(
-                  label: 'ATIVO',
+                trailing: GuardianHeaderChip(
+                  label: 'Ativo',
                   color: AppColors.trustHigh,
+                  icon: Icons.workspace_premium_outlined,
                 ),
               ),
               const SizedBox(height: 12),
@@ -268,31 +269,36 @@ class _CheckoutView extends StatelessWidget {
     final status = entitlement?.effectiveStatusAt(now);
     final trialDays = entitlement?.trialDaysLeftCeil(now) ?? 0;
 
-    final (pillLabel, statusLine, color) = switch (status) {
+    final (pillLabel, statusLine, color, pillIcon) = switch (status) {
       SubscriptionStatus.trial => (
-          'TRIAL',
+          'Trial',
           'Restam $trialDays dia${trialDays == 1 ? '' : 's'} grátis.',
           AppColors.trustMedium,
+          Icons.timelapse_rounded,
         ),
       SubscriptionStatus.expired => (
-          'TRIAL ENCERRADO',
+          'Trial encerrado',
           'Assine para continuar com a proteção completa.',
           AppColors.riskCritical,
+          Icons.hourglass_disabled_outlined,
         ),
       SubscriptionStatus.lapsed => (
-          'VENCIDA',
+          'Vencida',
           'Renove com PIX para reativar.',
           AppColors.riskCritical,
+          Icons.event_busy_outlined,
         ),
       SubscriptionStatus.active => (
-          'ATIVO',
+          'Ativo',
           '',
           AppColors.trustHigh,
+          Icons.workspace_premium_outlined,
         ),
       null => (
-          'PLANO',
+          'Plano',
           'Gere o PIX para ativar 12 meses na conta.',
           AppColors.primary,
+          Icons.workspace_premium_outlined,
         ),
     };
 
@@ -309,7 +315,11 @@ class _CheckoutView extends StatelessWidget {
                 _CardTitle(
                   icon: Icons.workspace_premium_outlined,
                   label: 'Assinatura anual',
-                  trailing: StatusPill(label: pillLabel, color: color),
+                  trailing: GuardianHeaderChip(
+                    label: pillLabel,
+                    color: color,
+                    icon: pillIcon,
+                  ),
                   centered: true,
                 ),
                 const SizedBox(height: 12),
@@ -370,7 +380,11 @@ class _CheckoutView extends StatelessWidget {
                   ),
                 ),
                 const SizedBox(width: 10),
-                StatusPill(label: pillLabel, color: color),
+                GuardianHeaderChip(
+                  label: pillLabel,
+                  color: color,
+                  icon: pillIcon,
+                ),
               ],
             ),
           ),

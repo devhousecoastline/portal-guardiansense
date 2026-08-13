@@ -43,4 +43,13 @@ class DevicePairingRepository {
     }
     return DevicePairing.fromCallable(Map<String, dynamic>.from(raw));
   }
+
+  /// Debug/QA: `verified: false` nos aparelhos ativos (só Admin SDK).
+  Future<int> resetVerification() async {
+    final callable = _functions.httpsCallable('resetDeviceVerification');
+    final result = await callable.call();
+    final raw = result.data;
+    if (raw is! Map) return 0;
+    return (raw['reset'] as num?)?.toInt() ?? 0;
+  }
 }

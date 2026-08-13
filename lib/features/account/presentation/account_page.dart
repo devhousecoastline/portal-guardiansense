@@ -1,14 +1,17 @@
+import 'package:cloud_functions/cloud_functions.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 import 'package:guardian_portal/core/routing/app_routes.dart';
 import 'package:guardian_portal/core/theme/app_colors.dart';
+import 'package:guardian_portal/core/widgets/device_verified_chip.dart';
+import 'package:guardian_portal/core/widgets/guardian_header_chip.dart';
 import 'package:guardian_portal/core/widgets/guardian_link_chip.dart';
 import 'package:guardian_portal/core/widgets/guardian_scaffold.dart';
 import 'package:guardian_portal/core/widgets/section_card.dart';
-import 'package:guardian_portal/core/widgets/status_pill.dart';
 import 'package:guardian_portal/features/auth/presentation/widgets/auth_scope.dart';
+import 'package:guardian_portal/features/devices/data/device_pairing_repository.dart';
 import 'package:guardian_portal/features/devices/data/device_repository.dart';
 import 'package:guardian_portal/features/devices/domain/guardian_device.dart';
 import 'package:guardian_portal/features/subscription/data/subscription_repository.dart';
@@ -159,9 +162,9 @@ class _IdentityCard extends StatelessWidget {
                       ),
                       if (!narrow) ...[
                         const SizedBox(width: 12),
-                        StatusPill(
-                          label: verified ? 'VERIFICADO' : 'NÃO VERIFICADO',
-                          color: color,
+                        DeviceVerifiedChip(
+                          compact: true,
+                          verified: verified,
                         ),
                       ],
                     ],
@@ -243,6 +246,7 @@ class _PlanCard extends StatefulWidget {
 
 class _PlanCardState extends State<_PlanCard> {
   bool _resetting = false;
+  bool _resettingVerification = false;
 
   Future<void> _resetTrial() async {
     if (_resetting) return;
@@ -263,6 +267,44 @@ class _PlanCardState extends State<_PlanCard> {
     }
   }
 
+  Future<void> _resetVerification() async {
+    if (_resettingVerification) return;
+    setState(() => _resettingVerification = true);
+    try {
+      final n = await DevicePairingRepository().resetVerification();
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text(
+            n == 0
+                ? 'Nenhum aparelho para resetar.'
+                : 'Verificação removida ($n). O Centro volta ao QR.',
+          ),
+        ),
+      );
+    } catch (error) {
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text(_verificationResetError(error)),
+        ),
+      );
+    } finally {
+      if (mounted) setState(() => _resettingVerification = false);
+    }
+  }
+
+  static String _verificationResetError(Object error) {
+    if (error is FirebaseFunctionsException) {
+      if (error.code == 'not-found' || error.code == 'NOT_FOUND') {
+        return 'Function ainda não publicada. Faça deploy de functions.';
+      }
+      final raw = (error.message ?? error.code).trim();
+      if (raw.isNotEmpty) return raw;
+    }
+    return 'Não foi possível resetar a verificação.';
+  }
+
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
@@ -275,35 +317,40 @@ class _PlanCardState extends State<_PlanCard> {
         final status = entitlement?.effectiveStatusAt(now);
         final df = DateFormat('dd/MM/yyyy');
 
-        final (label, detail, cta) = switch (status) {
+        final (label, detail, cta, pillIcon) = switch (status) {
           SubscriptionStatus.trial => (
-              'TRIAL',
+              'Trial',
               'Restam ${entitlement!.trialDaysLeftCeil(now)} dia'
                   '${entitlement.trialDaysLeftCeil(now) == 1 ? '' : 's'} grátis.',
               'Assinar com PIX',
+              Icons.timelapse_rounded,
             ),
           SubscriptionStatus.active => (
-              'ATIVO',
+              'Ativo',
               entitlement!.expiresAt != null
                   ? 'Até ${df.format(entitlement.expiresAt!.toLocal())}'
                       '${entitlement.store != null ? ' · ${entitlement.store}' : ''}'
                   : 'Assinatura anual ativa.',
               'Ver plano',
+              Icons.workspace_premium_outlined,
             ),
           SubscriptionStatus.expired => (
-              'TRIAL ENCERRADO',
+              'Trial encerrado',
               'Assine para continuar com a proteção completa.',
               'Assinar com PIX',
+              Icons.hourglass_disabled_outlined,
             ),
           SubscriptionStatus.lapsed => (
-              'VENCIDA',
+              'Vencida',
               'Renove com PIX para reativar.',
               'Renovar com PIX',
+              Icons.event_busy_outlined,
             ),
           null => (
-              'PLANO',
+              'Plano',
               'Assinatura anual · ${SubscriptionPricing.yearlyLabelBr}',
               'Assinar com PIX',
+              Icons.workspace_premium_outlined,
             ),
         };
         final color = switch (status) {
@@ -322,7 +369,11 @@ class _PlanCardState extends State<_PlanCard> {
               _CardTitle(
                 icon: Icons.workspace_premium_outlined,
                 label: 'Plano',
-                trailing: StatusPill(label: label, color: color),
+                trailing: GuardianHeaderChip(
+                  label: label,
+                  color: color,
+                  icon: pillIcon,
+                ),
               ),
               const SizedBox(height: 12),
               Text(detail, style: theme.textTheme.bodyMedium),
@@ -344,6 +395,17 @@ class _PlanCardState extends State<_PlanCard> {
                       icon: Icons.refresh_rounded,
                       compact: true,
                       onPressed: _resetting ? null : _resetTrial,
+                    ),
+                  if (kDebugMode)
+                    GuardianLinkChip(
+                      label: _resettingVerification
+                          ? 'Resetando…'
+                          : 'Resetar verificação (teste)',
+                      icon: Icons.qr_code_2_rounded,
+                      compact: true,
+                      onPressed: _resettingVerification
+                          ? null
+                          : _resetVerification,
                     ),
                 ],
               ),

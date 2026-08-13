@@ -238,3 +238,25 @@ exports.confirmDevicePairing = onCall(
     }
   },
 );
+
+/**
+ * Debug/QA autenticado: remove a verificação para retestar o QR.
+ */
+exports.resetDeviceVerification = onCall(
+  { invoker: "public" },
+  async (request) => {
+    if (!request.auth?.uid) {
+      throw new HttpsError("unauthenticated", "Faça login para resetar.");
+    }
+    try {
+      return await pairing.resetDeviceVerification(request.auth.uid);
+    } catch (e) {
+      console.error("resetDeviceVerification", e);
+      if (e instanceof HttpsError) throw e;
+      throw new HttpsError(
+        "internal",
+        e.message || "Não foi possível resetar a verificação.",
+      );
+    }
+  },
+);

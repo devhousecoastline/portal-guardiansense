@@ -211,9 +211,44 @@ async function confirmDevicePairing(uid, data = {}) {
   };
 }
 
+/**
+ * QA / debug: tira a verificação dos aparelhos ativos da conta.
+ * O portal volta ao QR; o app deve mostrar Confirmar identidade de novo.
+ */
+async function resetDeviceVerification(uid) {
+  const userRef = db().collection("users").doc(uid);
+  const snap = await userRef.collection("devices").limit(40).get();
+  const batch = db().batch();
+  let reset = 0;
+
+  for (const doc of snap.docs) {
+    const status = String(doc.data()?.status || "active").toLowerCase();
+    if (status === "released") continue;
+    batch.set(
+      doc.ref,
+      {
+        verified: false,
+        verifiedAt: admin.firestore.FieldValue.delete(),
+        verifiedVia: admin.firestore.FieldValue.delete(),
+      },
+      { merge: true },
+    );
+    reset += 1;
+  }
+
+  batch.set(
+    userRef,
+    { boundDeviceId: admin.firestore.FieldValue.delete() },
+    { merge: true },
+  );
+  await batch.commit();
+  return { reset };
+}
+
 module.exports = {
   createDevicePairing,
   confirmDevicePairing,
+  resetDeviceVerification,
   normalizeCode,
   pairingUrl,
 };
