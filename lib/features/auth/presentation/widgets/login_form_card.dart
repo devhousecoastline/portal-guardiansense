@@ -34,6 +34,8 @@ class LoginFormCard extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final radius = BorderRadius.circular(20);
+    final narrow = MediaQuery.sizeOf(context).width < 420;
+    final cardPad = narrow ? 20.0 : 28.0;
 
     return Container(
       width: double.infinity,
@@ -63,7 +65,7 @@ class LoginFormCard extends StatelessWidget {
         ),
         padding: const EdgeInsets.all(1.1),
         child: Container(
-          padding: const EdgeInsets.fromLTRB(28, 28, 28, 28),
+          padding: EdgeInsets.fromLTRB(cardPad, cardPad, cardPad, cardPad),
           decoration: BoxDecoration(
             color: AppColors.card.withValues(alpha: 0.92),
             borderRadius: BorderRadius.circular(19),
@@ -74,19 +76,22 @@ class LoginFormCard extends StatelessWidget {
             children: [
               Text(
                 creating ? 'Nova conta' : AppConstants.loginCardTitle,
+                textAlign: narrow ? TextAlign.center : TextAlign.start,
                 style: Theme.of(context).textTheme.headlineMedium?.copyWith(
                       fontWeight: FontWeight.w700,
                       height: 1.2,
                     ),
               ),
-              const SizedBox(height: 8),
-              Text(
-                creating
-                    ? 'Preencha os dados para começar.'
-                    : AppConstants.loginCardSubtitle,
-                style: Theme.of(context).textTheme.bodyMedium,
-              ),
-              const SizedBox(height: 28),
+              if (!narrow) ...[
+                const SizedBox(height: 8),
+                Text(
+                  creating
+                      ? 'Preencha os dados para começar.'
+                      : AppConstants.loginCardSubtitle,
+                  style: Theme.of(context).textTheme.bodyMedium,
+                ),
+              ],
+              SizedBox(height: narrow ? 20 : 28),
               Form(
                 key: formKey,
                 child: Column(

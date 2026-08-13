@@ -7,7 +7,6 @@ import 'package:guardian_portal/core/routing/app_routes.dart';
 import 'package:guardian_portal/core/widgets/guardian_logo.dart';
 import 'package:guardian_portal/features/auth/application/auth_controller.dart';
 import 'package:guardian_portal/app/constants.dart';
-import 'package:guardian_portal/core/theme/app_colors.dart';
 import 'package:guardian_portal/features/auth/presentation/widgets/auth_footer.dart';
 import 'package:guardian_portal/features/auth/presentation/widgets/auth_page_shell.dart';
 import 'package:guardian_portal/features/auth/presentation/widgets/auth_scope.dart';
@@ -253,14 +252,18 @@ class _MobileLoginBody extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final short = MediaQuery.sizeOf(context).height < 760;
+    final size = MediaQuery.sizeOf(context);
+    final short = size.height < 760;
     final logoSize = short ? 56.0 : 72.0;
+    // Margem simétrica — evita o card “colado” numa lateral no Chrome mobile.
+    final hPad = (size.width * 0.06).clamp(20.0, 28.0);
 
     return SingleChildScrollView(
-      padding: EdgeInsets.fromLTRB(24, short ? 8 : 20, 24, 12),
+      padding: EdgeInsets.fromLTRB(hPad, short ? 8 : 20, hPad, 12),
       child: Column(
+        crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
-          GuardianLogo(size: logoSize, breathe: true),
+          Center(child: GuardianLogo(size: logoSize, breathe: true)),
           Transform.translate(
             offset: const Offset(0, -6),
             child: Text(
@@ -271,21 +274,15 @@ class _MobileLoginBody extends StatelessWidget {
                   ),
             ),
           ),
-          const SizedBox(height: 4),
-          Text(
-            AppConstants.portalTitle,
-            textAlign: TextAlign.center,
-            style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                  color: AppColors.textMuted,
-                ),
-          ),
           SizedBox(height: short ? 16 : 24),
-          ConstrainedBox(
-            constraints: const BoxConstraints(maxWidth: 420),
-            child: form,
+          Center(
+            child: ConstrainedBox(
+              constraints: const BoxConstraints(maxWidth: 420),
+              child: form,
+            ),
           ),
           const SizedBox(height: 8),
-          const AuthFooter(),
+          const AuthFooter(includeHorizontalPadding: false),
         ],
       ),
     );
