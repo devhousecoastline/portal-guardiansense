@@ -14,9 +14,15 @@ class AuthFooter extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final narrow = MediaQuery.sizeOf(context).width < 900;
+    final muted = AppColors.textMuted.withValues(alpha: 0.55);
+    final versionStyle = Theme.of(context).textTheme.bodySmall?.copyWith(
+          fontSize: narrow ? 12 : 13,
+          color: muted,
+          fontWeight: FontWeight.w500,
+        );
     final copyright = Theme.of(context).textTheme.bodyMedium?.copyWith(
           fontSize: narrow ? 13 : 15,
-          color: AppColors.textMuted.withValues(alpha: 0.55),
+          color: muted,
         );
     final hPad = includeHorizontalPadding ? 24.0 : 0.0;
 
@@ -27,11 +33,22 @@ class AuthFooter extends StatelessWidget {
         hPad,
         narrow ? 16 : 24,
       ),
-      child: Text(
-        '© ${DateTime.now().year} ${AppConstants.appName} · '
-        'Todos os direitos reservados.',
-        style: copyright,
-        textAlign: TextAlign.center,
+      child: Column(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Text(
+            'Portal: v${AppConstants.portalVersion}',
+            style: versionStyle,
+            textAlign: TextAlign.center,
+          ),
+          const SizedBox(height: 4),
+          Text(
+            '© ${DateTime.now().year} ${AppConstants.appName} · '
+            'Todos os direitos reservados.',
+            style: copyright,
+            textAlign: TextAlign.center,
+          ),
+        ],
       ),
     );
   }
