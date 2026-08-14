@@ -65,7 +65,7 @@ class PairLandingPage extends StatelessWidget {
                   ),
                   const SizedBox(height: 6),
                   SelectableText(
-                    normalized!,
+                    normalized,
                     textAlign: TextAlign.center,
                     style: Theme.of(context).textTheme.headlineSmall?.copyWith(
                           fontWeight: FontWeight.w800,

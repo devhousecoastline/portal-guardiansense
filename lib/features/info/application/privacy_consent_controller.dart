@@ -9,10 +9,9 @@ import 'package:guardian_portal/features/info/domain/privacy_policy.dart';
 /// Observa o aceite da política da conta logada e avisa o router.
 class PrivacyConsentController extends ChangeNotifier {
   PrivacyConsentController({
-    required AuthController auth,
+    required this._auth,
     UserRepository? users,
-  })  : _auth = auth,
-        _users = users ?? UserRepository() {
+  }) : _users = users ?? UserRepository() {
     _auth.addListener(_onAuthChanged);
     _onAuthChanged();
   }
