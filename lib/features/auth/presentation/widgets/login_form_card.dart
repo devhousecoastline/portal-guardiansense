@@ -75,23 +75,24 @@ class LoginFormCard extends StatelessWidget {
             mainAxisSize: MainAxisSize.min,
             children: [
               Text(
-                creating
-                    ? 'Nova conta'
-                    : (narrow
-                        ? AppConstants.portalTitle
-                        : AppConstants.loginCardTitle),
+                creating ? 'Nova conta' : AppConstants.loginCardTitle,
                 textAlign: narrow ? TextAlign.center : TextAlign.start,
                 style: Theme.of(context).textTheme.headlineMedium?.copyWith(
                       fontWeight: FontWeight.w700,
                       height: 1.2,
                     ),
               ),
-              if (!narrow) ...[
+              if (!creating) ...[
                 const SizedBox(height: 8),
                 Text(
-                  creating
-                      ? 'Preencha os dados para começar.'
-                      : AppConstants.loginCardSubtitle,
+                  AppConstants.loginCardSubtitle,
+                  textAlign: narrow ? TextAlign.center : TextAlign.start,
+                  style: Theme.of(context).textTheme.bodyMedium,
+                ),
+              ] else if (!narrow) ...[
+                const SizedBox(height: 8),
+                Text(
+                  'Preencha os dados para começar.',
                   style: Theme.of(context).textTheme.bodyMedium,
                 ),
               ],
@@ -170,7 +171,7 @@ class LoginFormCard extends StatelessWidget {
               TextButton(
                 onPressed: busy ? null : onToggleMode,
                 style: TextButton.styleFrom(
-                  foregroundColor: AppColors.trustHigh,
+                  foregroundColor: AppColors.textMuted,
                 ),
                 child: Text(
                   creating

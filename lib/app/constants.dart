@@ -2,17 +2,14 @@
 abstract final class AppConstants {
   static const String appName = 'Guardian Sense';
   static const String portalTitle = 'Central de Proteção';
-  static const String loginCardTitle = 'Acesse sua Central de Proteção';
+  static const String loginCardTitle = 'Já tem o app? Entre';
   static const String tagline =
       'Seu aparelho continua protegido. Mesmo quando está longe de você.';
-  static const String loginHeadline = tagline;
-  static const String loginDescription =
-      'O Guardian Sense monitora continuamente sinais de furto e protege '
-      'automaticamente seus aplicativos e dados.';
   static const String loginCardSubtitle =
-      'Gerencie sua proteção, dispositivos e alertas em tempo real.';
-  static const String loginTrustLine =
-      'Proteção inteligente baseada em contexto e risco';
+      'Use a mesma conta do Guardian Sense no celular.';
+  static const String loginStoreCta = 'Baixar na Play Store';
+  static const String loginStoreTooltip =
+      'Por enquanto, o app está disponível só no Android.';
   static const String footerTagline =
       'Proteção inteligente para seus ativos digitais.';
 
@@ -31,11 +28,11 @@ abstract final class AppConstants {
   /// Voltar para `true` antes do próximo deploy público.
   static const bool showComingSoonLanding = false;
 
-  /// Destaques do painel de marca na login (desktop).
+  /// Destaques do painel de marca na login.
   static const List<String> loginHighlights = [
-    'Proteção dos seus ativos digitais',
-    'Detecção inteligente de risco',
-    'Bloqueio automático de apps críticos',
+    'Se o celular for levado, os apps críticos travam sozinhos.',
+    'Daqui você vê o que aconteceu e onde o aparelho está.',
+    'Primeiro o app no celular; depois esta central, com a mesma conta.',
   ];
 
   /// Largura máxima do layout desktop da login.
@@ -50,4 +47,8 @@ abstract final class AppConstants {
 
   /// Programa Nacional Celular Seguro (MJSP) — bloqueio de IMEI/linha na operadora.
   static const String celularSeguroUrl = 'https://celularseguro.mj.gov.br/';
+
+  /// Ficha do app no Google Play (`applicationId` alinhado ao bundle iOS).
+  static const String playStoreUrl =
+      'https://play.google.com/store/apps/details?id=com.guardiansense.app';
 }

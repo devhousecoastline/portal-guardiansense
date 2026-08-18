@@ -36,12 +36,20 @@ class _GuardianPillButtonState extends State<GuardianPillButton> {
   @override
   Widget build(BuildContext context) {
     final enabled = widget.onPressed != null && !widget.busy;
+    final isLight = Theme.of(context).brightness == Brightness.light;
     final base = widget.neutral ? AppColors.textMuted : AppColors.trustHigh;
     final fg = enabled
         ? (widget.neutral
-            ? AppColors.textMuted.withValues(alpha: 0.92)
+            ? AppColors.textMuted.withValues(alpha: isLight ? 1 : 0.92)
             : base)
         : AppColors.textMuted;
+    // No claro, 0.16 de verde some no branco; no escuro o glow já basta.
+    final fillAlpha = widget.neutral
+        ? (isLight ? 0.10 : 0.06)
+        : (isLight ? 0.24 : 0.16);
+    final borderAlpha = widget.neutral
+        ? (isLight ? 0.32 : 0.22)
+        : (isLight ? 0.62 : 0.5);
     final vPad = widget.compact ? 10.0 : 13.0;
     final fontSize = widget.compact ? 14.0 : 15.0;
     final iconSize = widget.compact ? 17.0 : 19.0;
@@ -57,12 +65,12 @@ class _GuardianPillButtonState extends State<GuardianPillButton> {
 
     final pill = Material(
       color: enabled
-          ? base.withValues(alpha: widget.neutral ? 0.06 : 0.16)
+          ? base.withValues(alpha: fillAlpha)
           : AppColors.textMuted.withValues(alpha: 0.08),
       shape: StadiumBorder(
         side: BorderSide(
           color: enabled
-              ? base.withValues(alpha: widget.neutral ? 0.22 : 0.5)
+              ? base.withValues(alpha: borderAlpha)
               : AppColors.textMuted.withValues(alpha: 0.2),
           width: widget.neutral ? 1.0 : 1.2,
         ),
@@ -113,7 +121,8 @@ class _GuardianPillButtonState extends State<GuardianPillButton> {
           boxShadow: _hovered
               ? [
                   BoxShadow(
-                    color: AppColors.trustHigh.withValues(alpha: 0.22),
+                    color: AppColors.trustHigh
+                        .withValues(alpha: isLight ? 0.28 : 0.22),
                     blurRadius: 18,
                     offset: const Offset(0, 6),
                   ),

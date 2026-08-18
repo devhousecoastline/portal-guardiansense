@@ -4,9 +4,7 @@ import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 import 'package:guardian_portal/core/routing/app_routes.dart';
-import 'package:guardian_portal/core/widgets/guardian_logo.dart';
 import 'package:guardian_portal/features/auth/application/auth_controller.dart';
-import 'package:guardian_portal/app/constants.dart';
 import 'package:guardian_portal/features/auth/presentation/widgets/auth_footer.dart';
 import 'package:guardian_portal/features/auth/presentation/widgets/auth_page_shell.dart';
 import 'package:guardian_portal/features/auth/presentation/widgets/auth_scope.dart';
@@ -209,33 +207,35 @@ class _DesktopLoginBody extends StatelessWidget {
   Widget build(BuildContext context) {
     return LayoutBuilder(
       builder: (context, constraints) {
-        // Escudo um pouco menor = peso mais próximo do card.
-        final logoSize = (constraints.maxHeight * 0.32).clamp(190.0, 228.0);
+        // Escudo menor para caber tagline, bullets e CTA da loja.
+        final logoSize = (constraints.maxHeight * 0.26).clamp(148.0, 188.0);
 
         return Center(
           child: SingleChildScrollView(
             padding: const EdgeInsets.symmetric(horizontal: 40, vertical: 28),
             child: ConstrainedBox(
-              constraints: const BoxConstraints(maxWidth: 900),
-              child: Row(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Expanded(
-                    flex: 5,
-                    child: LoginBrandPanel(logoSize: logoSize),
-                  ),
-                  const SizedBox(width: 8),
-                  Expanded(
-                    flex: 5,
-                    child: Align(
-                      alignment: Alignment.topCenter,
-                      child: ConstrainedBox(
-                        constraints: const BoxConstraints(maxWidth: 400),
-                        child: form,
+              constraints: const BoxConstraints(maxWidth: 920),
+              child: IntrinsicHeight(
+                child: Row(
+                  crossAxisAlignment: CrossAxisAlignment.stretch,
+                  children: [
+                    Expanded(
+                      flex: 5,
+                      child: LoginBrandPanel(logoSize: logoSize),
+                    ),
+                    const SizedBox(width: 8),
+                    Expanded(
+                      flex: 5,
+                      child: Align(
+                        alignment: Alignment.topCenter,
+                        child: ConstrainedBox(
+                          constraints: const BoxConstraints(maxWidth: 400),
+                          child: form,
+                        ),
                       ),
                     ),
-                  ),
-                ],
+                  ],
+                ),
               ),
             ),
           ),
@@ -263,16 +263,10 @@ class _MobileLoginBody extends StatelessWidget {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
-          Center(child: GuardianLogo(size: logoSize, breathe: true)),
-          Transform.translate(
-            offset: const Offset(0, -6),
-            child: Text(
-              AppConstants.appName,
-              textAlign: TextAlign.center,
-              style: Theme.of(context).textTheme.titleLarge?.copyWith(
-                    fontWeight: FontWeight.w700,
-                  ),
-            ),
+          LoginBrandPanel(
+            logoSize: logoSize,
+            centered: true,
+            showHighlights: !short,
           ),
           SizedBox(height: short ? 16 : 24),
           Center(
