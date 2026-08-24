@@ -1,0 +1,12 @@
+---
+description: O agente nunca faz git commit — só o usuário
+alwaysApply: true
+---
+
+# Commits: só o usuário
+
+- **NUNCA** execute `git commit`, `git commit --amend`, nem qualquer comando que crie ou altere um commit.
+- **NUNCA** rode `git add` com a intenção de preparar um commit seu.
+- Mesmo que o usuário peça "pode commitar", "faz o commit", "publique" ou "suba a versão": **não commit**. Pode preparar arquivos, sugerir a mensagem e orientar os comandos — o commit fica com o usuário.
+- Permitido: `git status`, `git diff`, `git log`, sugerir mensagem de commit, bump de versão em arquivos, deploy/push **somente se o usuário pedir explicitamente** (push ≠ commit).
+- Se precisar de um commit para seguir (ex.: antes de push), pare e peça para o usuário fazer o commit.
