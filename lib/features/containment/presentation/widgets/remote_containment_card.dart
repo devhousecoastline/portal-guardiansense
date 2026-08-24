@@ -53,6 +53,8 @@ class _RemoteContainmentCardState extends State<RemoteContainmentCard> {
   }
 
   Future<void> _confirmAndSend() async {
+    if (!widget.status.hasRecoveryConfigured) return;
+
     final confirmed = await showGuardianConfirmDialog(
       context,
       title: 'Fechar a ostra remotamente?',
@@ -187,6 +189,9 @@ class _RemoteContainmentCardState extends State<RemoteContainmentCard> {
     if (command?.isFailed == true) {
       return 'O último comando não foi confirmado pelo aparelho.';
     }
+    if (!widget.status.hasRecoveryConfigured) {
+      return 'Fechar ostra bloqueado — falta PIN ou biometria no aparelho.';
+    }
     return widget.status.isOnline
         ? 'Ação de emergência se o aparelho saiu do seu controle.'
         : 'Celular offline — o comando ficará na fila até sincronizar.';
@@ -226,19 +231,39 @@ class _RemoteContainmentCardState extends State<RemoteContainmentCard> {
       );
     }
 
+    final canClose = widget.status.hasRecoveryConfigured;
+
     if (command?.isFailed == true) {
       return _TintedPanel(
         color: AppColors.riskCritical,
         icon: Icons.error_outline_rounded,
         title: 'Falha ao aplicar',
-        subtitle: command?.failureMessage ??
-            'O aparelho não confirmou o fechamento.',
+        subtitle: canClose
+            ? (command?.failureMessage ??
+                'O aparelho não confirmou o fechamento.')
+            : _recoveryRequiredSubtitle,
         compact: widget.compact,
         fillHeight: fillHeight,
         action: _ContainmentActionButton(
           loading: _submitting,
-          onPressed: _confirmAndSend,
+          onPressed: canClose ? _confirmAndSend : null,
           label: 'Tentar novamente',
+        ),
+      );
+    }
+
+    if (!canClose) {
+      return _TintedPanel(
+        color: AppColors.trustMedium,
+        icon: Icons.fingerprint_rounded,
+        title: 'Fechar ostra indisponível',
+        subtitle: _recoveryRequiredSubtitle,
+        compact: widget.compact,
+        fillHeight: fillHeight,
+        action: const _ContainmentActionButton(
+          loading: false,
+          onPressed: null,
+          label: 'Fechar ostra',
         ),
       );
     }
@@ -259,6 +284,10 @@ class _RemoteContainmentCardState extends State<RemoteContainmentCard> {
       ),
     );
   }
+
+  static const _recoveryRequiredSubtitle =
+      'Configure PIN ou biometria no app Guardian Sense do celular — sem isso '
+      'não dá para reabrir a ostra.';
 }
 
 class _OysterClosedPanel extends StatelessWidget {
@@ -612,20 +641,24 @@ class _ContainmentActionButton extends StatelessWidget {
   });
 
   final bool loading;
-  final VoidCallback onPressed;
+  final VoidCallback? onPressed;
   final String label;
 
   @override
   Widget build(BuildContext context) {
+    final enabled = !loading && onPressed != null;
+    final accent = enabled ? AppColors.riskCritical : AppColors.textMuted;
+
     return OutlinedButton.icon(
-      onPressed: loading ? null : onPressed,
+      onPressed: enabled ? onPressed : null,
       style: OutlinedButton.styleFrom(
-        foregroundColor: AppColors.riskCritical,
+        foregroundColor: accent,
+        disabledForegroundColor: AppColors.textMuted,
         side: BorderSide(
-          color: AppColors.riskCritical.withValues(alpha: loading ? 0.25 : 0.55),
+          color: accent.withValues(alpha: enabled ? 0.55 : 0.28),
         ),
-        backgroundColor: AppColors.riskCritical.withValues(alpha: 0.08),
-        padding:  EdgeInsets.symmetric(horizontal: 16, vertical: 10),
+        backgroundColor: accent.withValues(alpha: enabled ? 0.08 : 0.04),
+        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
         visualDensity: VisualDensity.compact,
       ),
       icon: loading
@@ -637,7 +670,7 @@ class _ContainmentActionButton extends StatelessWidget {
                 color: AppColors.riskCritical.withValues(alpha: 0.8),
               ),
             )
-          : const Icon(Icons.lock_rounded, size: 18),
+          : Icon(Icons.lock_rounded, size: 18, color: accent),
       label: Text(label),
     );
   }

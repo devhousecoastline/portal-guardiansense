@@ -79,6 +79,17 @@ class DeviceStatus {
   List<ProtectionSetupItem> get pendingSetupItems =>
       protectionSetupItems.where((i) => !i.done).toList(growable: false);
 
+  /// Item `recovery` do checklist (PIN / biometria para reabrir a ostra).
+  ProtectionSetupItem? get recoverySetupItem {
+    for (final item in protectionSetupItems) {
+      if (item.id == 'recovery') return item;
+    }
+    return null;
+  }
+
+  /// Sem recuperação configurada o portal não deve fechar a ostra remotamente.
+  bool get hasRecoveryConfigured => recoverySetupItem?.done == true;
+
   /// Online se houve sync recente (recalculado a cada build/tick).
   bool get isOnline {
     if (isReleased) return false;

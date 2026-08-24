@@ -1,8 +1,12 @@
 import 'package:flutter_test/flutter_test.dart';
 import 'package:guardian_portal/app/constants.dart';
 import 'package:guardian_portal/features/dashboard/domain/device_status.dart';
+import 'package:guardian_portal/features/dashboard/domain/protection_setup_item.dart';
 
-DeviceStatus _status({DateTime? lastSeen}) {
+DeviceStatus _status({
+  DateTime? lastSeen,
+  List<ProtectionSetupItem> protectionSetupItems = const [],
+}) {
   return DeviceStatus(
     deviceId: 'dev-1',
     modelLabel: 'Samsung',
@@ -19,7 +23,7 @@ DeviceStatus _status({DateTime? lastSeen}) {
     lastEventSummary: null,
     location: null,
     fingerprint: 'fp',
-    protectionSetupItems: const [],
+    protectionSetupItems: protectionSetupItems,
     protectedLayers: const [],
   );
 }
@@ -102,5 +106,35 @@ void main() {
     );
     expect(status.isVerified, isTrue);
     expect(status.isQrVerified, isTrue);
+  });
+
+  test('hasRecoveryConfigured exige item recovery done', () {
+    expect(_status().hasRecoveryConfigured, isFalse);
+
+    expect(
+      _status(
+        protectionSetupItems: const [
+          ProtectionSetupItem(
+            id: 'recovery',
+            label: 'Recuperação por biometria/PIN',
+            done: false,
+          ),
+        ],
+      ).hasRecoveryConfigured,
+      isFalse,
+    );
+
+    expect(
+      _status(
+        protectionSetupItems: const [
+          ProtectionSetupItem(
+            id: 'recovery',
+            label: 'Recuperação por biometria/PIN',
+            done: true,
+          ),
+        ],
+      ).hasRecoveryConfigured,
+      isTrue,
+    );
   });
 }
