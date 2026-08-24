@@ -1,7 +1,7 @@
 name: guardian_portal
 description: Portal web Guardian Sense — Centro de Segurança (Flutter Web).
 publish_to: 'none'
-version: 1.0.16+17 # portal — a cada deploy: +patch e +build; alinhar AppConstants
+version: 1.0.17+18 # portal — a cada deploy: +patch e +build; alinhar AppConstants
 # Build hosting: scripts/deploy_hosting.ps1 (usa --pwa-strategy=none)
 
 environment:
