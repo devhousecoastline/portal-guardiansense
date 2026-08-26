@@ -5,9 +5,7 @@ import 'package:url_launcher/url_launcher.dart';
 
 /// CTA da ficha do app no Google Play, na tela de login.
 class LoginPlayStoreButton extends StatelessWidget {
-  const LoginPlayStoreButton({super.key, this.fullWidth = false});
-
-  final bool fullWidth;
+  const LoginPlayStoreButton({super.key});
 
   static final _uri = Uri.parse(AppConstants.playStoreUrl);
 
@@ -23,7 +21,6 @@ class LoginPlayStoreButton extends StatelessWidget {
         label: AppConstants.loginStoreCta,
         icon: Icons.android,
         iconLeading: true,
-        fullWidth: fullWidth,
         onPressed: open,
       ),
     );

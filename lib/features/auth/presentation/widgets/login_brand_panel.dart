@@ -88,7 +88,7 @@ class LoginBrandPanel extends StatelessWidget {
               const Spacer(),
             Align(
               alignment: centered ? Alignment.center : Alignment.centerLeft,
-              child: LoginPlayStoreButton(fullWidth: centered),
+              child: const LoginPlayStoreButton(),
             ),
           ],
         ),
