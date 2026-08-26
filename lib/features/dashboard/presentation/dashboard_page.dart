@@ -54,18 +54,11 @@ class _DashboardPageState extends State<DashboardPage> {
             return GuardianScaffold(
               title: 'Proteção',
               subtitleTrailing: device != null
-                  ? Wrap(
-                      spacing: 8,
-                      runSpacing: 6,
-                      alignment: WrapAlignment.end,
-                      children: [
-                        DeviceOnlineChip(
-                          isOnline: device.status.isOnline,
-                          lastSeen: device.status.lastSeen,
-                        ),
-                        if (device.status.isVerified)
-                          const DeviceVerifiedChip(compact: true),
-                      ],
+                  ? _HeaderStatusChips(
+                      isOnline: device.status.isOnline,
+                      lastSeen: device.status.lastSeen,
+                      verified: device.status.isVerified,
+                      stackOnMobile: layout.isMobile,
                     )
                   : null,
               onRefresh: _refreshController.refresh,
@@ -114,6 +107,51 @@ class _DashboardPageState extends State<DashboardPage> {
           },
         );
       },
+    );
+  }
+}
+
+class _HeaderStatusChips extends StatelessWidget {
+  const _HeaderStatusChips({
+    required this.isOnline,
+    required this.lastSeen,
+    required this.verified,
+    required this.stackOnMobile,
+  });
+
+  final bool isOnline;
+  final DateTime? lastSeen;
+  final bool verified;
+  final bool stackOnMobile;
+
+  @override
+  Widget build(BuildContext context) {
+    final online = DeviceOnlineChip(isOnline: isOnline, lastSeen: lastSeen);
+    final verifiedChip =
+        verified ? const DeviceVerifiedChip(compact: true) : null;
+
+    if (stackOnMobile) {
+      return Column(
+        mainAxisSize: MainAxisSize.min,
+        crossAxisAlignment: CrossAxisAlignment.center,
+        children: [
+          online,
+          if (verifiedChip != null) ...[
+            const SizedBox(height: 6),
+            verifiedChip,
+          ],
+        ],
+      );
+    }
+
+    return Wrap(
+      spacing: 8,
+      runSpacing: 6,
+      alignment: WrapAlignment.end,
+      children: [
+        online,
+        if (verifiedChip != null) verifiedChip,
+      ],
     );
   }
 }
