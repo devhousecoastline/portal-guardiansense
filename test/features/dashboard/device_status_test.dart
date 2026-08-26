@@ -108,6 +108,41 @@ void main() {
     expect(status.isQrVerified, isTrue);
   });
 
+  test('appVersionLabel junta versão e build', () {
+    expect(_status().appVersionLabel, '1.0');
+    expect(
+      DeviceStatus(
+        deviceId: 'dev-1',
+        modelLabel: 'Samsung',
+        platform: 'android',
+        appVersion: '1.0.0',
+        appBuild: '2',
+        lastSeen: DateTime.now(),
+        storedProtectionIndex: 100,
+        runtimeActive: true,
+        oysterClosed: false,
+        batteryLevel: null,
+        lastAlertAt: null,
+        lastAlertSummary: null,
+        lastEventAt: null,
+        lastEventSummary: null,
+        location: null,
+        fingerprint: 'fp',
+        protectionSetupItems: const [],
+        protectedLayers: const [],
+      ).appVersionLabel,
+      '1.0.0+2',
+    );
+    expect(
+      DeviceStatus.fromFirestore('dev-1', {
+        'appVersion': '1.0.0',
+        'appBuild': '2',
+        'lastSeen': DateTime.now(),
+      }).appVersionLabel,
+      '1.0.0+2',
+    );
+  });
+
   test('hasRecoveryConfigured exige item recovery done', () {
     expect(_status().hasRecoveryConfigured, isFalse);
 

@@ -26,9 +26,10 @@ class DeviceTile extends StatelessWidget {
     final syncLabel = released
         ? _releasedLabel(status.releasedAt)
         : _syncLabel(status.lastSeen);
-    final version = status.appVersion.trim().isEmpty
+    final versionLabel = status.appVersionLabel;
+    final version = versionLabel.isEmpty || versionLabel == '—'
         ? null
-        : 'v${status.appVersion}';
+        : 'v$versionLabel';
     final narrow = MediaQuery.sizeOf(context).width < 560;
     final presenceLabel = released
         ? 'Anterior'

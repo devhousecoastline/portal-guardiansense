@@ -138,7 +138,7 @@ class _DeviceInfoCard extends StatelessWidget {
         : Icons.smartphone_outlined;
     final deviceValue = status.hasSetupChecklist
         ? '${status.protectionIndex}% · índice'
-        : '$_platformLabel · Guardian Sense App v${status.appVersion}';
+        : '$_platformLabel · Guardian Sense App v${status.appVersionLabel}';
     final deviceAccent = status.hasSetupChecklist
         ? _indexColor(status.protectionIndex)
         : AppColors.primary;
@@ -185,7 +185,7 @@ class _DeviceInfoCard extends StatelessWidget {
           ),
           const SizedBox(height: 6),
           Text(
-            '$_platformLabel · Guardian Sense App v${status.appVersion}',
+            '$_platformLabel · Guardian Sense App v${status.appVersionLabel}',
             style: DashboardTypography.cardSubtitle(context),
           ),
           const SizedBox(height: 10),

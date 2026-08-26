@@ -16,6 +16,7 @@ class DeviceStatus {
     required this.modelLabel,
     required this.platform,
     required this.appVersion,
+    this.appBuild = '',
     required this.lastSeen,
     required this.storedProtectionIndex,
     required this.runtimeActive,
@@ -40,6 +41,9 @@ class DeviceStatus {
   final String modelLabel;
   final String platform;
   final String appVersion;
+
+  /// Build number do app (`PackageInfo.buildNumber`), ex. `"2"`.
+  final String appBuild;
   final DateTime? lastSeen;
   final int storedProtectionIndex;
   final bool? runtimeActive;
@@ -111,6 +115,15 @@ class DeviceStatus {
         ProtectionLevel.unknown => 'Aguardando sync',
       };
 
+  /// Versão do app para UI: `1.0.0` ou `1.0.0+2` quando há build.
+  String get appVersionLabel {
+    final version = appVersion.trim();
+    if (version.isEmpty || version == '—') return version;
+    final build = appBuild.trim();
+    if (build.isEmpty) return version;
+    return '$version+$build';
+  }
+
   static DeviceStatus fromFirestore(String id, Map<String, dynamic> data) {
     final lastSeen = _timestamp(data['lastSeen']) ?? _timestamp(data['lastSync']);
     final runtimeActive = data['runtimeActive'] as bool?;
@@ -125,6 +138,7 @@ class DeviceStatus {
           'Dispositivo',
       platform: data['platform'] as String? ?? '—',
       appVersion: data['appVersion'] as String? ?? '—',
+      appBuild: _stringField(data['appBuild']),
       lastSeen: lastSeen,
       storedProtectionIndex: protectionIndex,
       runtimeActive: runtimeActive,
@@ -190,5 +204,11 @@ class DeviceStatus {
     if (value is Timestamp) return value.toDate();
     if (value is DateTime) return value;
     return null;
+  }
+
+  static String _stringField(Object? value) {
+    if (value == null) return '';
+    if (value is String) return value.trim();
+    return value.toString().trim();
   }
 }
