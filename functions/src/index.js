@@ -25,6 +25,37 @@ const mpWebhookSecret = defineString("MERCADOPAGO_WEBHOOK_SECRET", {
 /** R$ 118,80 — alinhado a docs/subscription_trial_7d.md */
 const ANNUAL_VALUE_BRL = 118.8;
 
+function requireMpAccessToken() {
+  const token = String(mpAccessToken.value() || "").trim();
+  if (!token) {
+    throw new HttpsError(
+      "failed-precondition",
+      "Access Token do Mercado Pago não configurado. "
+        + "Configure MERCADOPAGO_ACCESS_TOKEN no Firebase.",
+    );
+  }
+  return token;
+}
+
+function mapMercadoPagoError(e) {
+  if (e instanceof HttpsError) return e;
+  const status = e.status;
+  const code = String(e.mercadopago?.code || "").toLowerCase();
+  const msg = String(e.message || "").toLowerCase();
+  if (
+    status === 401 ||
+    code === "unauthorized" ||
+    msg.includes("authorization value not present")
+  ) {
+    throw new HttpsError(
+      "failed-precondition",
+      "Access Token do Mercado Pago inválido ou vazio. "
+        + "Cole de novo o token de produção (APP_USR-...) no secret.",
+    );
+  }
+  throw new HttpsError("internal", e.message || "Não foi possível gerar o PIX.");
+}
+
 /**
  * Callable autenticada: gera cobrança PIX anual + QR / copia-cola (Mercado Pago).
  */
@@ -58,12 +89,13 @@ exports.createPixAnnualPayment = onCall(
 
     try {
       const payment = await mp.createPixPayment({
-        accessToken: mpAccessToken.value(),
+        accessToken: requireMpAccessToken(),
         uid,
         email,
         name,
         amount: ANNUAL_VALUE_BRL,
         description: "Guardian Sense — assinatura anual (12 meses)",
+        notificationUrl: mp.pixWebhookPublicUrl(),
       });
 
       const pix = mp.extractPixFromPayment(payment);
@@ -89,14 +121,50 @@ exports.createPixAnnualPayment = onCall(
       };
     } catch (e) {
       console.error("createPixAnnualPayment", e);
-      if (e instanceof HttpsError) throw e;
-      throw new HttpsError(
-        "internal",
-        e.message || "Não foi possível gerar o PIX.",
-      );
+      mapMercadoPagoError(e);
     }
   },
 );
+
+/**
+ * Confirma o pagamento na API do MP e aplica entitlement.
+ * Fonte da verdade: GET /v1/payments/{id} com o Access Token (não o body).
+ */
+async function applyFetchedPayment(fresh) {
+  const uid = String(
+    fresh.external_reference || fresh.metadata?.uid || "",
+  ).trim();
+  const status = String(fresh.status || "").toLowerCase();
+  const method = String(fresh.payment_method_id || "").toLowerCase();
+
+  if (!uid) {
+    return { uid: null, status, applied: false };
+  }
+
+  if (method && method !== "pix") {
+    console.warn("Pagamento ignorado: método não é PIX", fresh.id, method);
+    return { uid, status, applied: false };
+  }
+
+  if (status === "approved") {
+    await sub.activateAnnualFromPix({
+      uid,
+      pixPaymentId: String(fresh.id),
+      amount: fresh.transaction_amount,
+    });
+    return { uid, status, applied: true };
+  }
+
+  if (["refunded", "charged_back", "cancelled"].includes(status)) {
+    await sub.lapseFromPixRefund({
+      uid,
+      pixPaymentId: String(fresh.id),
+    });
+    return { uid, status, applied: true };
+  }
+
+  return { uid, status, applied: false };
+}
 
 /**
  * Webhook Mercado Pago — só o backend grava status=active (store: pix).
@@ -104,9 +172,10 @@ exports.createPixAnnualPayment = onCall(
  * Painel Developers → sua aplicação → Webhooks:
  * - URL: …/mercadopagoPixWebhook
  * - Eventos: Pagamentos (payment)
- * - Secret → MERCADOPAGO_WEBHOOK_SECRET
+ * - Secret → MERCADOPAGO_WEBHOOK_SECRET (assinatura secreta, NÃO o Access Token)
  *
  * Sempre confirma com GET /v1/payments/{id} (não confia só no body).
+ * HMAC inválido não bloqueia: o GET autenticado é a prova. 401 impedia a ativação.
  */
 exports.mercadopagoPixWebhook = onRequest(
   {
@@ -131,63 +200,102 @@ exports.mercadopagoPixWebhook = onRequest(
       return;
     }
 
-    const secret = mpWebhookSecret.value();
+    const secret = String(mpWebhookSecret.value() || "").trim();
     const xSignature = req.get("x-signature") || "";
     const xRequestId = req.get("x-request-id") || "";
-    const dataId = String(req.body?.data?.id || paymentId).toLowerCase();
+    const dataId =
+      mp.extractSignatureDataId(req) || String(paymentId).toLowerCase();
 
-    if (
-      secret &&
-      !mp.verifyWebhookSignature({
+    if (mp.looksLikeAccessToken(secret)) {
+      console.warn(
+        "MERCADOPAGO_WEBHOOK_SECRET parece Access Token. Use a assinatura secreta do painel Webhooks. HMAC ignorado.",
+      );
+    } else if (secret) {
+      const signed = mp.verifyWebhookSignature({
         secret,
         xSignature,
         xRequestId,
         dataId,
-      })
-    ) {
-      console.warn("Webhook MP assinatura inválida", paymentId);
-      res.status(401).send("Unauthorized");
-      return;
+      });
+      const signedNoReqId =
+        signed ||
+        mp.verifyWebhookSignature({
+          secret,
+          xSignature,
+          xRequestId: "",
+          dataId,
+        });
+      if (!signedNoReqId) {
+        console.warn(
+          "Webhook MP HMAC não conferiu; confirmando via GET /v1/payments",
+          paymentId,
+        );
+      }
     }
 
     try {
       const fresh = await mp.getPayment({
-        accessToken: mpAccessToken.value(),
+        accessToken: requireMpAccessToken(),
         paymentId,
       });
 
-      const uid =
-        fresh.external_reference ||
-        fresh.metadata?.uid ||
-        null;
-
-      if (!uid) {
+      const result = await applyFetchedPayment(fresh);
+      if (!result.uid) {
         console.warn("Webhook MP sem external_reference", paymentId);
-        res.status(200).send("OK");
-        return;
-      }
-
-      const status = String(fresh.status || "").toLowerCase();
-
-      if (status === "approved") {
-        await sub.activateAnnualFromPix({
-          uid,
-          pixPaymentId: String(fresh.id),
-          amount: fresh.transaction_amount,
-        });
-      } else if (
-        ["refunded", "charged_back", "cancelled"].includes(status)
-      ) {
-        await sub.lapseFromPixRefund({
-          uid,
-          pixPaymentId: String(fresh.id),
-        });
       }
 
       res.status(200).send("OK");
     } catch (e) {
       console.error("mercadopagoPixWebhook", e);
       res.status(500).send("Error");
+    }
+  },
+);
+
+/**
+ * Callable autenticada: o portal consulta o PIX (botão "Já paguei" / poll).
+ * Mesma regra do webhook — só ativa se o MP confirmar approved.
+ */
+exports.confirmPixPayment = onCall(
+  {
+    secrets: [mpAccessToken],
+    invoker: "public",
+  },
+  async (request) => {
+    if (!request.auth?.uid) {
+      throw new HttpsError("unauthenticated", "Faça login para confirmar.");
+    }
+
+    const paymentId = String(request.data?.paymentId || "").trim();
+    if (!paymentId) {
+      throw new HttpsError("invalid-argument", "Informe o pagamento PIX.");
+    }
+
+    try {
+      const fresh = await mp.getPayment({
+        accessToken: requireMpAccessToken(),
+        paymentId,
+      });
+
+      const uid = String(
+        fresh.external_reference || fresh.metadata?.uid || "",
+      ).trim();
+      if (!uid || uid !== request.auth.uid) {
+        throw new HttpsError(
+          "permission-denied",
+          "Este PIX não pertence à sua conta.",
+        );
+      }
+
+      const result = await applyFetchedPayment(fresh);
+      return {
+        status: result.status || String(fresh.status || "unknown"),
+        active: result.status === "approved",
+      };
+    } catch (e) {
+      console.error("confirmPixPayment", e);
+      if (e instanceof HttpsError) throw e;
+      mapMercadoPagoError(e);
     }
   },
 );

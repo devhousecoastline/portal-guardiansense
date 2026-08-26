@@ -94,6 +94,23 @@ async function createPixPayment({
   });
 }
 
+/** URL pública da Function de webhook (Cloud Functions v2). */
+function pixWebhookPublicUrl() {
+  const project =
+    process.env.GCLOUD_PROJECT ||
+    process.env.GCP_PROJECT ||
+    "guardian-sense-dbdfa";
+  return `https://southamerica-east1-${project}.cloudfunctions.net/mercadopagoPixWebhook`;
+}
+
+/**
+ * Access Token (TEST-/APP_USR-) não é a assinatura secreta do webhook.
+ * Se o param estiver com token, o HMAC nunca bate.
+ */
+function looksLikeAccessToken(value) {
+  return /^(TEST-|APP_USR-)/i.test(String(value || "").trim());
+}
+
 async function getPayment({ accessToken, paymentId }) {
   return mpFetch({
     accessToken,
@@ -115,6 +132,8 @@ function extractPixFromPayment(payment) {
 
 /**
  * Valida assinatura de webhook (x-signature) quando o secret está configurado.
+ * Manifesto: id e request-id só entram se existirem (docs MP).
+ * data.id do HMAC vem do query param, em minúsculas.
  * https://www.mercadopago.com.br/developers/pt/docs/your-integrations/notifications/webhooks
  */
 function verifyWebhookSignature({
@@ -124,32 +143,51 @@ function verifyWebhookSignature({
   dataId,
 }) {
   if (!secret) return true;
-  if (!xSignature || !dataId) return false;
+  if (looksLikeAccessToken(secret)) return true;
+  if (!xSignature) return false;
 
-  const parts = Object.fromEntries(
-    String(xSignature)
-      .split(",")
-      .map((p) => p.trim().split("=", 2))
-      .filter((kv) => kv.length === 2),
-  );
+  const parts = {};
+  for (const piece of String(xSignature).split(",")) {
+    const trimmed = piece.trim();
+    const eq = trimmed.indexOf("=");
+    if (eq <= 0) continue;
+    parts[trimmed.slice(0, eq)] = trimmed.slice(eq + 1);
+  }
   const ts = parts.ts;
   const hash = parts.v1;
   if (!ts || !hash) return false;
 
-  const manifest = `id:${dataId};request-id:${xRequestId || ""};ts:${ts};`;
+  const id = dataId ? String(dataId).toLowerCase() : "";
+  const requestId = xRequestId ? String(xRequestId) : "";
+  const chunks = [];
+  if (id) chunks.push(`id:${id}`);
+  if (requestId) chunks.push(`request-id:${requestId}`);
+  chunks.push(`ts:${ts}`);
+  const manifest = `${chunks.join(";")};`;
+
   const expected = crypto
     .createHmac("sha256", secret)
     .update(manifest)
     .digest("hex");
+  const incoming = String(hash).toLowerCase();
+  const expectedNorm = expected.toLowerCase();
 
   try {
-    return crypto.timingSafeEqual(
-      Buffer.from(expected, "hex"),
-      Buffer.from(hash, "hex"),
-    );
+    const a = Buffer.from(expectedNorm, "utf8");
+    const b = Buffer.from(incoming, "utf8");
+    if (a.length !== b.length) return false;
+    return crypto.timingSafeEqual(a, b);
   } catch (_) {
-    return expected === hash;
+    return expectedNorm === incoming;
   }
+}
+
+/** data.id do query (assinatura) — fallback para o body. */
+function extractSignatureDataId(req) {
+  const fromQuery = req.query?.["data.id"] ?? req.query?.data?.id;
+  const fromBody = req.body?.data?.id;
+  const raw = fromQuery ?? fromBody;
+  return raw == null ? "" : String(raw).toLowerCase();
 }
 
 /**
@@ -159,8 +197,11 @@ function extractPaymentIdFromRequest(req) {
   const fromData = req.body?.data?.id;
   if (fromData != null) return String(fromData);
 
+  const fromQueryData = req.query?.["data.id"];
+  if (fromQueryData != null) return String(fromQueryData);
+
   const topic = req.query?.topic || req.query?.type || req.body?.type;
-  const id = req.query?.id || req.query?.["data.id"];
+  const id = req.query?.id;
   if (
     id != null &&
     (topic === "payment" || req.body?.action?.startsWith?.("payment."))
@@ -181,4 +222,7 @@ module.exports = {
   extractPixFromPayment,
   verifyWebhookSignature,
   extractPaymentIdFromRequest,
+  extractSignatureDataId,
+  looksLikeAccessToken,
+  pixWebhookPublicUrl,
 };

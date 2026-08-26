@@ -14,6 +14,9 @@ class DevicePlanBanner extends StatelessWidget {
   Widget build(BuildContext context) {
     if (!snapshot.isOverLimit) return const SizedBox.shrink();
 
+    // Anual/trial ativo: 1 aparelho por conta — upgrade não se aplica.
+    if (snapshot.plan.isEntitled) return const SizedBox.shrink();
+
     final hidden = snapshot.hiddenCount;
     final limit = snapshot.plan.deviceLimit;
 

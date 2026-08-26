@@ -34,6 +34,21 @@ final class PixCharge {
   }
 }
 
+/// Resposta da callable `confirmPixPayment`.
+final class PixConfirmation {
+  const PixConfirmation({required this.status, required this.active});
+
+  final String status;
+  final bool active;
+
+  factory PixConfirmation.fromMap(Map<String, dynamic> map) {
+    return PixConfirmation(
+      status: (map['status'] as String?) ?? 'unknown',
+      active: map['active'] == true,
+    );
+  }
+}
+
 class PixBillingService {
   PixBillingService({FirebaseFunctions? functions})
       : _functions = functions ??
@@ -49,5 +64,17 @@ class PixBillingService {
       throw StateError('Resposta inválida do backend.');
     }
     return PixCharge.fromMap(Map<String, dynamic>.from(raw));
+  }
+
+  Future<PixConfirmation> confirmAnnualPixPayment(String paymentId) async {
+    final callable = _functions.httpsCallable('confirmPixPayment');
+    final result = await callable.call(<String, dynamic>{
+      'paymentId': paymentId,
+    });
+    final raw = result.data;
+    if (raw is! Map) {
+      throw StateError('Resposta inválida do backend.');
+    }
+    return PixConfirmation.fromMap(Map<String, dynamic>.from(raw));
   }
 }

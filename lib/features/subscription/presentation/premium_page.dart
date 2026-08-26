@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'dart:convert';
 
 import 'package:cloud_functions/cloud_functions.dart';
@@ -29,15 +30,37 @@ class _PremiumPageState extends State<PremiumPage> {
 
   PixCharge? _charge;
   bool _creating = false;
+  bool _confirming = false;
   String? _error;
   bool _ensuredTrial = false;
+  bool _prefetchStarted = false;
+  bool _prefetchComplete = false;
+  SubscriptionEntitlement? _prefetchedEntitlement;
+  Timer? _poll;
+  int _pollCount = 0;
+  bool _confirmInFlight = false;
+
+  static const _pollInterval = Duration(seconds: 10);
+  static const _maxPolls = 36;
 
   @override
   void didChangeDependencies() {
     super.didChangeDependencies();
-    if (_ensuredTrial) return;
     final uid = AuthScope.of(context).user?.uid;
     if (uid == null) return;
+
+    if (!_prefetchStarted) {
+      _prefetchStarted = true;
+      unawaited(_repo.getEntitlement(uid).then((entitlement) {
+        if (!mounted) return;
+        setState(() {
+          _prefetchedEntitlement = entitlement;
+          _prefetchComplete = true;
+        });
+      }));
+    }
+
+    if (_ensuredTrial) return;
     _ensuredTrial = true;
     _repo.ensureTrial(uid).catchError((Object e) {
       debugPrint('ensureTrial: $e');
@@ -45,7 +68,32 @@ class _PremiumPageState extends State<PremiumPage> {
     });
   }
 
+  @override
+  void dispose() {
+    _stopPoll();
+    super.dispose();
+  }
+
+  void _stopPoll() {
+    _poll?.cancel();
+    _poll = null;
+  }
+
+  void _startPoll() {
+    _stopPoll();
+    _pollCount = 0;
+    _poll = Timer.periodic(_pollInterval, (_) {
+      _pollCount += 1;
+      if (_pollCount > _maxPolls) {
+        _stopPoll();
+        return;
+      }
+      unawaited(_confirmPix(silent: true));
+    });
+  }
+
   Future<void> _generatePix() async {
+    _stopPoll();
     setState(() {
       _creating = true;
       _error = null;
@@ -57,12 +105,15 @@ class _PremiumPageState extends State<PremiumPage> {
         _charge = charge;
         _creating = false;
       });
+      _startPoll();
+      unawaited(_confirmPix(silent: true));
     } on FirebaseFunctionsException catch (e) {
       if (!mounted) return;
       setState(() {
         _creating = false;
         _error = _pixErrorMessage(e);
       });
+      if (_charge != null) _startPoll();
     } catch (e) {
       if (!mounted) return;
       setState(() {
@@ -70,14 +121,28 @@ class _PremiumPageState extends State<PremiumPage> {
         _error =
             'Não foi possível gerar o PIX. Tente de novo em instantes.';
       });
+      if (_charge != null) _startPoll();
     }
   }
 
   static String _pixErrorMessage(FirebaseFunctionsException e) {
     final raw = (e.message ?? e.code).trim();
-    final lower = raw.toLowerCase();
-    if (lower == 'internal' ||
-        lower == 'internal_error' ||
+    final lower = '${e.code} $raw'.toLowerCase();
+    if (_isMissingCloudFunction(e)) {
+      return 'A confirmação do PIX ainda não está na nuvem. '
+          'Publique só as Functions para o “Já paguei” funcionar.';
+    }
+    if (e.code == 'failed-precondition' ||
+        lower.contains('access token') ||
+        lower.contains('authorization value not present') ||
+        lower.contains('unauthorized')) {
+      return raw.isNotEmpty
+          ? raw
+          : 'Access Token do Mercado Pago não configurado. '
+              'Configure MERCADOPAGO_ACCESS_TOKEN no Firebase.';
+    }
+    if (e.code == 'internal' ||
+        lower.contains('internal_error') ||
         lower.contains('internal_server_error') ||
         lower.contains('http is unavailable')) {
       return 'O Mercado Pago está instável agora. Tente gerar o PIX de novo '
@@ -87,6 +152,113 @@ class _PremiumPageState extends State<PremiumPage> {
       return 'Não foi possível gerar o PIX. Tente de novo.';
     }
     return raw;
+  }
+
+  static String _confirmErrorMessage(FirebaseFunctionsException e) {
+    if (_isMissingCloudFunction(e) || e.code == 'internal') {
+      return 'A confirmação do PIX ainda não está na nuvem. '
+          'Publique só as Functions para o “Já paguei” funcionar.';
+    }
+    final raw = (e.message ?? e.code).trim();
+    if (raw.isEmpty) {
+      return 'Não foi possível confirmar o PIX. Tente de novo em instantes.';
+    }
+    return raw;
+  }
+
+  static bool _isMissingCloudFunction(FirebaseFunctionsException e) {
+    final lower = '${e.code} ${e.message ?? ''}'.toLowerCase();
+    return e.code == 'not-found' ||
+        e.code == 'unimplemented' ||
+        lower.contains('not-found') ||
+        lower.contains('not found');
+  }
+
+  Future<void> _confirmPix({required bool silent}) async {
+    final id = _charge?.paymentId;
+    if (id == null || id.isEmpty) return;
+    if (_confirmInFlight) {
+      if (silent) return;
+      for (var i = 0; i < 50 && _confirmInFlight; i++) {
+        await Future<void>.delayed(const Duration(milliseconds: 100));
+      }
+      if (!mounted || _confirmInFlight) return;
+    }
+    _confirmInFlight = true;
+
+    if (!silent) {
+      setState(() {
+        _confirming = true;
+        _error = null;
+      });
+    }
+
+    try {
+      final result = await _pix.confirmAnnualPixPayment(id);
+      if (!mounted) return;
+      if (result.active) {
+        _stopPoll();
+        setState(() => _confirming = false);
+        if (!silent) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(
+              content: Text('Assinatura ativada.'),
+              behavior: SnackBarBehavior.floating,
+            ),
+          );
+        }
+        return;
+      }
+      if (!silent) {
+        setState(() {
+          _confirming = false;
+          _error = _pendingPixMessage(result.status);
+        });
+      }
+    } on FirebaseFunctionsException catch (e) {
+      if (!mounted) return;
+      debugPrint('confirmPix: ${e.code} ${e.message}');
+      if (_isMissingCloudFunction(e) || e.code == 'internal') {
+        _stopPoll();
+        setState(() {
+          _confirming = false;
+          _error = _confirmErrorMessage(e);
+        });
+        return;
+      }
+      if (silent) return;
+      setState(() {
+        _confirming = false;
+        _error = _confirmErrorMessage(e);
+      });
+    } catch (e) {
+      if (!mounted) return;
+      if (silent) {
+        debugPrint('confirmPix silent: $e');
+        return;
+      }
+      setState(() {
+        _confirming = false;
+        _error =
+            'Não foi possível confirmar o PIX. Tente de novo em instantes.';
+      });
+    } finally {
+      _confirmInFlight = false;
+    }
+  }
+
+  static String _pendingPixMessage(String status) {
+    switch (status) {
+      case 'rejected':
+      case 'cancelled':
+        return 'Este PIX não foi concluído. Gere um novo QR.';
+      case 'refunded':
+      case 'charged_back':
+        return 'Este pagamento foi estornado.';
+      default:
+        return 'Ainda não identificamos o pagamento. Se já pagou, aguarde '
+            'um instante e toque de novo.';
+    }
   }
 
   Future<void> _copyPix() async {
@@ -128,10 +300,22 @@ class _PremiumPageState extends State<PremiumPage> {
         return StreamBuilder<SubscriptionEntitlement?>(
           stream: _repo.watchEntitlement(user.uid),
           builder: (context, snap) {
-            final entitlement = snap.data;
+            final entitlement =
+                snap.hasData ? snap.data : _prefetchedEntitlement;
+            final waitingForEntitlement = entitlement == null &&
+                (!_prefetchComplete || !snap.hasData);
+            if (waitingForEntitlement) {
+              return const _PremiumLoadingScaffold();
+            }
+
             final now = DateTime.now();
             final effective = entitlement?.effectiveStatusAt(now);
             final active = effective == SubscriptionStatus.active;
+            if (active && _poll != null) {
+              WidgetsBinding.instance.addPostFrameCallback((_) {
+                if (mounted) _stopPoll();
+              });
+            }
 
             return GuardianScaffold(
               title: 'Guardian Premium',
@@ -144,14 +328,43 @@ class _PremiumPageState extends State<PremiumPage> {
                       entitlement: entitlement,
                       charge: _charge,
                       creating: _creating,
+                      confirming: _confirming,
                       error: _error,
                       onGenerate: _generatePix,
                       onCopy: _copyPix,
+                      onConfirm: () => unawaited(_confirmPix(silent: false)),
                     ),
             );
           },
         );
       },
+    );
+  }
+}
+
+class _PremiumLoadingScaffold extends StatelessWidget {
+  const _PremiumLoadingScaffold();
+
+  @override
+  Widget build(BuildContext context) {
+    return GuardianScaffold(
+      title: 'Guardian Premium',
+      subtitle: 'Carregando…',
+      child: SectionCard(
+        child: Center(
+          child: Padding(
+            padding: const EdgeInsets.symmetric(vertical: 40),
+            child: SizedBox(
+              width: 28,
+              height: 28,
+              child: CircularProgressIndicator(
+                strokeWidth: 2.5,
+                color: AppColors.primary.withValues(alpha: 0.85),
+              ),
+            ),
+          ),
+        ),
+      ),
     );
   }
 }
@@ -163,7 +376,7 @@ class _ActiveView extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final theme = Theme.of(context);
+    final started = entitlement.startedAt ?? entitlement.trialStartedAt;
     final expires = entitlement.expiresAt;
     final df = DateFormat('dd/MM/yyyy');
     final store = entitlement.store == 'pix'
@@ -171,6 +384,8 @@ class _ActiveView extends StatelessWidget {
         : entitlement.store == 'play'
             ? 'Google Play'
             : entitlement.store ?? '—';
+
+    final startedLabel = df.format(started.toLocal());
 
     return Column(
       crossAxisAlignment: CrossAxisAlignment.stretch,
@@ -189,16 +404,14 @@ class _ActiveView extends StatelessWidget {
                 ),
               ),
               const SizedBox(height: 12),
-              Text(
-                expires != null
-                    ? 'Válida até ${df.format(expires.toLocal())}.'
-                    : 'Assinatura anual ativa.',
-                style: theme.textTheme.bodyMedium,
-              ),
-              const SizedBox(height: 12),
               LayoutBuilder(
                 builder: (context, constraints) {
-                  final tiles = [
+                  final tiles = <Widget>[
+                    _InfoTile(
+                      icon: Icons.play_circle_outline,
+                      label: 'Início',
+                      value: startedLabel,
+                    ),
                     _InfoTile(
                       icon: Icons.calendar_today_outlined,
                       label: 'Válida até',
@@ -216,17 +429,19 @@ class _ActiveView extends StatelessWidget {
                     return Column(
                       crossAxisAlignment: CrossAxisAlignment.stretch,
                       children: [
-                        tiles[0],
-                        const SizedBox(height: 8),
-                        tiles[1],
+                        for (var i = 0; i < tiles.length; i++) ...[
+                          if (i > 0) const SizedBox(height: 8),
+                          tiles[i],
+                        ],
                       ],
                     );
                   }
                   return Row(
                     children: [
-                      Expanded(child: tiles[0]),
-                      const SizedBox(width: 8),
-                      Expanded(child: tiles[1]),
+                      for (var i = 0; i < tiles.length; i++) ...[
+                        if (i > 0) const SizedBox(width: 8),
+                        Expanded(child: tiles[i]),
+                      ],
                     ],
                   );
                 },
@@ -250,17 +465,21 @@ class _CheckoutView extends StatelessWidget {
     required this.entitlement,
     required this.charge,
     required this.creating,
+    required this.confirming,
     required this.error,
     required this.onGenerate,
     required this.onCopy,
+    required this.onConfirm,
   });
 
   final SubscriptionEntitlement? entitlement;
   final PixCharge? charge;
   final bool creating;
+  final bool confirming;
   final String? error;
   final VoidCallback onGenerate;
   final VoidCallback onCopy;
+  final VoidCallback onConfirm;
 
   @override
   Widget build(BuildContext context) {
@@ -423,8 +642,10 @@ class _CheckoutView extends StatelessWidget {
           _PixPanel(
             charge: charge!,
             creating: creating,
+            confirming: confirming,
             onCopy: onCopy,
             onRegenerate: onGenerate,
+            onConfirm: onConfirm,
           ),
         if (error != null) ...[
           const SizedBox(height: 12),
@@ -452,14 +673,18 @@ class _PixPanel extends StatelessWidget {
   const _PixPanel({
     required this.charge,
     required this.creating,
+    required this.confirming,
     required this.onCopy,
     required this.onRegenerate,
+    required this.onConfirm,
   });
 
   final PixCharge charge;
   final bool creating;
+  final bool confirming;
   final VoidCallback onCopy;
   final VoidCallback onRegenerate;
+  final VoidCallback onConfirm;
 
   @override
   Widget build(BuildContext context) {
@@ -534,6 +759,25 @@ class _PixPanel extends StatelessWidget {
               icon: Icons.copy_rounded,
               iconLeading: true,
               onPressed: onCopy,
+            ),
+          ),
+          const SizedBox(height: 10),
+          Center(
+            child: GuardianPillButton(
+              label: confirming ? 'Verificando…' : 'Já paguei',
+              icon: Icons.check_circle_outline_rounded,
+              iconLeading: true,
+              busy: confirming,
+              onPressed: confirming ? null : onConfirm,
+            ),
+          ),
+          const SizedBox(height: 10),
+          Text(
+            'Aguardando o pagamento. A assinatura ativa sozinha após a '
+            'confirmação.',
+            textAlign: TextAlign.center,
+            style: theme.textTheme.bodySmall?.copyWith(
+              color: AppColors.textMuted,
             ),
           ),
           if (expiresLabel != null) ...[

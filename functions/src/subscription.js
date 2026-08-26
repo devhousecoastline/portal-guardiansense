@@ -42,7 +42,15 @@ async function activateAnnualFromPix({ uid, pixPaymentId, amount }) {
       updatedAt: now,
     };
 
-    tx.set(userRef, { subscription }, { merge: true });
+    tx.set(
+      userRef,
+      {
+        subscription,
+        plan: "premium",
+        deviceLimit: 1,
+      },
+      { merge: true },
+    );
     tx.set(
       payRef,
       {
@@ -81,6 +89,7 @@ async function lapseFromPixRefund({ uid, pixPaymentId }) {
             status: "lapsed",
             updatedAt: now,
           },
+          plan: "free",
         },
         { merge: true },
       );
