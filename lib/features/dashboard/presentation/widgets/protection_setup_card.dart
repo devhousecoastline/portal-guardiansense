@@ -165,6 +165,7 @@ class _SetupTimeline extends StatelessWidget {
         _SetupKind.accessibility => Icons.accessibility_new_rounded,
         _SetupKind.battery => Icons.battery_charging_full_rounded,
         _SetupKind.protectedLayers => Icons.layers_outlined,
+        _SetupKind.location => Icons.gps_fixed,
         _SetupKind.recovery => Icons.fingerprint,
         _SetupKind.unknown => Icons.check_circle_outline,
       };
@@ -176,6 +177,7 @@ class _SetupTimeline extends StatelessWidget {
         _SetupKind.accessibility => const Color(0xFF9B7BFF),
         _SetupKind.battery => const Color(0xFF2BB8A3),
         _SetupKind.protectedLayers => const Color(0xFF35B6D8),
+        _SetupKind.location => const Color(0xFFFF8A3D),
         _SetupKind.recovery => const Color(0xFFE573B5),
         _SetupKind.unknown => AppColors.primary,
       };
@@ -190,6 +192,10 @@ class _SetupTimeline extends StatelessWidget {
         return _SetupKind.battery;
       case 'protected_layers':
         return _SetupKind.protectedLayers;
+      case 'location':
+      case 'gps':
+      case 'localizacao':
+        return _SetupKind.location;
       case 'recovery':
         return _SetupKind.recovery;
     }
@@ -203,6 +209,9 @@ class _SetupTimeline extends StatelessWidget {
     if (l.contains('camada') || l.contains('layer')) {
       return _SetupKind.protectedLayers;
     }
+    if (l.contains('localiza') || l.contains('gps')) {
+      return _SetupKind.location;
+    }
     if (l.contains('biom') || l.contains('pin') || l.contains('recup')) {
       return _SetupKind.recovery;
     }
@@ -215,6 +224,7 @@ enum _SetupKind {
   accessibility,
   battery,
   protectedLayers,
+  location,
   recovery,
   unknown,
 }
