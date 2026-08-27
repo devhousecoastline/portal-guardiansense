@@ -154,7 +154,7 @@ class _HeaderStatusChips extends StatelessWidget {
       alignment: WrapAlignment.end,
       children: [
         online,
-        if (verifiedChip != null) verifiedChip,
+        ?verifiedChip,
       ],
     );
   }
