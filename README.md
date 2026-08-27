@@ -26,26 +26,29 @@ flutter run -d chrome
 
 ## Publicar hosting
 
+A `main` exige **pull request** (sem push direto). O bump de versão entra no PR.
+
 ### Automático (recomendado)
 
-Qualquer **merge/push na `main`** dispara o workflow [Deploy Hosting](.github/workflows/deploy-hosting.yml):
+1. Na feature branch, antes do PR:
+   ```powershell
+   python scripts/bump_portal_version.py
+   ```
+   (atualiza `pubspec.yaml` e `AppConstants`)
+2. Abra o PR → merge na `main`
+3. O workflow [Deploy Hosting](.github/workflows/deploy-hosting.yml) faz build + Firebase Hosting
 
-1. sobe patch + build (`pubspec.yaml` e `AppConstants`);
-2. `flutter build web --release --pwa-strategy=none`;
-3. `firebase deploy --only hosting`;
-4. commit `chore(portal): release vX.Y.Z+N [skip ci]` de volta na `main`.
-
-**Secret obrigatório** no repositório GitHub (`Settings` → `Secrets and variables` → `Actions`):
+**Secret obrigatório** (`Settings` → `Secrets and variables` → `Actions`):
 
 | Secret | Como obter |
 |--------|------------|
-| `FIREBASE_TOKEN` | `npx firebase-tools login:ci` (na máquina com acesso ao projeto) |
+| `FIREBASE_TOKEN` | `npx firebase-tools login:ci` |
 
 Também dá para rodar manualmente em **Actions** → **Deploy Hosting** → **Run workflow**.
 
 ### Manual (local)
 
-O script já faz bump + build + deploy:
+Bump + build + deploy (não usa a proteção da `main`):
 
 ```powershell
 .\scripts\deploy_hosting.ps1
