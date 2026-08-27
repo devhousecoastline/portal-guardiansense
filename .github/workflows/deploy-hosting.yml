@@ -1,0 +1,79 @@
+name: Deploy Hosting
+
+on:
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+concurrency:
+  group: deploy-hosting-main
+  cancel-in-progress: false
+
+permissions:
+  contents: write
+
+jobs:
+  bump-build-deploy:
+    if: github.event_name == 'workflow_dispatch' || !contains(github.event.head_commit.message, '[skip ci]')
+    runs-on: ubuntu-latest
+    timeout-minutes: 45
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          token: ${{ secrets.GITHUB_TOKEN }}
+          fetch-depth: 0
+
+      - name: Bump portal version
+        id: bump
+        run: |
+          python3 scripts/bump_portal_version.py | tee bump.out
+          echo "version=$(grep '^NEW_VERSION=' bump.out | cut -d= -f2)" >> "$GITHUB_OUTPUT"
+          echo "build=$(grep '^NEW_BUILD=' bump.out | cut -d= -f2)" >> "$GITHUB_OUTPUT"
+          echo "full=$(grep '^NEW_FULL=' bump.out | cut -d= -f2)" >> "$GITHUB_OUTPUT"
+
+      - name: Setup Flutter
+        uses: subosito/flutter-action@v2
+        with:
+          flutter-version: "3.47.0"
+          channel: stable
+          cache: true
+
+      - name: Install dependencies
+        run: flutter pub get
+
+      - name: Build web
+        run: flutter build web --release --pwa-strategy=none
+
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: "20"
+
+      - name: Install Firebase CLI
+        run: npm install -g firebase-tools
+
+      - name: Deploy Firebase Hosting
+        env:
+          FIREBASE_TOKEN: ${{ secrets.FIREBASE_TOKEN }}
+        run: |
+          if [ -z "$FIREBASE_TOKEN" ]; then
+            echo "Secret FIREBASE_TOKEN não configurado."
+            echo "Gere com: npx firebase-tools login:ci"
+            echo "E adicione em Settings → Secrets and variables → Actions."
+            exit 1
+          fi
+          firebase deploy --only hosting --project guardian-sense-dbdfa --non-interactive
+
+      - name: Commit version bump
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add pubspec.yaml lib/app/constants.dart
+          if git diff --cached --quiet; then
+            echo "Nada para commitar."
+            exit 0
+          fi
+          git commit -m "chore(portal): release v${{ steps.bump.outputs.full }} [skip ci]"
+          git push origin HEAD:main
