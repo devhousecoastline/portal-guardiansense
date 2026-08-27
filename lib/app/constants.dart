@@ -19,8 +19,8 @@ abstract final class AppConstants {
   /// - cada deploy sobe o patch (`1.0.0` → `1.0.1`) e o build (`+1` → `+2`);
   /// - minor/major só em mudança grande de produto.
   /// Manter igual ao `version:` do pubspec.yaml (`x.y.z+build`).
-  static const String portalVersion = '1.0.22';
-  static const int portalBuild = 23;
+  static const String portalVersion = '1.0.23';
+  static const int portalBuild = 24;
 
   /// Landing "Em desenvolvimento" na `/`.
   ///
@@ -51,4 +51,11 @@ abstract final class AppConstants {
   /// Ficha do app no Google Play (`applicationId` alinhado ao bundle iOS).
   static const String playStoreUrl =
       'https://play.google.com/store/apps/details?id=com.guardiansense.app';
+
+  /// Tiles CARTO Voyager na tela Localizar.
+  ///
+  /// Pedida em https://carto.com/basemaps/apikey (basemap, não o trial da
+  /// plataforma). Visível no cliente — igual à apiKey do Firebase.
+  static const String cartoBasemapApiKey =
+      'cb1_29ip_1_ea9b081a8ef825c9d64ce59a';
 }

@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_map/flutter_map.dart';
+import 'package:guardian_portal/app/constants.dart';
 import 'package:guardian_portal/core/theme/app_colors.dart';
 import 'package:guardian_portal/features/dashboard/domain/device_location.dart';
 import 'package:latlong2/latlong.dart';
@@ -68,8 +69,8 @@ class _GuardianDeviceMapState extends State<GuardianDeviceMap> {
               children: [
                 TileLayer(
                   urlTemplate:
-                      'https://{s}.basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}{r}.png',
-                  subdomains:  ['a', 'b', 'c', 'd'],
+                      'https://{s}.basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}{r}.png?key=${AppConstants.cartoBasemapApiKey}',
+                  subdomains: const ['a', 'b', 'c', 'd'],
                   userAgentPackageName: 'guardian_portal',
                 ),
                 CircleLayer(
