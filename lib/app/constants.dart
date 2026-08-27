@@ -19,8 +19,8 @@ abstract final class AppConstants {
   /// - cada deploy sobe o patch (`1.0.0` → `1.0.1`) e o build (`+1` → `+2`);
   /// - minor/major só em mudança grande de produto.
   /// Manter igual ao `version:` do pubspec.yaml (`x.y.z+build`).
-  static const String portalVersion = '1.0.23';
-  static const int portalBuild = 24;
+  static const String portalVersion = '1.0.24';
+  static const int portalBuild = 25;
 
   /// Landing "Em desenvolvimento" na `/`.
   ///
