@@ -165,7 +165,8 @@ class _SetupTimeline extends StatelessWidget {
         _SetupKind.accessibility => Icons.accessibility_new_rounded,
         _SetupKind.battery => Icons.battery_charging_full_rounded,
         _SetupKind.protectedLayers => Icons.layers_outlined,
-        _SetupKind.location => Icons.gps_fixed,
+        // my_location já é usado no mapa; gps_fixed some no build web (glyph vazio).
+        _SetupKind.location => Icons.my_location,
         _SetupKind.recovery => Icons.fingerprint,
         _SetupKind.unknown => Icons.check_circle_outline,
       };
