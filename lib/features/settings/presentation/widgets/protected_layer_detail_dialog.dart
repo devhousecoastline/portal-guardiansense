@@ -2,6 +2,7 @@ import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import 'package:guardian_portal/core/theme/app_colors.dart';
 import 'package:guardian_portal/core/widgets/guardian_confirm_dialog.dart';
+import 'package:guardian_portal/core/widgets/premium_badge.dart';
 import 'package:guardian_portal/features/containment/data/device_commands_repository.dart';
 import 'package:guardian_portal/features/dashboard/domain/protected_layer_summary.dart';
 
@@ -11,6 +12,7 @@ Future<void> showProtectedLayerDetailDialog(
   required String uid,
   required String deviceId,
   required bool muted,
+  bool extraProtectEnabled = true,
 }) {
   return showDialog<void>(
     context: context,
@@ -20,6 +22,7 @@ Future<void> showProtectedLayerDetailDialog(
       uid: uid,
       deviceId: deviceId,
       muted: muted,
+      extraProtectEnabled: extraProtectEnabled,
     ),
   );
 }
@@ -30,12 +33,14 @@ class _ProtectedLayerDetailDialog extends StatefulWidget {
     required this.uid,
     required this.deviceId,
     required this.muted,
+    required this.extraProtectEnabled,
   });
 
   final ProtectedLayerSummary layer;
   final String uid;
   final String deviceId;
   final bool muted;
+  final bool extraProtectEnabled;
 
   @override
   State<_ProtectedLayerDetailDialog> createState() =>
@@ -47,6 +52,7 @@ class _ProtectedLayerDetailDialogState extends State<_ProtectedLayerDetailDialog
   String? _submittingPackage;
 
   Future<void> _protectApp(ProtectedLayerAppSummary app) async {
+    if (_isPremiumLocked(app)) return;
     if (widget.muted || !app.canProtectRemotely || _submittingPackage != null) {
       if (widget.muted && mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
@@ -125,11 +131,33 @@ class _ProtectedLayerDetailDialogState extends State<_ProtectedLayerDetailDialog
     }
   }
 
+  /// Free: 1 app protegido por camada. Se já há protegido, o resto é Premium.
+  /// Se nenhum está protegido, só o 1º "Proteger" é free.
+  bool _isPremiumLocked(ProtectedLayerAppSummary app) {
+    if (!app.canProtectRemotely || widget.extraProtectEnabled) return false;
+    return !_isFreeProtectSlot(widget.layer, app);
+  }
+
+  static bool _isFreeProtectSlot(
+    ProtectedLayerSummary layer,
+    ProtectedLayerAppSummary app,
+  ) {
+    final alreadyProtected = layer.apps.any((a) => a.protected);
+    if (alreadyProtected) return false;
+
+    for (final candidate in layer.apps) {
+      if (!candidate.canProtectRemotely) continue;
+      return candidate.packageName == app.packageName;
+    }
+    return false;
+  }
+
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
     final maxListHeight = MediaQuery.sizeOf(context).height * 0.42;
-    final hasRemoteActions = widget.layer.apps.any((app) => app.canProtectRemotely);
+    final hasRemoteActions =
+        widget.layer.apps.any((app) => app.canProtectRemotely);
 
     return Dialog(
       insetPadding:  EdgeInsets.symmetric(horizontal: 20, vertical: 24),
@@ -205,11 +233,13 @@ class _ProtectedLayerDetailDialogState extends State<_ProtectedLayerDetailDialog
                     separatorBuilder: (_, _) => const SizedBox(height: 6),
                     itemBuilder: (_, index) {
                       final app = widget.layer.apps[index];
+                      final premiumLocked = _isPremiumLocked(app);
                       return _AppRow(
                         app: app,
                         muted: widget.muted,
                         submitting: _submittingPackage == app.packageName,
-                        onProtect: app.canProtectRemotely
+                        premiumLocked: premiumLocked,
+                        onProtect: app.canProtectRemotely && !premiumLocked
                             ? () => _protectApp(app)
                             : null,
                       );
@@ -277,12 +307,14 @@ class _AppRow extends StatelessWidget {
     required this.muted,
     required this.submitting,
     required this.onProtect,
+    this.premiumLocked = false,
   });
 
   final ProtectedLayerAppSummary app;
   final bool muted;
   final bool submitting;
   final VoidCallback? onProtect;
+  final bool premiumLocked;
 
   @override
   Widget build(BuildContext context) {
@@ -291,6 +323,7 @@ class _AppRow extends StatelessWidget {
         ? AppColors.textMuted
         : (protected ? AppColors.trustHigh : AppColors.trustMedium);
     final canProtect = onProtect != null && !muted;
+    final showProtectSlot = canProtect || (premiumLocked && !muted && !protected);
 
     return DecoratedBox(
       decoration: BoxDecoration(
@@ -328,24 +361,47 @@ class _AppRow extends StatelessWidget {
                 ],
               ),
             ),
-            if (canProtect) ...[
-               SizedBox(width: 8),
-              submitting
-                  ?  SizedBox(
-                      width: 22,
-                      height: 22,
-                      child: CircularProgressIndicator(strokeWidth: 2),
-                    )
-                  : TextButton(
-                      onPressed: onProtect,
-                      style: TextButton.styleFrom(
-                        foregroundColor: AppColors.trustHigh,
-                        padding: const EdgeInsets.symmetric(horizontal: 10),
-                        minimumSize: Size.zero,
-                        tapTargetSize: MaterialTapTargetSize.shrinkWrap,
+            if (showProtectSlot) ...[
+              const SizedBox(width: 8),
+              if (submitting)
+                const SizedBox(
+                  width: 22,
+                  height: 22,
+                  child: CircularProgressIndicator(strokeWidth: 2),
+                )
+              else if (premiumLocked)
+                Tooltip(
+                  message: 'Disponível no plano Premium ativo',
+                  child: Row(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      TextButton(
+                        onPressed: null,
+                        style: TextButton.styleFrom(
+                          foregroundColor: AppColors.trustHigh,
+                          disabledForegroundColor: AppColors.textMuted,
+                          padding: const EdgeInsets.symmetric(horizontal: 10),
+                          minimumSize: Size.zero,
+                          tapTargetSize: MaterialTapTargetSize.shrinkWrap,
+                        ),
+                        child: const Text('Proteger'),
                       ),
-                      child: const Text('Proteger'),
-                    ),
+                      const SizedBox(width: 6),
+                      const PremiumBadge(compact: true),
+                    ],
+                  ),
+                )
+              else
+                TextButton(
+                  onPressed: onProtect,
+                  style: TextButton.styleFrom(
+                    foregroundColor: AppColors.trustHigh,
+                    padding: const EdgeInsets.symmetric(horizontal: 10),
+                    minimumSize: Size.zero,
+                    tapTargetSize: MaterialTapTargetSize.shrinkWrap,
+                  ),
+                  child: const Text('Proteger'),
+                ),
             ],
           ],
         ),

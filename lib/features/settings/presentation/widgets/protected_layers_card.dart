@@ -4,6 +4,7 @@ import 'package:guardian_portal/core/layout/app_layout.dart';
 import 'package:guardian_portal/core/theme/app_colors.dart';
 import 'package:guardian_portal/core/widgets/guardian_confirm_dialog.dart';
 import 'package:guardian_portal/core/widgets/live_status_tile.dart';
+import 'package:guardian_portal/core/widgets/premium_badge.dart';
 import 'package:guardian_portal/core/widgets/section_card.dart';
 import 'package:guardian_portal/features/containment/data/device_commands_repository.dart';
 import 'package:guardian_portal/features/dashboard/domain/device_status.dart';
@@ -15,10 +16,18 @@ class ProtectedLayersCard extends StatefulWidget {
     super.key,
     required this.uid,
     required this.status,
+    this.protectAllEnabled = true,
+    this.extraProtectEnabled = true,
   });
 
   final String uid;
   final DeviceStatus status;
+
+  /// Plano Premium ativo — habilita o comando remoto em massa.
+  final bool protectAllEnabled;
+
+  /// Plano Premium ativo — habilita Proteger além do 1º app da camada.
+  final bool extraProtectEnabled;
 
   @override
   State<ProtectedLayersCard> createState() => _ProtectedLayersCardState();
@@ -31,6 +40,7 @@ class _ProtectedLayersCardState extends State<ProtectedLayersCard> {
   DeviceStatus get status => widget.status;
 
   Future<void> _protectAll(List<ProtectAppCommandTarget> targets) async {
+    if (!widget.protectAllEnabled) return;
     if (_submittingAll || targets.isEmpty || !status.isOnline) {
       if (!status.isOnline && mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
@@ -175,22 +185,11 @@ class _ProtectedLayersCardState extends State<ProtectedLayersCard> {
                       height: 22,
                       child: CircularProgressIndicator(strokeWidth: 2),
                     )
-                  : OutlinedButton.icon(
+                  : _ProtectAllButton(
+                      enabled: widget.protectAllEnabled,
+                      muted: muted,
+                      targetCount: protectAllTargets.length,
                       onPressed: () => _protectAll(protectAllTargets),
-                      icon:  Icon(Icons.verified_user, size: 18),
-                      label: Text(
-                        protectAllTargets.length == 1
-                            ? 'Proteger 1 app remotamente'
-                            : 'Proteger todos (${protectAllTargets.length})',
-                      ),
-                      style: OutlinedButton.styleFrom(
-                        foregroundColor: AppColors.trustHigh,
-                        side: BorderSide(
-                          color: AppColors.trustHigh.withValues(
-                            alpha: muted ? 0.25 : 0.45,
-                          ),
-                        ),
-                      ),
                     ),
             ),
           ],
@@ -207,6 +206,7 @@ class _ProtectedLayersCardState extends State<ProtectedLayersCard> {
               deviceId: status.deviceId,
               layers: active,
               muted: muted,
+              extraProtectEnabled: widget.extraProtectEnabled,
             ),
           ],
         ],
@@ -242,18 +242,72 @@ class _ProtectedLayersCardState extends State<ProtectedLayersCard> {
   }
 }
 
+class _ProtectAllButton extends StatelessWidget {
+  const _ProtectAllButton({
+    required this.enabled,
+    required this.muted,
+    required this.targetCount,
+    required this.onPressed,
+  });
+
+  final bool enabled;
+  final bool muted;
+  final int targetCount;
+  final VoidCallback onPressed;
+
+  @override
+  Widget build(BuildContext context) {
+    final button = OutlinedButton.icon(
+      onPressed: enabled ? onPressed : null,
+      icon: Icon(
+        enabled ? Icons.verified_user : Icons.lock_outline_rounded,
+        size: 18,
+      ),
+      label: Text(
+        targetCount == 1
+            ? 'Proteger 1 app remotamente'
+            : 'Proteger todos ($targetCount)',
+      ),
+      style: OutlinedButton.styleFrom(
+        foregroundColor: AppColors.trustHigh,
+        side: BorderSide(
+          color: AppColors.trustHigh.withValues(
+            alpha: muted || !enabled ? 0.25 : 0.45,
+          ),
+        ),
+      ),
+    );
+
+    if (enabled) return button;
+
+    return Tooltip(
+      message: 'Disponível no plano Premium ativo',
+      child: Row(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          button,
+          const SizedBox(width: 8),
+          const PremiumBadge(compact: true),
+        ],
+      ),
+    );
+  }
+}
+
 class _LayersGrid extends StatelessWidget {
   const _LayersGrid({
     required this.uid,
     required this.deviceId,
     required this.layers,
     required this.muted,
+    required this.extraProtectEnabled,
   });
 
   final String uid;
   final String deviceId;
   final List<ProtectedLayerSummary> layers;
   final bool muted;
+  final bool extraProtectEnabled;
 
   @override
   Widget build(BuildContext context) {
@@ -276,6 +330,7 @@ class _LayersGrid extends StatelessWidget {
                 deviceId: deviceId,
                 layer: layers[index],
                 muted: muted,
+                extraProtectEnabled: extraProtectEnabled,
               ),
         );
       },
@@ -295,12 +350,14 @@ class _LayerTile extends StatelessWidget {
     required this.deviceId,
     required this.layer,
     required this.muted,
+    required this.extraProtectEnabled,
   });
 
   final String uid;
   final String deviceId;
   final ProtectedLayerSummary layer;
   final bool muted;
+  final bool extraProtectEnabled;
 
   @override
   Widget build(BuildContext context) {
@@ -326,6 +383,7 @@ class _LayerTile extends StatelessWidget {
           uid: uid,
           deviceId: deviceId,
           muted: muted,
+          extraProtectEnabled: extraProtectEnabled,
         );
       },
     );

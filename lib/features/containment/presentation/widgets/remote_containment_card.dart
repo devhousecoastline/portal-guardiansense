@@ -5,6 +5,7 @@ import 'package:guardian_portal/core/theme/app_colors.dart';
 import 'package:guardian_portal/core/theme/dashboard_typography.dart';
 import 'package:guardian_portal/core/widgets/celular_seguro_link.dart';
 import 'package:guardian_portal/core/widgets/guardian_confirm_dialog.dart';
+import 'package:guardian_portal/core/widgets/premium_badge.dart';
 import 'package:guardian_portal/core/widgets/relative_time.dart';
 import 'package:guardian_portal/core/widgets/section_card.dart';
 import 'package:guardian_portal/features/containment/data/device_commands_repository.dart';
@@ -19,6 +20,7 @@ class RemoteContainmentCard extends StatefulWidget {
     required this.status,
     this.compact = false,
     this.expandVertically = false,
+    this.closeOysterEnabled = true,
   });
 
   final String uid;
@@ -26,6 +28,9 @@ class RemoteContainmentCard extends StatefulWidget {
   final DeviceStatus status;
   final bool compact;
   final bool expandVertically;
+
+  /// Plano Premium ativo — habilita fechar ostra remotamente.
+  final bool closeOysterEnabled;
 
   @override
   State<RemoteContainmentCard> createState() => _RemoteContainmentCardState();
@@ -53,6 +58,7 @@ class _RemoteContainmentCardState extends State<RemoteContainmentCard> {
   }
 
   Future<void> _confirmAndSend() async {
+    if (!widget.closeOysterEnabled) return;
     if (!widget.status.hasRecoveryConfigured) return;
 
     final confirmed = await showGuardianConfirmDialog(
@@ -138,12 +144,22 @@ class _RemoteContainmentCardState extends State<RemoteContainmentCard> {
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.stretch,
             children: [
-              Text(
-                'Contenção remota',
-                style: DashboardTypography.cardTitle(
-                  context,
-                  compact: widget.compact,
-                ),
+              Row(
+                children: [
+                  Expanded(
+                    child: Text(
+                      'Contenção remota',
+                      style: DashboardTypography.cardTitle(
+                        context,
+                        compact: widget.compact,
+                      ),
+                    ),
+                  ),
+                  if (!widget.closeOysterEnabled) ...[
+                    const SizedBox(width: 8),
+                    const PremiumBadge(compact: true),
+                  ],
+                ],
               ),
               const SizedBox(height: 4),
               Text(
@@ -192,6 +208,9 @@ class _RemoteContainmentCardState extends State<RemoteContainmentCard> {
     if (!widget.status.hasRecoveryConfigured) {
       return 'Fechar ostra bloqueado — falta PIN ou biometria no aparelho.';
     }
+    if (!widget.closeOysterEnabled) {
+      return 'Disponível no plano Premium ativo.';
+    }
     return widget.status.isOnline
         ? 'Ação de emergência se o aparelho saiu do seu controle.'
         : 'Celular offline — o comando ficará na fila até sincronizar.';
@@ -231,14 +250,15 @@ class _RemoteContainmentCardState extends State<RemoteContainmentCard> {
       );
     }
 
-    final canClose = widget.status.hasRecoveryConfigured;
+    final canClose =
+        widget.status.hasRecoveryConfigured && widget.closeOysterEnabled;
 
     if (command?.isFailed == true) {
       return _TintedPanel(
         color: AppColors.riskCritical,
         icon: Icons.error_outline_rounded,
         title: 'Falha ao aplicar',
-        subtitle: canClose
+        subtitle: widget.status.hasRecoveryConfigured
             ? (command?.failureMessage ??
                 'O aparelho não confirmou o fechamento.')
             : _recoveryRequiredSubtitle,
@@ -246,8 +266,13 @@ class _RemoteContainmentCardState extends State<RemoteContainmentCard> {
         fillHeight: fillHeight,
         action: _ContainmentActionButton(
           loading: _submitting,
-          onPressed: canClose ? _confirmAndSend : null,
+          onPressed: widget.status.hasRecoveryConfigured &&
+                  widget.closeOysterEnabled
+              ? _confirmAndSend
+              : null,
           label: 'Tentar novamente',
+          premiumLocked: widget.status.hasRecoveryConfigured &&
+              !widget.closeOysterEnabled,
         ),
       );
     }
@@ -279,8 +304,10 @@ class _RemoteContainmentCardState extends State<RemoteContainmentCard> {
       fillHeight: fillHeight,
       action: _ContainmentActionButton(
         loading: _submitting,
-        onPressed: _confirmAndSend,
+        onPressed: canClose ? _confirmAndSend : null,
         label: 'Fechar ostra',
+        premiumLocked:
+            widget.status.hasRecoveryConfigured && !widget.closeOysterEnabled,
       ),
     );
   }
@@ -638,18 +665,20 @@ class _ContainmentActionButton extends StatelessWidget {
     required this.loading,
     required this.onPressed,
     required this.label,
+    this.premiumLocked = false,
   });
 
   final bool loading;
   final VoidCallback? onPressed;
   final String label;
+  final bool premiumLocked;
 
   @override
   Widget build(BuildContext context) {
     final enabled = !loading && onPressed != null;
     final accent = enabled ? AppColors.riskCritical : AppColors.textMuted;
 
-    return OutlinedButton.icon(
+    final button = OutlinedButton.icon(
       onPressed: enabled ? onPressed : null,
       style: OutlinedButton.styleFrom(
         foregroundColor: accent,
@@ -670,8 +699,30 @@ class _ContainmentActionButton extends StatelessWidget {
                 color: AppColors.riskCritical.withValues(alpha: 0.8),
               ),
             )
-          : Icon(Icons.lock_rounded, size: 18, color: accent),
+          : Icon(
+              premiumLocked && !enabled
+                  ? Icons.lock_outline_rounded
+                  : Icons.lock_rounded,
+              size: 18,
+              color: accent,
+            ),
       label: Text(label),
     );
+
+    if (premiumLocked && !enabled) {
+      return Tooltip(
+        message: 'Disponível no plano Premium ativo',
+        child: Row(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            button,
+            const SizedBox(width: 8),
+            const PremiumBadge(compact: true),
+          ],
+        ),
+      );
+    }
+
+    return button;
   }
 }

@@ -17,6 +17,7 @@ class ProtectionChecklistCard extends StatelessWidget {
     this.twoColumns,
     this.pairGrid = false,
     this.expandVertically = false,
+    this.eventsEnabled = true,
   });
 
   final DeviceStatus status;
@@ -26,6 +27,9 @@ class ProtectionChecklistCard extends StatelessWidget {
   final bool? twoColumns;
   final bool pairGrid;
   final bool expandVertically;
+
+  /// Plano Premium ativo — habilita atalho para Eventos.
+  final bool eventsEnabled;
 
   @override
   Widget build(BuildContext context) {
@@ -65,6 +69,7 @@ class ProtectionChecklistCard extends StatelessWidget {
                 useTwoColumns: useTwoColumns,
                 pairGrid: pairGrid,
                 pinFooter: true,
+                eventsEnabled: eventsEnabled,
               ),
             )
           else
@@ -73,6 +78,7 @@ class ProtectionChecklistCard extends StatelessWidget {
               compact: compact,
               useTwoColumns: useTwoColumns,
               pairGrid: pairGrid,
+              eventsEnabled: eventsEnabled,
             ),
         ],
       ),
@@ -87,6 +93,7 @@ class _ChecklistBody extends StatelessWidget {
     required this.useTwoColumns,
     required this.pairGrid,
     this.pinFooter = false,
+    this.eventsEnabled = true,
   });
 
   final ChecklistLayout layout;
@@ -96,6 +103,8 @@ class _ChecklistBody extends StatelessWidget {
 
   /// Empurra "Último evento" (fullWidth) para a base do card.
   final bool pinFooter;
+
+  final bool eventsEnabled;
 
   /// Largura mínima do card para os blocos de rodapé caberem lado a lado.
   static const _sideBySideFooterWidth = 300.0;
@@ -114,6 +123,7 @@ class _ChecklistBody extends StatelessWidget {
     ProtectionChecklistEntry entry,
   ) {
     if (entry.question.startsWith('Último evento')) {
+      if (!eventsEnabled) return null;
       if (entry.answer == 'Nenhuma registrada') return null;
       return () =>
           NavigationLoadingScope.of(context).go(context, AppRoutes.events);

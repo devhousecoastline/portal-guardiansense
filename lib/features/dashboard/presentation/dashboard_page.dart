@@ -6,6 +6,7 @@ import 'package:guardian_portal/core/widgets/device_online_chip.dart';
 import 'package:guardian_portal/core/widgets/device_verified_chip.dart';
 import 'package:guardian_portal/core/widgets/guardian_scaffold.dart';
 import 'package:guardian_portal/core/widgets/online_refresh.dart';
+import 'package:guardian_portal/core/widgets/status_badge.dart';
 import 'package:guardian_portal/features/containment/presentation/widgets/remote_containment_card.dart';
 import 'package:guardian_portal/features/dashboard/application/dashboard_service.dart';
 import 'package:guardian_portal/features/dashboard/domain/device_status.dart';
@@ -15,6 +16,9 @@ import 'package:guardian_portal/features/dashboard/presentation/widgets/protecti
 import 'package:guardian_portal/features/dashboard/presentation/widgets/protection_setup_card.dart';
 import 'package:guardian_portal/features/dashboard/presentation/widgets/protection_status_hero.dart';
 import 'package:guardian_portal/features/devices/domain/guardian_device.dart';
+import 'package:guardian_portal/features/account/data/user_repository.dart';
+import 'package:guardian_portal/features/account/domain/user_plan.dart';
+import 'package:guardian_portal/features/subscription/domain/premium_features.dart';
 
 class DashboardPage extends StatefulWidget {
   const DashboardPage({super.key});
@@ -175,6 +179,51 @@ class _DashboardBody extends StatelessWidget {
   Widget build(BuildContext context) {
     final tone = ProtectionSnapshot.tone(status);
 
+    return StreamBuilder<UserPlan>(
+      stream: UserRepository().watchPlan(uid),
+      builder: (context, planSnap) {
+        final plan = planSnap.data ?? UserPlan.free;
+        final eventsEnabled = PremiumFeatures.events(plan);
+        final closeOysterEnabled = PremiumFeatures.closeOyster(plan);
+
+        return _DashboardLayout(
+          uid: uid,
+          device: device,
+          layout: layout,
+          showRefreshTick: showRefreshTick,
+          tone: tone,
+          status: status,
+          eventsEnabled: eventsEnabled,
+          closeOysterEnabled: closeOysterEnabled,
+        );
+      },
+    );
+  }
+}
+
+class _DashboardLayout extends StatelessWidget {
+  const _DashboardLayout({
+    required this.uid,
+    required this.device,
+    required this.layout,
+    required this.showRefreshTick,
+    required this.tone,
+    required this.status,
+    required this.eventsEnabled,
+    required this.closeOysterEnabled,
+  });
+
+  final String uid;
+  final GuardianDevice device;
+  final DashboardLayoutSpec layout;
+  final bool showRefreshTick;
+  final StatusTone tone;
+  final DeviceStatus status;
+  final bool eventsEnabled;
+  final bool closeOysterEnabled;
+
+  @override
+  Widget build(BuildContext context) {
     final fillCells = layout.isNotebook || layout.isDesktop;
 
     final hero = ProtectionStatusHero(
@@ -196,6 +245,7 @@ class _DashboardBody extends StatelessWidget {
       twoColumns: layout.checklistTwoColumns,
       pairGrid: layout.checklistPairGrid,
       expandVertically: fillCells,
+      eventsEnabled: eventsEnabled,
     );
     final containment = RemoteContainmentCard(
       uid: uid,
@@ -203,6 +253,7 @@ class _DashboardBody extends StatelessWidget {
       status: status,
       compact: layout.compact,
       expandVertically: fillCells,
+      closeOysterEnabled: closeOysterEnabled,
     );
 
     if (layout.isNotebook) {

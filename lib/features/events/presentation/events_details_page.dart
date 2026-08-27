@@ -5,7 +5,9 @@ import 'package:guardian_portal/core/routing/app_routes.dart';
 import 'package:guardian_portal/core/theme/app_colors.dart';
 import 'package:guardian_portal/core/widgets/guardian_scaffold.dart';
 import 'package:guardian_portal/core/widgets/online_refresh.dart';
+import 'package:guardian_portal/core/widgets/premium_feature_gate.dart';
 import 'package:guardian_portal/core/widgets/section_card.dart';
+import 'package:guardian_portal/features/subscription/domain/premium_features.dart';
 import 'package:guardian_portal/features/devices/data/device_repository.dart';
 import 'package:guardian_portal/features/events/data/events_repository.dart';
 import 'package:guardian_portal/features/events/domain/event_filters.dart';
@@ -34,7 +36,13 @@ class _EventsDetailsPageState extends State<EventsDetailsPage> {
     final day = EventFilters.calendarDay(widget.day);
     final dayLabel = EventFilters.dayLabelFor(day);
 
-    return StreamBuilder(
+    return PremiumFeatureGate(
+      featureName: 'Eventos',
+      hasAccess: PremiumFeatures.events,
+      scaffoldTitle: 'Eventos · $dayLabel',
+      scaffoldSubtitle: 'Detalhes do dia',
+      onRefresh: _refreshController.refresh,
+      child: StreamBuilder(
       stream: DeviceRepository().watchDeviceList(uid),
       builder: (context, deviceSnap) {
         final deviceList = deviceSnap.data;
@@ -94,6 +102,7 @@ class _EventsDetailsPageState extends State<EventsDetailsPage> {
           },
         );
       },
+    ),
     );
   }
 }

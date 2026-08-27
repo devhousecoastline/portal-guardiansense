@@ -3,7 +3,9 @@ import 'package:flutter/material.dart';
 import 'package:guardian_portal/core/theme/app_colors.dart';
 import 'package:guardian_portal/core/widgets/guardian_scaffold.dart';
 import 'package:guardian_portal/core/widgets/online_refresh.dart';
+import 'package:guardian_portal/core/widgets/premium_feature_gate.dart';
 import 'package:guardian_portal/core/widgets/section_card.dart';
+import 'package:guardian_portal/features/subscription/domain/premium_features.dart';
 import 'package:guardian_portal/features/devices/data/device_repository.dart';
 import 'package:guardian_portal/features/events/data/events_repository.dart';
 import 'package:guardian_portal/features/events/domain/event_filters.dart';
@@ -28,7 +30,13 @@ class _EventsPageState extends State<EventsPage> {
     final uid = FirebaseAuth.instance.currentUser?.uid;
     if (uid == null) return const SizedBox.shrink();
 
-    return StreamBuilder(
+    return PremiumFeatureGate(
+      featureName: 'Eventos',
+      hasAccess: PremiumFeatures.events,
+      scaffoldTitle: 'Eventos',
+      scaffoldSubtitle: 'Linha do tempo de segurança',
+      onRefresh: _refreshController.refresh,
+      child: StreamBuilder(
       stream: DeviceRepository().watchDeviceList(uid),
       builder: (context, deviceSnap) {
         if (deviceSnap.connectionState == ConnectionState.waiting &&
@@ -98,6 +106,7 @@ class _EventsPageState extends State<EventsPage> {
           },
         );
       },
+    ),
     );
   }
 }

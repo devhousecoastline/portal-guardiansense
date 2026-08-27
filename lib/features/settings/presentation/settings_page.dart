@@ -15,7 +15,10 @@ import 'package:guardian_portal/features/dashboard/domain/protection_setup_item.
 import 'package:guardian_portal/features/dashboard/domain/protection_snapshot.dart';
 import 'package:guardian_portal/features/dashboard/presentation/widgets/empty_devices_card.dart';
 import 'package:guardian_portal/features/devices/domain/guardian_device.dart';
+import 'package:guardian_portal/features/account/data/user_repository.dart';
+import 'package:guardian_portal/features/account/domain/user_plan.dart';
 import 'package:guardian_portal/features/settings/presentation/widgets/protected_layers_card.dart';
+import 'package:guardian_portal/features/subscription/domain/premium_features.dart';
 
 class SettingsPage extends StatefulWidget {
   const SettingsPage({super.key});
@@ -90,16 +93,30 @@ class _SettingsBody extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.stretch,
-      children: [
-        _DeviceInfoCard(
-          status: status,
-          recovery: _item('recovery'),
-        ),
-        const SizedBox(height: 16),
-        ProtectedLayersCard(uid: uid, status: status),
-      ],
+    return StreamBuilder<UserPlan>(
+      stream: UserRepository().watchPlan(uid),
+      builder: (context, planSnap) {
+        final plan = planSnap.data ?? UserPlan.free;
+        final protectAllEnabled = PremiumFeatures.remoteProtectAll(plan);
+        final extraProtectEnabled = PremiumFeatures.remoteProtectExtra(plan);
+
+        return Column(
+          crossAxisAlignment: CrossAxisAlignment.stretch,
+          children: [
+            _DeviceInfoCard(
+              status: status,
+              recovery: _item('recovery'),
+            ),
+            const SizedBox(height: 16),
+            ProtectedLayersCard(
+              uid: uid,
+              status: status,
+              protectAllEnabled: protectAllEnabled,
+              extraProtectEnabled: extraProtectEnabled,
+            ),
+          ],
+        );
+      },
     );
   }
 }

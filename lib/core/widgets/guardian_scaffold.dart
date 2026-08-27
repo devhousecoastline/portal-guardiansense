@@ -9,6 +9,11 @@ import 'package:guardian_portal/core/theme/theme_scope.dart';
 import 'package:guardian_portal/core/widgets/drawer_premium_teaser.dart';
 import 'package:guardian_portal/core/widgets/drawer_account_tile.dart';
 import 'package:guardian_portal/core/widgets/guardian_logo.dart';
+import 'package:guardian_portal/core/widgets/premium_badge.dart';
+import 'package:guardian_portal/features/account/data/user_repository.dart';
+import 'package:guardian_portal/features/account/domain/user_plan.dart';
+import 'package:guardian_portal/features/auth/presentation/widgets/auth_scope.dart';
+import 'package:guardian_portal/features/subscription/domain/premium_features.dart';
 
 
 /// Layout base do portal — sidebar em telas largas, drawer em mobile web.
@@ -485,32 +490,53 @@ class _NavList extends StatelessWidget {
   final String current;
   final VoidCallback? onTap;
 
+  bool _isLocked(_NavItem item, UserPlan plan) {
+    return PremiumFeatures.isNavLocked(item.route, plan);
+  }
+
   @override
   Widget build(BuildContext context) {
-    Widget tile(_NavItem item) => _NavTile(
+    final uid = AuthScope.of(context).user?.uid;
+
+    Widget buildList(UserPlan plan) {
+      Widget tile(_NavItem item) {
+        final locked = _isLocked(item, plan);
+        return _NavTile(
           item: item,
-          selected: _isNavSelected(current, item.route),
+          selected: !locked && _isNavSelected(current, item.route),
+          locked: locked,
           onTap: () {
-            // Captura router antes de fechar o bottom sheet (mobile).
             final loading = NavigationLoadingScope.of(context);
             final router = GoRouter.of(context);
             onTap?.call();
-            if (current != item.route) {
-              loading.goWithRouter(router, item.route);
+            final target = locked ? AppRoutes.premium : item.route;
+            if (current != target) {
+              loading.goWithRouter(router, target);
             }
           },
         );
+      }
 
-    return ListView(
-      padding: const EdgeInsets.symmetric(horizontal: 12),
-      children: [
-        for (final item in _navItems) tile(item),
-        Padding(
-          padding: const EdgeInsets.fromLTRB(14, 10, 14, 8),
-          child: Divider(height: 1, color: AppColors.divider),
-        ),
-        for (final item in _infoItems) tile(item),
-      ],
+      return ListView(
+        padding: const EdgeInsets.symmetric(horizontal: 12),
+        children: [
+          for (final item in _navItems) tile(item),
+          Padding(
+            padding: const EdgeInsets.fromLTRB(14, 10, 14, 8),
+            child: Divider(height: 1, color: AppColors.divider),
+          ),
+          for (final item in _infoItems) tile(item),
+        ],
+      );
+    }
+
+    if (uid == null) return buildList(UserPlan.free);
+
+    return StreamBuilder<UserPlan>(
+      stream: UserRepository().watchPlan(uid),
+      builder: (context, snap) {
+        return buildList(snap.data ?? UserPlan.free);
+      },
     );
   }
 }
@@ -551,11 +577,13 @@ class _NavTile extends StatelessWidget {
     required this.item,
     required this.selected,
     required this.onTap,
+    this.locked = false,
   });
 
   final _NavItem item;
   final bool selected;
   final VoidCallback onTap;
+  final bool locked;
 
   @override
   Widget build(BuildContext context) {
@@ -578,15 +606,18 @@ class _NavTile extends StatelessWidget {
               children: [
                 Icon(item.icon, size: 20, color: fg),
                  SizedBox(width: 12),
-                Text(
-                  item.label,
-                  style: TextStyle(
-                    color: selected
-                        ? AppColors.textPrimary
-                        : AppColors.textMuted,
-                    fontWeight: selected ? FontWeight.w600 : FontWeight.w500,
+                Expanded(
+                  child: Text(
+                    item.label,
+                    style: TextStyle(
+                      color: selected
+                          ? AppColors.textPrimary
+                          : AppColors.textMuted,
+                      fontWeight: selected ? FontWeight.w600 : FontWeight.w500,
+                    ),
                   ),
                 ),
+                if (locked) const PremiumBadge(compact: true),
               ],
             ),
           ),

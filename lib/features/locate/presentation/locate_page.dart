@@ -4,7 +4,9 @@ import 'package:guardian_portal/core/layout/app_layout.dart';
 import 'package:guardian_portal/core/theme/app_colors.dart';
 import 'package:guardian_portal/core/widgets/guardian_scaffold.dart';
 import 'package:guardian_portal/core/widgets/online_refresh.dart';
+import 'package:guardian_portal/core/widgets/premium_feature_gate.dart';
 import 'package:guardian_portal/core/widgets/section_card.dart';
+import 'package:guardian_portal/features/subscription/domain/premium_features.dart';
 import 'package:guardian_portal/features/dashboard/application/dashboard_service.dart';
 import 'package:guardian_portal/features/devices/domain/guardian_device.dart';
 import 'package:guardian_portal/features/locate/presentation/widgets/guardian_device_map.dart';
@@ -29,7 +31,13 @@ class _LocatePageState extends State<LocatePage> {
     _deviceStream ??= DashboardService().watchPrimaryDevice(uid);
     final split = AppLayout.isLocateSplit(MediaQuery.sizeOf(context).width);
 
-    return StreamBuilder<GuardianDevice?>(
+    return PremiumFeatureGate(
+      featureName: 'Localizar',
+      hasAccess: PremiumFeatures.locate,
+      scaffoldTitle: 'Localizar',
+      scaffoldSubtitle: 'Última posição conhecida do aparelho',
+      onRefresh: _refreshController.refresh,
+      child: StreamBuilder<GuardianDevice?>(
       stream: _deviceStream,
       builder: (context, snapshot) {
         final initialLoad =
@@ -60,6 +68,7 @@ class _LocatePageState extends State<LocatePage> {
           },
         );
       },
+    ),
     );
   }
 }
