@@ -3,11 +3,13 @@
 const { onCall, HttpsError, onRequest } = require("firebase-functions/v2/https");
 const { defineSecret, defineString } = require("firebase-functions/params");
 const { setGlobalOptions } = require("firebase-functions/v2");
+const functionsV1 = require("firebase-functions/v1");
 const admin = require("firebase-admin");
 
 const mp = require("./mercadopago");
 const sub = require("./subscription");
 const pairing = require("./device_pairing");
+const welcome = require("./welcome_email");
 
 admin.initializeApp();
 
@@ -17,6 +19,7 @@ setGlobalOptions({
 });
 
 const mpAccessToken = defineSecret("MERCADOPAGO_ACCESS_TOKEN");
+const sendgridApiKey = defineSecret("SENDGRID_API_KEY");
 /** Opcional no sandbox; recomendado em produção (painel Webhooks → secret). */
 const mpWebhookSecret = defineString("MERCADOPAGO_WEBHOOK_SECRET", {
   default: "",
@@ -348,6 +351,25 @@ exports.confirmDevicePairing = onCall(
 );
 
 /**
+ * Auth onCreate (1ª gen): boas-vindas no cadastro, app ou portal.
+ * v2 identity não tem onCreate; Auth 1ª gen só em us-central1.
+ */
+exports.sendWelcomeEmail = functionsV1
+  .region("us-central1")
+  .runWith({
+    secrets: [sendgridApiKey],
+    maxInstances: 20,
+    timeoutSeconds: 60,
+    memory: "256MB",
+  })
+  .auth.user()
+  .onCreate(async (user) => {
+    await welcome.handleUserCreated(user, {
+      apiKey: sendgridApiKey.value(),
+    });
+  });
+
+/**
  * Debug/QA autenticado: remove a verificação para retestar o QR.
  */
 exports.resetDeviceVerification = onCall(
@@ -364,6 +386,62 @@ exports.resetDeviceVerification = onCall(
       throw new HttpsError(
         "internal",
         e.message || "Não foi possível resetar a verificação.",
+      );
+    }
+  },
+);
+
+/**
+ * Debug/QA autenticado: reenvia o e-mail de boas-vindas para a conta logada.
+ * Só o portal em kDebugMode chama; force ignora welcomeEmails/{uid}.
+ */
+exports.sendWelcomeEmailTest = onCall(
+  {
+    secrets: [sendgridApiKey],
+    invoker: "public",
+  },
+  async (request) => {
+    if (!request.auth?.uid) {
+      throw new HttpsError("unauthenticated", "Faça login para testar.");
+    }
+
+    const email = String(request.auth.token.email || "").trim();
+    if (!email) {
+      throw new HttpsError(
+        "failed-precondition",
+        "Sua conta não tem e-mail para receber o teste.",
+      );
+    }
+
+    try {
+      const result = await welcome.sendWelcomeForUser(
+        {
+          uid: request.auth.uid,
+          email,
+          displayName: request.auth.token.name || "",
+        },
+        {
+          apiKey: sendgridApiKey.value(),
+          force: true,
+        },
+      );
+
+      if (!result.sent) {
+        throw new HttpsError(
+          "failed-precondition",
+          result.reason === "missing-api-key"
+            ? "SENDGRID_API_KEY não configurada."
+            : `Não foi possível enviar (${result.reason || "unknown"}).`,
+        );
+      }
+
+      return { sent: true, email };
+    } catch (e) {
+      console.error("sendWelcomeEmailTest", e);
+      if (e instanceof HttpsError) throw e;
+      throw new HttpsError(
+        "internal",
+        e.message || "Não foi possível enviar o e-mail de teste.",
       );
     }
   },
