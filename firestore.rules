@@ -259,5 +259,10 @@ service cloud.firestore {
     match /pixPayments/{paymentId} {
       allow read, write: if false;
     }
+
+    // Log de boas-vindas — só Admin SDK (Functions).
+    match /welcomeEmails/{userId} {
+      allow read, write: if false;
+    }
   }
 }

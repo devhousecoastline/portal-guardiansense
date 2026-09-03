@@ -39,6 +39,15 @@ Enquanto o Firebase Auth não emite o primeiro `authStateChanges` (`authReady ==
 
 Domínios Auth autorizados: `localhost`, `*.firebaseapp.com` / `*.web.app` do projeto, `guardian-sense.com` e `www.guardian-sense.com`. Detalhes em [revisao_seguranca_firebase.md](revisao_seguranca_firebase.md).
 
+## E-mail de boas-vindas
+
+No **cadastro** (Firebase Auth `onCreate`), a Function `sendWelcomeEmail` envia um e-mail curto via SendGrid. Vale para conta criada no **app** ou no **portal**, e-mail/senha ou Google. Login seguinte não dispara de novo.
+
+- Template no servidor (`functions/src/welcome_email_template.js`): assunto/prévia `Olá, {nome}`, conta criada, este e-mail é o login, 1 conta ↔ 1 aparelho, link da Central, Play Store. Sem promessa de “impede furto”.
+- Log em `welcomeEmails/{uid}` (só Admin SDK). Sem e-mail no Auth, não envia.
+- Secret `SENDGRID_API_KEY`. Remetente padrão: `nao-responda@guardian-sense.com` (`WELCOME_MAIL_FROM`).
+- Trigger 1ª geração em `us-central1` (limitação do Auth). O resto das Functions continua em `southamerica-east1`.
+
 ## Aceite de privacidade
 
 Independente do aceite local do app. Gravado em `users/{uid}.portalPrivacyConsent` (`version` + `acceptedAt`).
@@ -81,7 +90,7 @@ Objetivo: o usuário prova que o celular da conta é aquele aparelho. Sem isso o
 
 Onde o QR aparece no portal: card vazio de **Proteção**, **Configurações** e **Dispositivos** quando não há aparelho ativo verificado.
 
-Debug/QA (`kDebugMode`): botão para `resetDeviceVerification` (só Admin SDK). **Não aparece em produção.**
+Debug/QA (`kDebugMode`): botões para `resetDeviceVerification` e `sendWelcomeEmailTest` (só Admin SDK / Functions). **Não aparecem em produção.**
 
 ## O que o portal escreve (exceções)
 
@@ -91,3 +100,5 @@ Além de ler, o cliente autenticado pode:
 - criar comando `close_oyster` `pending`;
 - criar trial de assinatura (sem marcar pago);
 - chamar Functions (`createDevicePairing`, `createPixAnnualPayment`, reset de verificação em debug).
+
+O e-mail de boas-vindas **não** sai do cliente: só a Function `sendWelcomeEmail` no `onCreate` do Auth.

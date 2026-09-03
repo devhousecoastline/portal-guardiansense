@@ -24,7 +24,7 @@ Conta criada só no portal (sem app) existe no Firebase Auth. O documento `users
 | Rotas | `go_router` |
 | Auth | Firebase Auth (e-mail/senha + Google popup) |
 | Dados | Cloud Firestore |
-| Backend | Cloud Functions v2 (`southamerica-east1`) |
+| Backend | Cloud Functions v2 (`southamerica-east1`); Auth `onCreate` 1ª gen (`us-central1`) |
 | Hosting | Firebase Hosting |
 | Cobrança | PIX Mercado Pago (assinatura anual) |
 | Mapa | `flutter_map` |
@@ -52,6 +52,7 @@ users/{uid}
   devicePairings/{pairingId}  # só Functions escrevem
   events/{eventId}            # legado
 pixPayments/{paymentId}       # só Functions
+welcomeEmails/{uid}           # só Functions (log do e-mail de boas-vindas)
 ```
 
 Rules: `firestore.rules`. Só o dono lê `users/{uid}`. Delete de usuário e de device bloqueado.
@@ -74,4 +75,4 @@ Publicar o hosting:
 
 O script faz `flutter build web --release --pwa-strategy=none` e `firebase deploy --only hosting`. Sem service worker para o deploy aparecer na hora.
 
-Functions (pairing, PIX, webhook) são um deploy separado: `firebase deploy --only functions --project guardian-sense-dbdfa`.
+Functions (pairing, PIX, webhook, boas-vindas) são um deploy separado: `firebase deploy --only functions --project guardian-sense-dbdfa`.

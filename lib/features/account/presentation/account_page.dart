@@ -247,6 +247,7 @@ class _PlanCard extends StatefulWidget {
 class _PlanCardState extends State<_PlanCard> {
   bool _resetting = false;
   bool _resettingVerification = false;
+  bool _sendingWelcome = false;
 
   Future<void> _resetTrial() async {
     if (_resetting) return;
@@ -264,6 +265,36 @@ class _PlanCardState extends State<_PlanCard> {
       );
     } finally {
       if (mounted) setState(() => _resetting = false);
+    }
+  }
+
+  Future<void> _sendWelcomeTest() async {
+    if (_sendingWelcome) return;
+    setState(() => _sendingWelcome = true);
+    try {
+      final functions =
+          FirebaseFunctions.instanceFor(region: 'southamerica-east1');
+      final result =
+          await functions.httpsCallable('sendWelcomeEmailTest').call();
+      final raw = result.data;
+      final email = raw is Map ? raw['email'] as String? : null;
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text(
+            email == null || email.isEmpty
+                ? 'E-mail de boas-vindas enviado.'
+                : 'E-mail de boas-vindas enviado para $email.',
+          ),
+        ),
+      );
+    } catch (error) {
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text(_welcomeTestError(error))),
+      );
+    } finally {
+      if (mounted) setState(() => _sendingWelcome = false);
     }
   }
 
@@ -303,6 +334,17 @@ class _PlanCardState extends State<_PlanCard> {
       if (raw.isNotEmpty) return raw;
     }
     return 'Não foi possível resetar a verificação.';
+  }
+
+  static String _welcomeTestError(Object error) {
+    if (error is FirebaseFunctionsException) {
+      if (error.code == 'not-found' || error.code == 'NOT_FOUND') {
+        return 'Function ainda não publicada. Faça deploy de functions.';
+      }
+      final raw = (error.message ?? error.code).trim();
+      if (raw.isNotEmpty) return raw;
+    }
+    return 'Não foi possível enviar o e-mail de teste.';
   }
 
   @override
@@ -456,6 +498,15 @@ class _PlanCardState extends State<_PlanCard> {
                       onPressed: _resettingVerification
                           ? null
                           : _resetVerification,
+                    ),
+                  if (kDebugMode)
+                    GuardianLinkChip(
+                      label: _sendingWelcome
+                          ? 'Enviando…'
+                          : 'Enviar boas-vindas (teste)',
+                      icon: Icons.mail_outline_rounded,
+                      compact: true,
+                      onPressed: _sendingWelcome ? null : _sendWelcomeTest,
                     ),
                 ],
               ),
