@@ -40,6 +40,7 @@ class ProtectionChecklistCard extends StatelessWidget {
 
     return SectionCard(
       expandVertically: expandVertically,
+      accentColor: _checklistTone(status),
       padding: EdgeInsets.fromLTRB(
         20,
         compact ? 12 : 18,
@@ -83,6 +84,19 @@ class ProtectionChecklistCard extends StatelessWidget {
         ],
       ),
     );
+  }
+
+  static Color _checklistTone(DeviceStatus status) {
+    if (!status.isOnline) return AppColors.textMuted;
+    // Parcial fica no hero/setup — aqui só alerta ou tudo ok.
+    return switch (status.level) {
+      ProtectionLevel.alert => AppColors.riskCritical,
+      ProtectionLevel.protected => AppColors.trustHigh,
+      ProtectionLevel.partial ||
+      ProtectionLevel.offline ||
+      ProtectionLevel.unknown =>
+        AppColors.textMuted,
+    };
   }
 }
 

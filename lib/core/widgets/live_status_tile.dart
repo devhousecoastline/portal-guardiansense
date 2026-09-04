@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:guardian_portal/core/layout/app_layout.dart';
 import 'package:guardian_portal/core/theme/app_colors.dart';
 import 'package:guardian_portal/core/theme/dashboard_typography.dart';
 
@@ -20,7 +21,7 @@ class LiveStatusTile extends StatelessWidget {
   final Color accent;
   final VoidCallback? onTap;
 
-  /// Grade densa (camadas) — mesmo visual, menos padding e uma linha no valor.
+  /// Grade densa (aparelho e camadas) — canto suave, menos padding e uma linha no valor.
   final bool compact;
 
   @override
@@ -31,7 +32,7 @@ class LiveStatusTile extends StatelessWidget {
     final iconSize = compact ? 18.0 : 20.0;
     final gap = compact ? 8.0 : 10.0;
     final valueGap = compact ? 2.0 : 4.0;
-    // Camadas: canto suave. Runtime/Ostra: pill (mesmo idioma dos filtros).
+    // Grade (camadas e aparelho): canto suave. compact: false = pill.
     final radius = compact ? 10.0 : 99.0;
 
     final tile = Container(
@@ -128,5 +129,40 @@ class _LiveStatusTexts extends StatelessWidget {
         ),
       ],
     );
+  }
+}
+
+/// Grade responsiva dos tiles de status — mesma densidade em aparelho e camadas.
+class LiveStatusGrid extends StatelessWidget {
+  const LiveStatusGrid({super.key, required this.children});
+
+  final List<Widget> children;
+
+  @override
+  Widget build(BuildContext context) {
+    return LayoutBuilder(
+      builder: (context, constraints) {
+        final columns = columnCount(constraints.maxWidth);
+
+        return GridView.builder(
+          shrinkWrap: true,
+          physics: const NeverScrollableScrollPhysics(),
+          gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
+            crossAxisCount: columns,
+            mainAxisSpacing: 8,
+            crossAxisSpacing: 8,
+            mainAxisExtent: 56,
+          ),
+          itemCount: children.length,
+          itemBuilder: (context, index) => children[index],
+        );
+      },
+    );
+  }
+
+  static int columnCount(double width) {
+    if (width >= AppLayout.dashboardRowBreakpoint) return 4;
+    if (width >= AppLayout.checklistTwoColBreakpoint) return 3;
+    return 2;
   }
 }

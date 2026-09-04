@@ -35,6 +35,13 @@ class ProtectionSetupCard extends StatelessWidget {
       height: expands ? double.infinity : null,
       child: SectionCard(
         expandVertically: expands,
+        accentColor: muted
+            ? AppColors.textMuted
+            : complete
+                ? AppColors.trustHigh
+                : status.hasSetupChecklist
+                    ? AppColors.trustMedium
+                    : AppColors.textMuted,
         padding: EdgeInsets.fromLTRB(
           20,
           compact ? 12 : 18,

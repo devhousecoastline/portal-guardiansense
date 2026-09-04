@@ -166,7 +166,7 @@ class _EventsBody extends StatelessWidget {
             categoryCounts: EventFilters.categoryCounts(inPeriod),
           ),
         ),
-        const SizedBox(height: 14),
+        const SizedBox(height: 16),
         if (timeline.isEmpty)
           SectionCard(
             child: Column(

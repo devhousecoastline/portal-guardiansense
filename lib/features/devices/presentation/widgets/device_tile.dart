@@ -131,20 +131,34 @@ class DeviceTile extends StatelessWidget {
                       ),
                       if (!narrow) ...[
                         const SizedBox(width: 12),
-                        Column(
-                          mainAxisSize: MainAxisSize.min,
-                          crossAxisAlignment: CrossAxisAlignment.end,
-                          children: [
-                            GuardianHeaderChip(
-                              label: statusLine,
-                              color: color,
-                              icon: _statusIcon(status, released: released),
+                        ConstrainedBox(
+                          constraints: BoxConstraints(
+                            minWidth: _statusChipColumnWidth(context),
+                          ),
+                          child: IntrinsicWidth(
+                            child: Column(
+                              mainAxisSize: MainAxisSize.min,
+                              crossAxisAlignment: CrossAxisAlignment.stretch,
+                              children: [
+                                GuardianHeaderChip(
+                                  label: statusLine,
+                                  color: color,
+                                  icon: _statusIcon(
+                                    status,
+                                    released: released,
+                                  ),
+                                  expand: true,
+                                ),
+                                if (!released && status.isVerified) ...[
+                                  const SizedBox(height: 6),
+                                  const DeviceVerifiedChip(
+                                    compact: true,
+                                    expand: true,
+                                  ),
+                                ],
+                              ],
                             ),
-                            if (!released && status.isVerified) ...[
-                              const SizedBox(height: 6),
-                              const DeviceVerifiedChip(compact: true),
-                            ],
-                          ],
+                          ),
                         ),
                       ],
                     ],
@@ -156,6 +170,20 @@ class DeviceTile extends StatelessWidget {
         ),
       ),
     );
+  }
+
+  /// Largura do chip mais longo da lista (`Desvinculado`) — alinha a coluna.
+  static double _statusChipColumnWidth(BuildContext context) {
+    final style = Theme.of(context).textTheme.bodySmall?.copyWith(
+          fontWeight: FontWeight.w600,
+        );
+    final painter = TextPainter(
+      text: TextSpan(text: 'Desvinculado', style: style),
+      textDirection: TextDirection.ltr,
+      maxLines: 1,
+    )..layout();
+    // ícone 15 + gap 8 + texto + padding 10×2 + borda 1×2
+    return 15 + 8 + painter.width + 20 + 2;
   }
 
   static IconData _statusIcon(

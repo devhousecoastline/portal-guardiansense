@@ -7,26 +7,55 @@ class SectionCard extends StatelessWidget {
     required this.child,
     this.padding = const EdgeInsets.all(20),
     this.expandVertically = false,
+    this.accentColor,
   });
 
   final Widget child;
   final EdgeInsets padding;
   final bool expandVertically;
 
+  /// Faixa de 4px à esquerda — mesmo idioma dos tiles de Dispositivos.
+  final Color? accentColor;
+
+  static const _accentWidth = 4.0;
+
   @override
   Widget build(BuildContext context) {
+    final hasAccent = accentColor != null;
+    final contentPadding = hasAccent
+        ? padding.copyWith(left: padding.left + _accentWidth)
+        : padding;
+
+    final paddedChild = Padding(
+      padding: contentPadding,
+      child: child,
+    );
+
     return Container(
       width: double.infinity,
       height: expandVertically ? double.infinity : null,
       alignment: Alignment.topLeft,
-      clipBehavior: Clip.none,
-      padding: padding,
+      clipBehavior: hasAccent ? Clip.antiAlias : Clip.none,
       decoration: BoxDecoration(
         color: AppColors.card,
         borderRadius: BorderRadius.circular(16),
         border: Border.all(color: AppColors.divider),
       ),
-      child: child,
+      child: hasAccent
+          ? Stack(
+              fit: expandVertically ? StackFit.expand : StackFit.loose,
+              children: [
+                paddedChild,
+                Positioned(
+                  left: 0,
+                  top: 0,
+                  bottom: 0,
+                  width: _accentWidth,
+                  child: ColoredBox(color: accentColor!),
+                ),
+              ],
+            )
+          : paddedChild,
     );
   }
 }

@@ -8,10 +8,12 @@ class DeviceVerifiedChip extends StatelessWidget {
     super.key,
     this.compact = false,
     this.verified = true,
+    this.expand = false,
   });
 
   final bool compact;
   final bool verified;
+  final bool expand;
 
   @override
   Widget build(BuildContext context) {
@@ -24,6 +26,7 @@ class DeviceVerifiedChip extends StatelessWidget {
       label: label,
       color: accent,
       icon: verified ? Icons.verified_rounded : Icons.gpp_maybe_outlined,
+      expand: expand,
     );
   }
 }

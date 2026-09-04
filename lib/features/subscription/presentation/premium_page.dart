@@ -287,6 +287,7 @@ class _PremiumPageState extends State<PremiumPage> {
             title: 'Guardian Premium',
             subtitle: 'Assinatura anual · PIX',
             child: SectionCard(
+              accentColor: AppColors.textMuted,
               child: Text(
                 'Faça login para assinar.',
                 style: Theme.of(context).textTheme.bodyMedium?.copyWith(
@@ -351,6 +352,7 @@ class _PremiumLoadingScaffold extends StatelessWidget {
       title: 'Guardian Premium',
       subtitle: 'Carregando…',
       child: SectionCard(
+        accentColor: AppColors.textMuted,
         child: Center(
           child: Padding(
             padding: const EdgeInsets.symmetric(vertical: 40),
@@ -391,16 +393,21 @@ class _ActiveView extends StatelessWidget {
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
         SectionCard(
+          accentColor: AppColors.trustHigh,
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.stretch,
             children: [
               _CardTitle(
                 icon: Icons.verified_outlined,
                 label: 'Proteção ativa',
-                trailing: GuardianHeaderChip(
-                  label: 'Ativo',
-                  color: AppColors.trustHigh,
-                  icon: Icons.workspace_premium_outlined,
+                trailing: SizedBox(
+                  width: GuardianHeaderChip.alignedWidth(context, 'Ativo'),
+                  child: GuardianHeaderChip(
+                    label: 'Ativo',
+                    color: AppColors.trustHigh,
+                    icon: Icons.workspace_premium_outlined,
+                    expand: true,
+                  ),
                 ),
               ),
               const SizedBox(height: 12),
@@ -528,16 +535,21 @@ class _CheckoutView extends StatelessWidget {
       children: [
         if (!showingPix)
           SectionCard(
+            accentColor: color,
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.center,
               children: [
                 _CardTitle(
                   icon: Icons.workspace_premium_outlined,
                   label: 'Assinatura anual',
-                  trailing: GuardianHeaderChip(
-                    label: pillLabel,
-                    color: color,
-                    icon: pillIcon,
+                  trailing: SizedBox(
+                    width: GuardianHeaderChip.alignedWidth(context, pillLabel),
+                    child: GuardianHeaderChip(
+                      label: pillLabel,
+                      color: color,
+                      icon: pillIcon,
+                      expand: true,
+                    ),
                   ),
                   centered: true,
                 ),
@@ -579,13 +591,14 @@ class _CheckoutView extends StatelessWidget {
           )
         else
           SectionCard(
+            accentColor: color,
             padding: const EdgeInsets.fromLTRB(16, 12, 16, 12),
             child: Row(
               mainAxisAlignment: MainAxisAlignment.center,
               children: [
                 Icon(
                   Icons.workspace_premium_outlined,
-                  color: AppColors.primary,
+                  color: AppColors.textMuted,
                   size: 20,
                 ),
                 const SizedBox(width: 10),
@@ -599,10 +612,14 @@ class _CheckoutView extends StatelessWidget {
                   ),
                 ),
                 const SizedBox(width: 10),
-                GuardianHeaderChip(
-                  label: pillLabel,
-                  color: color,
-                  icon: pillIcon,
+                SizedBox(
+                  width: GuardianHeaderChip.alignedWidth(context, pillLabel),
+                  child: GuardianHeaderChip(
+                    label: pillLabel,
+                    color: color,
+                    icon: pillIcon,
+                    expand: true,
+                  ),
                 ),
               ],
             ),
@@ -610,6 +627,7 @@ class _CheckoutView extends StatelessWidget {
         const SizedBox(height: 16),
         if (!showingPix)
           SectionCard(
+            accentColor: AppColors.trustHigh,
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.center,
               children: [
@@ -693,6 +711,7 @@ class _PixPanel extends StatelessWidget {
     final expiresLabel = _formatExpiration(charge.expirationDate);
 
     return SectionCard(
+      accentColor: AppColors.trustHigh,
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
@@ -850,11 +869,11 @@ class _CardTitle extends StatelessWidget {
       mainAxisAlignment:
           centered ? MainAxisAlignment.center : MainAxisAlignment.start,
       children: [
-        Icon(icon, color: AppColors.primary, size: 22),
+        Icon(icon, color: AppColors.textMuted, size: 22),
         const SizedBox(width: 10),
         if (centered) title else Expanded(child: title),
         if (trailing != null) ...[
-          const SizedBox(width: 10),
+          const SizedBox(width: 12),
           trailing!,
         ],
       ],

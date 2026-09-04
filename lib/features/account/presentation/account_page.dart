@@ -106,74 +106,66 @@ class _IdentityCard extends StatelessWidget {
     final narrow = MediaQuery.sizeOf(context).width < 560;
 
     return SectionCard(
-      padding: EdgeInsets.zero,
-      child: ClipRRect(
-        borderRadius: BorderRadius.circular(16),
-        child: IntrinsicHeight(
-          child: Row(
-            crossAxisAlignment: CrossAxisAlignment.stretch,
-            children: [
-              Container(width: 4, color: color),
-              Expanded(
-                child: Padding(
-                  padding: const EdgeInsets.fromLTRB(12, 10, 12, 10),
-                  child: Row(
-                    children: [
-                      _Avatar(user: user, size: 44),
-                      const SizedBox(width: 12),
-                      Expanded(
-                        child: Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          mainAxisSize: MainAxisSize.min,
-                          children: [
-                            Text(
-                              _shortLabel(user),
-                              maxLines: 1,
-                              overflow: TextOverflow.ellipsis,
-                              style: theme.textTheme.titleSmall?.copyWith(
-                                fontWeight: FontWeight.w700,
-                              ),
-                            ),
-                            const SizedBox(height: 2),
-                            Text(
-                              user.email?.trim().isNotEmpty == true
-                                  ? user.email!
-                                  : 'Sem e-mail cadastrado',
-                              maxLines: 1,
-                              overflow: TextOverflow.ellipsis,
-                              style: theme.textTheme.bodySmall?.copyWith(
-                                color: AppColors.textMuted,
-                              ),
-                            ),
-                            if (providers.isNotEmpty) ...[
-                              const SizedBox(height: 2),
-                              Text(
-                                'Entrada por ${providers.join(' · ')}',
-                                maxLines: 1,
-                                overflow: TextOverflow.ellipsis,
-                                style: theme.textTheme.bodySmall?.copyWith(
-                                  height: 1.25,
-                                  color: AppColors.textMuted,
-                                ),
-                              ),
-                            ],
-                          ],
-                        ),
-                      ),
-                      if (!narrow) ...[
-                        const SizedBox(width: 12),
-                        DeviceVerifiedChip(
-                          compact: true,
-                          verified: verified,
-                        ),
-                      ],
-                    ],
+      padding: const EdgeInsets.fromLTRB(20, 12, 20, 12),
+      accentColor: color,
+      child: Row(
+        children: [
+          _Avatar(user: user, size: 44),
+          const SizedBox(width: 12),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Text(
+                  _shortLabel(user),
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                  style: theme.textTheme.titleSmall?.copyWith(
+                    fontWeight: FontWeight.w700,
                   ),
                 ),
-              ),
-            ],
+                const SizedBox(height: 2),
+                Text(
+                  user.email?.trim().isNotEmpty == true
+                      ? user.email!
+                      : 'Sem e-mail cadastrado',
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                  style: theme.textTheme.bodySmall?.copyWith(
+                    color: AppColors.textMuted,
+                  ),
+                ),
+                if (providers.isNotEmpty) ...[
+                  const SizedBox(height: 2),
+                  Text(
+                    'Entrada por ${providers.join(' · ')}',
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                    style: theme.textTheme.bodySmall?.copyWith(
+                      height: 1.25,
+                      color: AppColors.textMuted,
+                    ),
+                  ),
+                ],
+              ],
+            ),
           ),
-        ),
+          if (!narrow) ...[
+            const SizedBox(width: 12),
+            SizedBox(
+              width: GuardianHeaderChip.alignedWidth(
+                context,
+                verified ? 'Verificado' : 'Não verificado',
+              ),
+              child: DeviceVerifiedChip(
+                compact: true,
+                verified: verified,
+                expand: true,
+              ),
+            ),
+          ],
+        ],
       ),
     );
   }
@@ -420,16 +412,22 @@ class _PlanCardState extends State<_PlanCard> {
         };
 
         return SectionCard(
+          padding: const EdgeInsets.fromLTRB(20, 12, 20, 20),
+          accentColor: color,
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.stretch,
             children: [
               _CardTitle(
                 icon: Icons.workspace_premium_outlined,
                 label: 'Plano',
-                trailing: GuardianHeaderChip(
-                  label: label,
-                  color: color,
-                  icon: pillIcon,
+                trailing: SizedBox(
+                  width: GuardianHeaderChip.alignedWidth(context, label),
+                  child: GuardianHeaderChip(
+                    label: label,
+                    color: color,
+                    icon: pillIcon,
+                    expand: true,
+                  ),
                 ),
               ),
               const SizedBox(height: 12),
@@ -553,6 +551,7 @@ class _AccountInfoCard extends StatelessWidget {
     ];
 
     return SectionCard(
+      accentColor: verified ? AppColors.trustHigh : AppColors.riskElevated,
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
@@ -629,7 +628,7 @@ class _CardTitle extends StatelessWidget {
   Widget build(BuildContext context) {
     return Row(
       children: [
-        Icon(icon, color: AppColors.primary, size: 22),
+        Icon(icon, color: AppColors.textMuted, size: 22),
         const SizedBox(width: 10),
         Expanded(
           child: Text(
@@ -639,7 +638,10 @@ class _CardTitle extends StatelessWidget {
                 ),
           ),
         ),
-        ?trailing,
+        if (trailing != null) ...[
+          const SizedBox(width: 12),
+          trailing!,
+        ],
       ],
     );
   }
@@ -786,6 +788,7 @@ class _SignedOutCard extends StatelessWidget {
     final theme = Theme.of(context);
 
     return SectionCard(
+      accentColor: AppColors.textMuted,
       child: Column(
         mainAxisSize: MainAxisSize.min,
         children: [

@@ -131,7 +131,7 @@ class _DevicesBodyState extends State<_DevicesBody> {
                   DevicePairingCard(uid: widget.uid),
                 ],
                 if (snapshot.hasReleased) ...[
-                  const SizedBox(height: 18),
+                  const SizedBox(height: 16),
                   _SectionLabel(
                     icon: Icons.history,
                     label: 'Histórico',
@@ -167,7 +167,7 @@ class _SectionLabel extends StatelessWidget {
   Widget build(BuildContext context) {
     return Row(
       children: [
-        Icon(icon, size: 16, color: AppColors.primary),
+        Icon(icon, size: 16, color: AppColors.textMuted),
         const SizedBox(width: 8),
         Expanded(
           child: Text(
