@@ -7,6 +7,7 @@ import 'package:guardian_portal/core/theme/theme_scope.dart';
 import 'package:guardian_portal/core/widgets/guardian_scaffold.dart';
 import 'package:guardian_portal/core/widgets/online_refresh.dart';
 import 'package:guardian_portal/core/widgets/live_status_tile.dart';
+import 'package:guardian_portal/core/widgets/relative_time.dart';
 import 'package:guardian_portal/core/widgets/section_card.dart';
 import 'package:guardian_portal/features/dashboard/application/dashboard_service.dart';
 import 'package:guardian_portal/features/dashboard/domain/device_status.dart';
@@ -204,6 +205,16 @@ class _DeviceInfoCard extends StatelessWidget {
             '$_platformLabel · Guardian Sense App v${status.appVersionLabel}',
             style: DashboardTypography.cardSubtitle(context),
           ),
+          const SizedBox(height: 2),
+          Text(
+            _syncLabel(status.lastSeen),
+            style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                  color: status.isOnline
+                      ? AppColors.textMuted
+                      : AppColors.trustMedium,
+                  height: 1.35,
+                ),
+          ),
           const SizedBox(height: 12),
           LiveStatusGrid(
             children: [
@@ -254,6 +265,13 @@ class _DeviceInfoCard extends StatelessWidget {
     if (index >= 50) return AppColors.trustMedium;
     return AppColors.riskCritical;
   }
+
+  static String _syncLabel(DateTime? lastSeen) {
+    final relative = formatRelativeTime(lastSeen);
+    if (relative == '—') return 'Sem sincronização';
+    if (relative == 'agora') return 'Sincronizado agora';
+    return 'Sincronizado $relative';
+  }
 }
 
 class _AppearanceCard extends StatelessWidget {
@@ -288,7 +306,7 @@ class _AppearanceCard extends StatelessWidget {
           const SizedBox(height: 6),
           Text(
             'A preferência fica salva neste navegador.',
-            style: Theme.of(context).textTheme.bodyMedium,
+            style: DashboardTypography.cardSubtitle(context),
           ),
           const SizedBox(height: 14),
           Row(
