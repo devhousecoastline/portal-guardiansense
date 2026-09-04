@@ -357,7 +357,7 @@ class _AppearanceCard extends StatelessWidget {
   }
 }
 
-/// Switch com track em pill — visual alinhado aos FilterChips de Eventos.
+/// Switch com track em pill — controle binário compacto.
 class _PillSwitch extends StatelessWidget {
   const _PillSwitch({
     required this.value,
