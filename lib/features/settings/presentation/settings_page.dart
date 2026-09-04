@@ -179,6 +179,7 @@ class _DeviceInfoCard extends StatelessWidget {
     };
 
     return SectionCard(
+      accentColor: _statusTone(status),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
@@ -253,6 +254,17 @@ class _DeviceInfoCard extends StatelessWidget {
     );
   }
 
+  static Color _statusTone(DeviceStatus status) {
+    if (!status.isOnline) return AppColors.textMuted;
+    return switch (status.level) {
+      ProtectionLevel.protected => AppColors.trustHigh,
+      ProtectionLevel.partial => AppColors.trustMedium,
+      ProtectionLevel.alert => AppColors.riskCritical,
+      ProtectionLevel.offline => AppColors.textMuted,
+      ProtectionLevel.unknown => AppColors.textMuted,
+    };
+  }
+
   static Color _signalColor(ChecklistSignal signal) => switch (signal) {
         ChecklistSignal.ok => AppColors.trustHigh,
         ChecklistSignal.warn => AppColors.trustMedium,
@@ -282,6 +294,7 @@ class _AppearanceCard extends StatelessWidget {
     final theme = ThemeScope.of(context);
 
     return SectionCard(
+      accentColor: AppColors.textMuted,
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [

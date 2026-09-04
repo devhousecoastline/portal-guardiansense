@@ -129,6 +129,12 @@ class _ProtectedLayersCardState extends State<ProtectedLayersCard> {
         ProtectedLayerSnapshot.protectableUnprotectedTargets(layers);
 
     return SectionCard(
+      accentColor: _layersTone(
+        muted: muted,
+        hasSnapshot: hasSnapshot,
+        active: active,
+        layers: layers,
+      ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
@@ -238,6 +244,19 @@ class _ProtectedLayersCardState extends State<ProtectedLayersCard> {
         ? '1 fora da proteção'
         : '$outside fora da proteção';
     return '$outLabel · $categories $catWord';
+  }
+
+  static Color _layersTone({
+    required bool muted,
+    required bool hasSnapshot,
+    required List<ProtectedLayerSummary> active,
+    required List<ProtectedLayerSummary> layers,
+  }) {
+    if (muted || !hasSnapshot) return AppColors.textMuted;
+    if (active.isEmpty) return AppColors.textMuted;
+    final outside = ProtectedLayerSnapshot.totalUnprotectedApps(layers);
+    if (outside > 0) return AppColors.trustMedium;
+    return AppColors.trustHigh;
   }
 }
 
