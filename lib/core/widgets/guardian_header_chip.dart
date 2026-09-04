@@ -19,6 +19,27 @@ class GuardianHeaderChip extends StatelessWidget {
   /// Preenche a largura do pai (ex.: empilhar chips com a mesma largura).
   final bool expand;
 
+  /// Largura alinhada a `Verificado` (rótulos maiores crescem se precisar).
+  static double alignedWidth(BuildContext context, String label) {
+    final style = Theme.of(context).textTheme.bodySmall?.copyWith(
+          fontWeight: FontWeight.w600,
+        );
+    final direction = Directionality.of(context);
+    double measure(String text) {
+      final painter = TextPainter(
+        text: TextSpan(text: text, style: style),
+        textDirection: direction,
+        maxLines: 1,
+      )..layout();
+      // ícone 15 + gap 8 + texto + padding 10×2 + borda 1×2
+      return 15 + 8 + painter.width + 20 + 2;
+    }
+
+    final verifiedWidth = measure('Verificado');
+    final labelWidth = measure(label);
+    return verifiedWidth > labelWidth ? verifiedWidth : labelWidth;
+  }
+
   @override
   Widget build(BuildContext context) {
     return Container(

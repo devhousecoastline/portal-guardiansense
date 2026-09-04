@@ -154,7 +154,7 @@ class _IdentityCard extends StatelessWidget {
           if (!narrow) ...[
             const SizedBox(width: 12),
             SizedBox(
-              width: _accountStatusChipWidth(
+              width: GuardianHeaderChip.alignedWidth(
                 context,
                 verified ? 'Verificado' : 'Não verificado',
               ),
@@ -421,7 +421,7 @@ class _PlanCardState extends State<_PlanCard> {
                 icon: Icons.workspace_premium_outlined,
                 label: 'Plano',
                 trailing: SizedBox(
-                  width: _accountStatusChipWidth(context, label),
+                  width: GuardianHeaderChip.alignedWidth(context, label),
                   child: GuardianHeaderChip(
                     label: label,
                     color: color,
@@ -849,27 +849,6 @@ class _SignedOutCard extends StatelessWidget {
     default:
       return (providerId, Icons.verified_user_outlined);
   }
-}
-
-/// Largura fixa alinhada ao chip `Verificado` (rótulos maiores crescem se precisar).
-double _accountStatusChipWidth(BuildContext context, String label) {
-  final style = Theme.of(context).textTheme.bodySmall?.copyWith(
-        fontWeight: FontWeight.w600,
-      );
-  final direction = Directionality.of(context);
-  double measure(String text) {
-    final painter = TextPainter(
-      text: TextSpan(text: text, style: style),
-      textDirection: direction,
-      maxLines: 1,
-    )..layout();
-    // ícone 15 + gap 8 + texto + padding 10×2 + borda 1×2
-    return 15 + 8 + painter.width + 20 + 2;
-  }
-
-  final verifiedWidth = measure('Verificado');
-  final labelWidth = measure(label);
-  return verifiedWidth > labelWidth ? verifiedWidth : labelWidth;
 }
 
 String _shortLabel(User user) {
