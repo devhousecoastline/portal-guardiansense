@@ -1,6 +1,5 @@
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
-import 'package:guardian_portal/core/layout/app_layout.dart';
 import 'package:guardian_portal/core/theme/app_colors.dart';
 import 'package:guardian_portal/core/widgets/guardian_confirm_dialog.dart';
 import 'package:guardian_portal/core/widgets/live_status_tile.dart';
@@ -311,36 +310,18 @@ class _LayersGrid extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return LayoutBuilder(
-      builder: (context, constraints) {
-        final columns = _columnCount(constraints.maxWidth);
-
-        return GridView.builder(
-          shrinkWrap: true,
-          physics: const NeverScrollableScrollPhysics(),
-          gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
-            crossAxisCount: columns,
-            mainAxisSpacing: 8,
-            crossAxisSpacing: 8,
-            mainAxisExtent: 56,
+    return LiveStatusGrid(
+      children: [
+        for (final layer in layers)
+          _LayerTile(
+            uid: uid,
+            deviceId: deviceId,
+            layer: layer,
+            muted: muted,
+            extraProtectEnabled: extraProtectEnabled,
           ),
-          itemCount: layers.length,
-          itemBuilder: (context, index) => _LayerTile(
-                uid: uid,
-                deviceId: deviceId,
-                layer: layers[index],
-                muted: muted,
-                extraProtectEnabled: extraProtectEnabled,
-              ),
-        );
-      },
+      ],
     );
-  }
-
-  static int _columnCount(double width) {
-    if (width >= AppLayout.dashboardRowBreakpoint) return 4;
-    if (width >= AppLayout.checklistTwoColBreakpoint) return 3;
-    return 2;
   }
 }
 

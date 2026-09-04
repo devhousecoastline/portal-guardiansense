@@ -7,7 +7,6 @@ import 'package:guardian_portal/core/theme/theme_scope.dart';
 import 'package:guardian_portal/core/widgets/guardian_scaffold.dart';
 import 'package:guardian_portal/core/widgets/online_refresh.dart';
 import 'package:guardian_portal/core/widgets/live_status_tile.dart';
-import 'package:guardian_portal/core/widgets/relative_time.dart';
 import 'package:guardian_portal/core/widgets/section_card.dart';
 import 'package:guardian_portal/features/dashboard/application/dashboard_service.dart';
 import 'package:guardian_portal/features/dashboard/domain/device_status.dart';
@@ -60,14 +59,12 @@ class _SettingsPageState extends State<SettingsPage> {
                     const RefreshTickBar(visible: true),
                   if (initialLoad)
                     const Center(child: CircularProgressIndicator())
-                  else ...[
-                    const _AppearanceCard(),
+                  else if (device == null) ...[
+                    EmptyDevicesCard(uid: uid),
                     const SizedBox(height: 16),
-                    if (device == null)
-                      EmptyDevicesCard(uid: uid)
-                    else
-                      _SettingsBody(uid: uid, status: device.status),
-                  ],
+                    const _AppearanceCard(),
+                  ] else
+                    _SettingsBody(uid: uid, status: device.status),
                 ],
               ),
             );
@@ -107,6 +104,8 @@ class _SettingsBody extends StatelessWidget {
               status: status,
               recovery: _item('recovery'),
             ),
+            const SizedBox(height: 16),
+            const _AppearanceCard(),
             const SizedBox(height: 16),
             ProtectedLayersCard(
               uid: uid,
@@ -192,7 +191,7 @@ class _DeviceInfoCard extends StatelessWidget {
               const SizedBox(width: 10),
               Expanded(
                 child: Text(
-                  'Aparelho vinculado',
+                  'Status do aparelho',
                   style: Theme.of(context).textTheme.titleMedium?.copyWith(
                         fontWeight: FontWeight.w600,
                       ),
@@ -205,44 +204,36 @@ class _DeviceInfoCard extends StatelessWidget {
             '$_platformLabel · Guardian Sense App v${status.appVersionLabel}',
             style: DashboardTypography.cardSubtitle(context),
           ),
-          const SizedBox(height: 10),
-          Wrap(
-            spacing: 12,
-            runSpacing: 10,
+          const SizedBox(height: 12),
+          LiveStatusGrid(
             children: [
               LiveStatusTile(
                 icon: phoneIcon,
                 label: status.modelLabel,
                 value: deviceValue,
                 accent: deviceAccent,
-              ),
-              LiveStatusTile(
-                icon: status.isOnline
-                    ? Icons.wifi_rounded
-                    : Icons.wifi_off_rounded,
-                label: status.isOnline ? 'Online' : 'Offline',
-                value: formatRelativeTime(status.lastSeen),
-                accent: status.isOnline
-                    ? AppColors.trustHigh
-                    : AppColors.textMuted,
+                compact: true,
               ),
               LiveStatusTile(
                 icon: Icons.memory_rounded,
                 label: 'Runtime',
                 value: runtime.answer,
                 accent: _signalColor(runtime.signal),
+                compact: true,
               ),
               LiveStatusTile(
                 icon: Icons.lock_outline_rounded,
                 label: 'Ostra',
                 value: oyster.answer,
                 accent: _signalColor(oyster.signal),
+                compact: true,
               ),
               LiveStatusTile(
                 icon: Icons.pin_outlined,
                 label: 'PIN / biometria',
                 value: recoveryValue,
                 accent: recoveryAccent,
+                compact: true,
               ),
             ],
           ),
