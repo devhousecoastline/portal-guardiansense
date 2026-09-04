@@ -26,6 +26,11 @@ class SectionCard extends StatelessWidget {
         ? padding.copyWith(left: padding.left + _accentWidth)
         : padding;
 
+    final paddedChild = Padding(
+      padding: contentPadding,
+      child: child,
+    );
+
     return Container(
       width: double.infinity,
       height: expandVertically ? double.infinity : null,
@@ -38,11 +43,9 @@ class SectionCard extends StatelessWidget {
       ),
       child: hasAccent
           ? Stack(
+              fit: expandVertically ? StackFit.expand : StackFit.loose,
               children: [
-                Padding(
-                  padding: contentPadding,
-                  child: child,
-                ),
+                paddedChild,
                 Positioned(
                   left: 0,
                   top: 0,
@@ -52,10 +55,7 @@ class SectionCard extends StatelessWidget {
                 ),
               ],
             )
-          : Padding(
-              padding: contentPadding,
-              child: child,
-            ),
+          : paddedChild,
     );
   }
 }

@@ -140,7 +140,7 @@ class _ProtectedLayersCardState extends State<ProtectedLayersCard> {
         children: [
           Row(
             children: [
-              Icon(Icons.layers_outlined, color: AppColors.primary, size: 22),
+              Icon(Icons.layers_outlined, color: AppColors.textMuted, size: 22),
               const SizedBox(width: 10),
               Expanded(
                 child: Text(

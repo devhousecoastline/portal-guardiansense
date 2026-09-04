@@ -135,6 +135,11 @@ class _RemoteContainmentCardState extends State<RemoteContainmentCard> {
 
         return SectionCard(
           expandVertically: widget.expandVertically,
+          accentColor: !widget.status.isOnline
+              ? AppColors.textMuted
+              : oysterClosed
+                  ? AppColors.trustMedium
+                  : AppColors.trustHigh,
           padding: EdgeInsets.fromLTRB(
             20,
             widget.compact ? 12 : 18,

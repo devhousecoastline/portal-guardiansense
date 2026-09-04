@@ -41,6 +41,7 @@ class ProtectionStatusHero extends StatelessWidget {
       height: expands ? double.infinity : null,
       child: SectionCard(
         expandVertically: expands,
+        accentColor: accent,
         padding: EdgeInsets.fromLTRB(
           20,
           compact ? 12 : 18,

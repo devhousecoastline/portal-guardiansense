@@ -131,7 +131,7 @@ class _DevicesBodyState extends State<_DevicesBody> {
                   DevicePairingCard(uid: widget.uid),
                 ],
                 if (snapshot.hasReleased) ...[
-                  const SizedBox(height: 18),
+                  const SizedBox(height: 16),
                   _SectionLabel(
                     icon: Icons.history,
                     label: 'Histórico',

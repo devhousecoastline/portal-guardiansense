@@ -187,7 +187,7 @@ class _DeviceInfoCard extends StatelessWidget {
             children: [
               Icon(
                 Icons.smartphone_outlined,
-                color: AppColors.primary,
+                color: AppColors.textMuted,
                 size: 22,
               ),
               const SizedBox(width: 10),
@@ -302,7 +302,7 @@ class _AppearanceCard extends StatelessWidget {
             children: [
               Icon(
                 Icons.palette_outlined,
-                color: AppColors.primary,
+                color: AppColors.textMuted,
                 size: 22,
               ),
               const SizedBox(width: 10),

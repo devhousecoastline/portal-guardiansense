@@ -185,7 +185,7 @@ class _DayDetailsBodyState extends State<_DayDetailsBody> {
           padding: const EdgeInsets.only(bottom: 10),
           child: Row(
             children: [
-              Icon(Icons.insights_outlined, size: 16, color: AppColors.primary),
+              Icon(Icons.insights_outlined, size: 16, color: AppColors.textMuted),
               const SizedBox(width: 8),
               Expanded(
                 child: Text(
