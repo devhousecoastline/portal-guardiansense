@@ -4,10 +4,12 @@ import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 import 'package:guardian_portal/core/routing/app_routes.dart';
+import 'package:guardian_portal/core/theme/app_colors.dart';
 import 'package:guardian_portal/features/auth/application/auth_controller.dart';
 import 'package:guardian_portal/features/auth/presentation/widgets/auth_footer.dart';
 import 'package:guardian_portal/features/auth/presentation/widgets/auth_page_shell.dart';
 import 'package:guardian_portal/features/auth/presentation/widgets/auth_scope.dart';
+import 'package:guardian_portal/features/auth/presentation/widgets/auth_surface_card.dart';
 import 'package:guardian_portal/features/auth/presentation/widgets/login_brand_panel.dart';
 import 'package:guardian_portal/features/auth/presentation/widgets/login_form_card.dart';
 import 'package:guardian_portal/features/info/presentation/privacy_consent_scope.dart';
@@ -163,7 +165,12 @@ class _LoginPageState extends State<LoginPage> {
     context.go(uri);
   }
 
-  Widget _formCard(AuthController auth, {required bool busy}) {
+  Widget _formCard(
+    AuthController auth, {
+    required bool busy,
+    bool fillHeight = false,
+    bool embedded = false,
+  }) {
     return LoginFormCard(
       formKey: _formKey,
       email: _email,
@@ -171,6 +178,8 @@ class _LoginPageState extends State<LoginPage> {
       creating: _creating,
       busy: busy,
       error: _error,
+      fillHeight: fillHeight,
+      embedded: embedded,
       onSubmit: () => _submit(auth),
       onGoogleSignIn: () => _signInWithGoogle(auth),
       onToggleMode: () => _setCreating(!_creating),
@@ -187,50 +196,100 @@ class _LoginPageState extends State<LoginPage> {
     final waitingConsent = auth.user != null && !consent.isReady;
     final busy = _busy || waitingConsent;
     final wide = MediaQuery.sizeOf(context).width >= 900;
-    final form = _formCard(auth, busy: busy);
 
     return AuthPageShell(
       stickyFooter: wide,
       body: wide
-          ? _DesktopLoginBody(form: form)
-          : _MobileLoginBody(form: form),
+          ? _DesktopLoginBody(
+              // Remonta ao trocar modo/erro para re-medir a altura do card.
+              key: ValueKey('$_creating|${_error ?? ''}'),
+              formBuilder: (fill) => _formCard(
+                auth,
+                busy: busy,
+                fillHeight: fill,
+                embedded: true,
+              ),
+            )
+          : _MobileLoginBody(form: _formCard(auth, busy: busy)),
     );
   }
 }
 
-class _DesktopLoginBody extends StatelessWidget {
-  const _DesktopLoginBody({required this.form});
+class _DesktopLoginBody extends StatefulWidget {
+  const _DesktopLoginBody({super.key, required this.formBuilder});
 
-  final Widget form;
+  final Widget Function(bool fillHeight) formBuilder;
+
+  @override
+  State<_DesktopLoginBody> createState() => _DesktopLoginBodyState();
+}
+
+class _DesktopLoginBodyState extends State<_DesktopLoginBody> {
+  final _brandKey = GlobalKey();
+  final _formKey = GlobalKey();
+  double? _syncedHeight;
+
+  void _syncHeights() {
+    final brandH = _brandKey.currentContext?.size?.height;
+    final formH = _formKey.currentContext?.size?.height;
+    if (brandH == null || formH == null) return;
+    final next = brandH > formH ? brandH : formH;
+    if (_syncedHeight != null && (next - _syncedHeight!).abs() < 1) return;
+    setState(() => _syncedHeight = next);
+  }
 
   @override
   Widget build(BuildContext context) {
+    final synced = _syncedHeight;
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (mounted) _syncHeights();
+    });
+
     return LayoutBuilder(
       builder: (context, constraints) {
-        // Escudo menor para caber tagline, bullets e CTA da loja.
-        final logoSize = (constraints.maxHeight * 0.26).clamp(148.0, 188.0);
+        final logoSize = (constraints.maxHeight * 0.14).clamp(96.0, 128.0);
 
         return Center(
           child: SingleChildScrollView(
             padding: const EdgeInsets.symmetric(horizontal: 40, vertical: 28),
             child: ConstrainedBox(
-              constraints: const BoxConstraints(maxWidth: 920),
-              child: IntrinsicHeight(
+              constraints: const BoxConstraints(maxWidth: 840),
+              child: AuthSurfaceCard(
+                padding: EdgeInsets.zero,
                 child: Row(
-                  crossAxisAlignment: CrossAxisAlignment.stretch,
+                  crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     Expanded(
-                      flex: 5,
-                      child: LoginBrandPanel(logoSize: logoSize),
+                      child: SizedBox(
+                        key: _brandKey,
+                        height: synced,
+                        child: Padding(
+                          padding: const EdgeInsets.fromLTRB(22, 22, 18, 22),
+                          child: LoginBrandPanel(
+                            logoSize: logoSize,
+                            embedded: true,
+                            fillHeight: synced != null,
+                          ),
+                        ),
+                      ),
                     ),
-                    const SizedBox(width: 8),
+                    SizedBox(
+                      height: synced,
+                      child: VerticalDivider(
+                        width: 20,
+                        thickness: 1,
+                        indent: 16,
+                        endIndent: 16,
+                        color: AppColors.divider.withValues(alpha: 0.28),
+                      ),
+                    ),
                     Expanded(
-                      flex: 5,
-                      child: Align(
-                        alignment: Alignment.topCenter,
-                        child: ConstrainedBox(
-                          constraints: const BoxConstraints(maxWidth: 400),
-                          child: form,
+                      child: SizedBox(
+                        key: _formKey,
+                        height: synced,
+                        child: Padding(
+                          padding: const EdgeInsets.fromLTRB(18, 22, 22, 22),
+                          child: widget.formBuilder(synced != null),
                         ),
                       ),
                     ),

@@ -16,6 +16,9 @@ class GuardianPillButton extends StatefulWidget {
     this.compact = false,
   }) : assert(icon != null || leading != null);
 
+  /// Altura visual do pill padrão (ícone 19 + pad 13×2 + borda).
+  static const double standardHeight = 48;
+
   final String label;
   final IconData? icon;
   final Widget? leading;

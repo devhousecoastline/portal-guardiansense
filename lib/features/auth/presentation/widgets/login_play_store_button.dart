@@ -21,6 +21,7 @@ class LoginPlayStoreButton extends StatelessWidget {
         label: AppConstants.loginStoreCta,
         icon: Icons.android,
         iconLeading: true,
+        fullWidth: true,
         onPressed: open,
       ),
     );
