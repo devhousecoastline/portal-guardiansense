@@ -4,15 +4,76 @@
   <base href="$FLUTTER_BASE_HREF">
   <meta charset="UTF-8">
   <meta content="IE=Edge" http-equiv="X-UA-Compatible">
-  <meta name="description" content="Guardian Sense — Centro de Segurança. Seu aparelho continua protegido mesmo quando não está mais nas suas mãos.">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+  <title>Guardian Sense | Central de Proteção do celular</title>
+  <meta name="description" content="Guardian Sense — Central de Proteção. Seu celular continua protegido, mesmo quando está longe de você. Localize, acompanhe alertas e aja pelo portal.">
   <meta name="theme-color" content="#0B0F14">
+  <link rel="canonical" href="https://guardian-sense.com/">
+
+  <!-- Open Graph -->
+  <meta property="og:type" content="website">
+  <meta property="og:locale" content="pt_BR">
+  <meta property="og:url" content="https://guardian-sense.com/">
+  <meta property="og:site_name" content="Guardian Sense">
+  <meta property="og:title" content="Guardian Sense | Central de Proteção do celular">
+  <meta property="og:description" content="Guardian Sense — Central de Proteção. Seu celular continua protegido, mesmo quando está longe de você. Localize, acompanhe alertas e aja pelo portal.">
+  <meta property="og:image" content="https://guardian-sense.com/og-image.png">
+  <meta property="og:image:width" content="1200">
+  <meta property="og:image:height" content="630">
+
+  <!-- Twitter -->
+  <meta name="twitter:card" content="summary_large_image">
+  <meta name="twitter:title" content="Guardian Sense | Central de Proteção do celular">
+  <meta name="twitter:description" content="Guardian Sense — Central de Proteção. Seu celular continua protegido, mesmo quando está longe de você. Localize, acompanhe alertas e aja pelo portal.">
+  <meta name="twitter:image" content="https://guardian-sense.com/og-image.png">
+
   <meta name="mobile-web-app-capable" content="yes">
   <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
   <meta name="apple-mobile-web-app-title" content="Guardian Sense">
   <link rel="apple-touch-icon" href="icons/Icon-192.png">
   <link rel="icon" type="image/png" href="favicon.png"/>
-  <title>Guardian Sense</title>
   <link rel="manifest" href="manifest.json">
+
+  <script type="application/ld+json">
+  {
+    "@context": "https://schema.org",
+    "@type": "WebApplication",
+    "name": "Guardian Sense",
+    "alternateName": "Central de Proteção",
+    "url": "https://guardian-sense.com/",
+    "description": "Guardian Sense — Central de Proteção. Seu celular continua protegido, mesmo quando está longe de você. Localize, acompanhe alertas e aja pelo portal.",
+    "applicationCategory": "SecurityApplication",
+    "operatingSystem": "Android, Web",
+    "inLanguage": "pt-BR",
+    "offers": {
+      "@type": "Offer",
+      "price": "0",
+      "priceCurrency": "BRL"
+    },
+    "publisher": {
+      "@type": "Organization",
+      "name": "Guardian Sense",
+      "url": "https://guardian-sense.com/"
+    }
+  }
+  </script>
+
+  <style>
+    /* Conteúdo para crawladores; o Flutter cobre a UI após carregar. */
+    .seo-content {
+      position: absolute;
+      width: 1px;
+      height: 1px;
+      padding: 0;
+      margin: -1px;
+      overflow: hidden;
+      clip: rect(0, 0, 0, 0);
+      white-space: nowrap;
+      border: 0;
+    }
+  </style>
+
   <!-- Portal atualiza com frequência: remove SW antigo do Flutter (cache teimoso). -->
   <script>
     if ('serviceWorker' in navigator) {
@@ -32,6 +93,28 @@
   </script>
 </head>
 <body>
+  <main class="seo-content">
+    <h1>Guardian Sense</h1>
+    <p>
+      Central de Proteção do celular. Seu celular continua protegido, mesmo quando
+      está longe de você. Localize o celular, acompanhe alertas e aja pelo portal
+      com a mesma conta do app.
+    </p>
+    <ul>
+      <li>Se o celular for levado, os apps críticos que você configurou ficam sem acesso.</li>
+      <li>Localize o celular e acompanhe o que aconteceu, tudo do portal.</li>
+      <li>Veja no portal o status, os alertas e a proteção do seu celular.</li>
+    </ul>
+    <p>
+      <a href="https://play.google.com/store/apps/details?id=com.guardiansense.app">Baixar na Play Store</a>
+      ·
+      <a href="/#/privacy">Privacidade</a>
+      ·
+      <a href="/#/about">Sobre</a>
+      ·
+      <a href="/#/login">Entrar no portal</a>
+    </p>
+  </main>
   <script src="flutter_bootstrap.js" async></script>
 </body>
 </html>

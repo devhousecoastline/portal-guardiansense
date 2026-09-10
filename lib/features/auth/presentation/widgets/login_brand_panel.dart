@@ -2,7 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:guardian_portal/app/constants.dart';
 import 'package:guardian_portal/core/theme/app_colors.dart';
 import 'package:guardian_portal/core/widgets/guardian_logo.dart';
-import 'package:guardian_portal/features/auth/presentation/widgets/login_play_store_button.dart';
+import 'package:guardian_portal/features/auth/presentation/widgets/auth_surface_card.dart';
 
 /// Painel de marca do login: produto à esquerda (desktop) ou acima do card (mobile).
 class LoginBrandPanel extends StatelessWidget {
@@ -11,15 +11,23 @@ class LoginBrandPanel extends StatelessWidget {
     this.logoSize = 220,
     this.centered = false,
     this.showHighlights = true,
+    this.fillHeight = false,
+    this.embedded = false,
   });
 
   final double logoSize;
 
-  /// Mobile: textos centralizados e CTA em largura total.
+  /// Mobile: textos centralizados.
   final bool centered;
 
   /// Em telas baixas o mobile omite os bullets para caber o formulário.
   final bool showHighlights;
+
+  /// Desktop: preenche altura sincronizada com o formulário.
+  final bool fillHeight;
+
+  /// Dentro do card unificado (sem chrome próprio).
+  final bool embedded;
 
   static const _highlightIcons = <IconData>[
     Icons.lock_outline_rounded,
@@ -29,71 +37,60 @@ class LoginBrandPanel extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final align = centered ? TextAlign.center : TextAlign.left;
-
-    return Align(
-      alignment: centered ? Alignment.topCenter : Alignment.topLeft,
-      child: SizedBox(
-        width: centered ? null : 360,
-        child: Column(
-          crossAxisAlignment:
-              centered ? CrossAxisAlignment.stretch : CrossAxisAlignment.start,
-          mainAxisSize:
-              centered ? MainAxisSize.min : MainAxisSize.max,
-          children: [
-            Align(
-              alignment: centered ? Alignment.center : Alignment.centerLeft,
-              child: Transform.translate(
-                offset: centered ? Offset.zero : const Offset(-4, -8),
-                child: GuardianLogo(size: logoSize, breathe: true),
-              ),
+    final body = Column(
+      crossAxisAlignment:
+          centered ? CrossAxisAlignment.stretch : CrossAxisAlignment.start,
+      mainAxisSize: MainAxisSize.min,
+      children: [
+        Align(
+          alignment: Alignment.center,
+          child: GuardianLogo(size: logoSize, breathe: true),
+        ),
+        const SizedBox(height: 4),
+        Align(
+          alignment: Alignment.center,
+          child: Text(
+            AppConstants.appName,
+            textAlign: TextAlign.center,
+            style: (centered
+                    ? Theme.of(context).textTheme.titleLarge
+                    : Theme.of(context).textTheme.headlineSmall)
+                ?.copyWith(
+              fontWeight: FontWeight.w700,
+              height: 1.15,
             ),
-            Transform.translate(
-              offset: Offset(0, centered ? -6 : -18),
-              child: Text(
-                AppConstants.appName,
-                textAlign: align,
-                style: (centered
-                        ? Theme.of(context).textTheme.titleLarge
-                        : Theme.of(context).textTheme.headlineSmall)
-                    ?.copyWith(
-                  fontWeight: FontWeight.w700,
-                  height: 1.15,
+          ),
+        ),
+        const SizedBox(height: 14),
+        SizedBox(
+          width: double.infinity,
+          child: Text(
+            AppConstants.tagline,
+            textAlign: TextAlign.center,
+            style: Theme.of(context).textTheme.bodyLarge?.copyWith(
+                  color: AppColors.textMuted,
+                  height: 1.35,
+                  fontWeight: FontWeight.w500,
                 ),
-              ),
-            ),
-            Text(
-              AppConstants.tagline,
-              textAlign: align,
-              style: Theme.of(context).textTheme.bodyLarge?.copyWith(
-                    color: AppColors.textMuted,
-                    height: 1.4,
-                    fontWeight: FontWeight.w500,
-                  ),
-            ),
-            if (showHighlights) ...[
-              SizedBox(height: centered ? 16 : 20),
-              for (var i = 0; i < AppConstants.loginHighlights.length; i++) ...[
-                if (i > 0) SizedBox(height: centered ? 8 : 10),
-                _HighlightRow(
-                  icon: _highlightIcons[i],
-                  label: AppConstants.loginHighlights[i],
-                  centered: centered,
-                ),
-              ],
-            ],
-            if (centered)
-              const SizedBox(height: 16)
-            else
-              const Spacer(),
-            Align(
-              alignment: centered ? Alignment.center : Alignment.centerLeft,
-              child: const LoginPlayStoreButton(),
+          ),
+        ),
+        if (showHighlights) ...[
+          SizedBox(height: centered ? 18 : 22),
+          for (var i = 0; i < AppConstants.loginHighlights.length; i++) ...[
+            if (i > 0) const SizedBox(height: 14),
+            _HighlightRow(
+              icon: _highlightIcons[i],
+              label: AppConstants.loginHighlights[i],
+              centered: centered,
             ),
           ],
-        ),
-      ),
+        ],
+      ],
     );
+
+    final child = fillHeight ? SizedBox.expand(child: body) : body;
+    if (embedded) return child;
+    return AuthSurfaceCard(child: child);
   }
 }
 

@@ -4,7 +4,7 @@ abstract final class AppConstants {
   static const String portalTitle = 'Central de Proteção';
   static const String loginCardTitle = 'Já tem o app? Entre';
   static const String tagline =
-      'Seu aparelho continua protegido. Mesmo quando está longe de você.';
+      'Seu celular continua protegido. Mesmo quando está longe de você.';
   static const String loginCardSubtitle =
       'Use a mesma conta do Guardian Sense no celular.';
   static const String loginStoreCta = 'Baixar na Play Store';
@@ -19,8 +19,8 @@ abstract final class AppConstants {
   /// - cada deploy sobe o patch (`1.0.0` → `1.0.1`) e o build (`+1` → `+2`);
   /// - minor/major só em mudança grande de produto.
   /// Manter igual ao `version:` do pubspec.yaml (`x.y.z+build`).
-  static const String portalVersion = '1.0.29';
-  static const int portalBuild = 30;
+  static const String portalVersion = '1.0.30';
+  static const int portalBuild = 31;
 
   /// Landing "Em desenvolvimento" na `/`.
   ///
@@ -30,9 +30,9 @@ abstract final class AppConstants {
 
   /// Destaques do painel de marca na login.
   static const List<String> loginHighlights = [
-    'Se o celular for levado, os apps críticos travam sozinhos.',
-    'Daqui você vê o que aconteceu e onde o aparelho está.',
-    'Primeiro o app no celular; depois esta central, com a mesma conta.',
+    'Se o celular for levado, os apps críticos que você configurou ficam sem acesso.',
+    'Localize o celular e acompanhe o que aconteceu, tudo do portal.',
+    'Veja no portal o status, os alertas e a proteção do seu celular.',
   ];
 
   /// Largura máxima do layout desktop da login.
