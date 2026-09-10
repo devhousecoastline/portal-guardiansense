@@ -1,0 +1,19 @@
+# Guardian Sense — portal público
+# https://guardian-sense.com/
+
+User-agent: *
+Allow: /
+
+# Área autenticada / interna (paths; hash routes ainda dependem do HTML da home)
+Disallow: /dashboard
+Disallow: /events
+Disallow: /events-details
+Disallow: /locate
+Disallow: /devices
+Disallow: /settings
+Disallow: /account
+Disallow: /premium
+Disallow: /privacy-consent
+Disallow: /pair
+
+Sitemap: https://guardian-sense.com/sitemap.xml
