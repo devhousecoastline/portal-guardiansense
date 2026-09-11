@@ -234,6 +234,13 @@ service cloud.firestore {
           allow delete: if isOwner(userId);
         }
 
+        // Histórico de GPS (trilha Localizar) — append pelo app; portal só lê.
+        match /locations/{pointId} {
+          allow read: if isOwner(userId);
+          allow create, update: if isOwner(userId);
+          allow delete: if isOwner(userId);
+        }
+
         match /commands/{commandId} {
           allow read: if isOwner(userId);
           allow create: if isOwner(userId) && isValidCommandCreate();
