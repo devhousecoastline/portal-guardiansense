@@ -28,7 +28,7 @@ final class SubscriptionEntitlement {
   final String? store;
   final String? pixPaymentId;
 
-  static const trialDuration = Duration(days: 7);
+  static const trialDuration = Duration(days: 14);
   static const annualDuration = Duration(days: 365);
 
   bool isEntitledAt(DateTime now) {
@@ -64,7 +64,8 @@ final class SubscriptionEntitlement {
     final ms = trialEndsAt.difference(now).inMilliseconds;
     if (ms <= 0) return 0;
     const dayMs = 24 * 60 * 60 * 1000;
-    return ((ms + dayMs - 1) ~/ dayMs).clamp(1, 7);
+    final maxDays = trialDuration.inDays;
+    return ((ms + dayMs - 1) ~/ dayMs).clamp(1, maxDays);
   }
 
   factory SubscriptionEntitlement.newTrial(DateTime now) {

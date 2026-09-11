@@ -43,16 +43,28 @@ class UserPlan {
     );
   }
 
-  /// PIX / Play gravam `subscription.status=active`; o campo raiz `plan` pode
-  /// ficar desatualizado (`free`) até o app sincronizar.
+  /// PIX / Play gravam `subscription.status=active`; trial válido também
+  /// libera premium até `trialEndsAt`. O campo raiz `plan` pode ficar
+  /// desatualizado (`free`) até o app sincronizar.
   static bool _subscriptionGrantsPremium(Map<String, dynamic> data) {
     final sub = data['subscription'];
     if (sub is! Map) return false;
     final status = sub['status'] as String?;
-    if (status != 'active') return false;
-    final expires = _readDate(sub['expiresAt']);
-    if (expires != null && DateTime.now().isAfter(expires)) return false;
-    return true;
+    final now = DateTime.now();
+
+    if (status == 'active') {
+      final expires = _readDate(sub['expiresAt']);
+      if (expires != null && !now.isBefore(expires)) return false;
+      return true;
+    }
+
+    if (status == 'trial') {
+      final trialEnds = _readDate(sub['trialEndsAt']);
+      if (trialEnds == null) return false;
+      return now.isBefore(trialEnds);
+    }
+
+    return false;
   }
 
   static DateTime? _readDate(Object? value) {

@@ -20,11 +20,41 @@ void main() {
     expect(plan.isFree, isFalse);
   });
 
-  test('plan free sem subscription active → limite 1, upgrade permitido', () {
+  test('trial válido libera premium até trialEndsAt', () {
     final plan = UserPlan.fromFirestore({
       'plan': 'free',
-      'subscription': {'status': 'trial'},
+      'subscription': {
+        'status': 'trial',
+        'trialEndsAt': Timestamp.fromDate(
+          DateTime.now().add(const Duration(days: 10)),
+        ),
+      },
     });
+
+    expect(plan.isEntitled, isTrue);
+    expect(plan.isFree, isFalse);
+    expect(plan.plan, 'premium');
+    expect(plan.deviceLimit, 1);
+  });
+
+  test('trial vencido não libera premium', () {
+    final plan = UserPlan.fromFirestore({
+      'plan': 'free',
+      'subscription': {
+        'status': 'trial',
+        'trialEndsAt': Timestamp.fromDate(
+          DateTime.now().subtract(const Duration(days: 1)),
+        ),
+      },
+    });
+
+    expect(plan.isEntitled, isFalse);
+    expect(plan.isFree, isTrue);
+    expect(plan.deviceLimit, 1);
+  });
+
+  test('plan free sem subscription → limite 1, upgrade permitido', () {
+    final plan = UserPlan.fromFirestore({'plan': 'free'});
 
     expect(plan.isEntitled, isFalse);
     expect(plan.isFree, isTrue);

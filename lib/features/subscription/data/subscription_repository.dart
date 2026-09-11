@@ -45,7 +45,7 @@ class SubscriptionRepository {
     return trial;
   }
 
-  /// Reinicia 7 dias de trial — uso em desenvolvimento / QA.
+  /// Reinicia 14 dias de trial — uso em desenvolvimento / QA.
   Future<SubscriptionEntitlement> resetTrial(String uid) async {
     final trial = SubscriptionEntitlement.newTrial(DateTime.now());
     await _userRef(uid).set(

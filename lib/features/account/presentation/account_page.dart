@@ -248,7 +248,7 @@ class _PlanCardState extends State<_PlanCard> {
       await SubscriptionRepository().resetTrial(widget.uid);
       if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Trial reiniciado: +7 dias.')),
+        const SnackBar(content: Text('Trial reiniciado: +14 dias.')),
       );
     } catch (error) {
       if (!mounted) return;

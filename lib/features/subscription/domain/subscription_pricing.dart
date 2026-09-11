@@ -1,4 +1,4 @@
-/// Preços da vitrine anual (BR) — contrato subscription_trial_7d.
+/// Preços da vitrine anual (BR) — contrato de trial/assinatura.
 abstract final class SubscriptionPricing {
   static const planId = 'annual_12m';
   static const yearlyBrl = 118.80;

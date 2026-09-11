@@ -8,11 +8,11 @@ void main() {
       final e = SubscriptionEntitlement(
         status: SubscriptionStatus.trial,
         trialStartedAt: now,
-        trialEndsAt: now.add(const Duration(days: 7)),
+        trialEndsAt: now.add(SubscriptionEntitlement.trialDuration),
       );
       expect(e.isEntitledAt(now), isTrue);
       expect(e.effectiveStatusAt(now), SubscriptionStatus.trial);
-      expect(e.trialDaysLeftCeil(now), 7);
+      expect(e.trialDaysLeftCeil(now), 14);
     });
 
     test('trial vencido vira expired', () {
@@ -20,13 +20,20 @@ void main() {
       final e = SubscriptionEntitlement(
         status: SubscriptionStatus.trial,
         trialStartedAt: start,
-        trialEndsAt: start.add(const Duration(days: 7)),
+        trialEndsAt: start.add(SubscriptionEntitlement.trialDuration),
       );
       expect(
-        e.effectiveStatusAt(DateTime(2026, 7, 10)),
+        e.effectiveStatusAt(DateTime(2026, 7, 16)),
         SubscriptionStatus.expired,
       );
-      expect(e.isEntitledAt(DateTime(2026, 7, 10)), isFalse);
+      expect(e.isEntitledAt(DateTime(2026, 7, 16)), isFalse);
+    });
+
+    test('newTrial usa 14 dias', () {
+      final now = DateTime(2026, 9, 11, 12);
+      final e = SubscriptionEntitlement.newTrial(now);
+      expect(e.trialEndsAt, now.add(const Duration(days: 14)));
+      expect(e.trialDaysLeftCeil(now), 14);
     });
 
     test('active com expiresAt futuro libera', () {
