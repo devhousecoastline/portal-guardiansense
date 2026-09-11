@@ -11,9 +11,20 @@ import 'package:guardian_portal/features/locate/domain/location_freshness.dart';
 
 /// Resumo da última posição — mesmo idioma visual dos tiles de Dispositivos.
 class LocationInfoCard extends StatefulWidget {
-  const LocationInfoCard({super.key, required this.status});
+  const LocationInfoCard({
+    super.key,
+    required this.status,
+    this.focusLocation,
+    this.focusCaption,
+  });
 
   final DeviceStatus status;
+
+  /// Ponto em destaque (seleção no Histórico). Null = posição atual do device.
+  final DeviceLocation? focusLocation;
+
+  /// Extra sob o horário (ex.: `16:51–17:29 · mesmo local · ~37 min`).
+  final String? focusCaption;
 
   @override
   State<LocationInfoCard> createState() => _LocationInfoCardState();
@@ -24,6 +35,11 @@ class _LocationInfoCardState extends State<LocationInfoCard> {
   String? _address;
   bool _loadingAddress = false;
 
+  DeviceLocation? get _displayLocation =>
+      widget.focusLocation ?? widget.status.location;
+
+  bool get _focusingHistory => widget.focusLocation != null;
+
   @override
   void initState() {
     super.initState();
@@ -33,15 +49,17 @@ class _LocationInfoCardState extends State<LocationInfoCard> {
   @override
   void didUpdateWidget(covariant LocationInfoCard oldWidget) {
     super.didUpdateWidget(oldWidget);
-    final oldLoc = oldWidget.status.location;
-    final newLoc = widget.status.location;
-    if (oldLoc?.lat != newLoc?.lat || oldLoc?.lng != newLoc?.lng) {
+    final oldLoc = oldWidget.focusLocation ?? oldWidget.status.location;
+    final newLoc = widget.focusLocation ?? widget.status.location;
+    if (oldLoc?.lat != newLoc?.lat ||
+        oldLoc?.lng != newLoc?.lng ||
+        oldWidget.focusLocation != widget.focusLocation) {
       _loadAddress();
     }
   }
 
   Future<void> _loadAddress() async {
-    final location = widget.status.location;
+    final location = _displayLocation;
     if (location == null) {
       setState(() {
         _address = null;
@@ -76,11 +94,12 @@ class _LocationInfoCardState extends State<LocationInfoCard> {
   @override
   Widget build(BuildContext context) {
     final status = widget.status;
-    final location = status.location;
+    final location = _displayLocation;
     final locationReady = status.isLocationReady;
-    final stale =
-        location != null && LocationFreshness.isStale(location.updatedAt);
-    final staleMessage = location == null
+    final stale = !_focusingHistory &&
+        location != null &&
+        LocationFreshness.isStale(location.updatedAt);
+    final staleMessage = _focusingHistory || location == null
         ? null
         : LocationFreshness.staleMessage(
             location.updatedAt,
@@ -93,11 +112,13 @@ class _LocationInfoCardState extends State<LocationInfoCard> {
       hasLocation: location != null,
       stale: stale,
     );
-    final statusLine = location == null
-        ? 'SEM POSIÇÃO'
-        : stale
-            ? 'POSIÇÃO ANTIGA'
-            : 'POSIÇÃO ATUAL';
+    final statusLine = _focusingHistory
+        ? 'LOCAL DO HISTÓRICO'
+        : location == null
+            ? 'SEM POSIÇÃO'
+            : stale
+                ? 'POSIÇÃO ANTIGA'
+                : 'POSIÇÃO ATUAL';
     return SectionCard(
       padding: EdgeInsets.zero,
       // LayoutBuilder fora do IntrinsicHeight: um não mede o outro.
@@ -110,6 +131,7 @@ class _LocationInfoCardState extends State<LocationInfoCard> {
             color: color,
             statusLine: statusLine,
             showPill: !wide && constraints.maxWidth >= 520,
+            caption: widget.focusCaption,
           );
 
           return ClipRRect(
@@ -267,6 +289,7 @@ class _Header extends StatelessWidget {
     required this.color,
     required this.statusLine,
     required this.showPill,
+    this.caption,
   });
 
   final DeviceStatus status;
@@ -274,6 +297,7 @@ class _Header extends StatelessWidget {
   final Color color;
   final String statusLine;
   final bool showPill;
+  final String? caption;
 
   @override
   Widget build(BuildContext context) {
@@ -344,6 +368,19 @@ class _Header extends StatelessWidget {
                   color: AppColors.textMuted,
                 ),
               ),
+              if (caption != null && caption!.isNotEmpty) ...[
+                const SizedBox(height: 2),
+                Text(
+                  caption!,
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                  style: theme.textTheme.bodySmall?.copyWith(
+                    height: 1.25,
+                    color: AppColors.textMuted,
+                    fontWeight: FontWeight.w600,
+                  ),
+                ),
+              ],
             ],
           ),
         ),
