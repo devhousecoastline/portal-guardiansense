@@ -1,7 +1,7 @@
 import 'package:guardian_portal/core/routing/app_routes.dart';
 import 'package:guardian_portal/features/account/domain/user_plan.dart';
 
-/// Recursos exclusivos do plano Premium ativo (`subscription.status == active`).
+/// Recursos exclusivos do plano Premium (assinatura ativa **ou** trial válido).
 abstract final class PremiumFeatures {
   /// Linha do tempo de eventos de segurança.
   static bool events(UserPlan plan) => plan.isEntitled;

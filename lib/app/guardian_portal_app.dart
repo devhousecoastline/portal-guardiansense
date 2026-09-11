@@ -8,6 +8,7 @@ import 'package:guardian_portal/core/theme/app_palette.dart';
 import 'package:guardian_portal/core/theme/app_theme.dart';
 import 'package:guardian_portal/core/theme/theme_controller.dart';
 import 'package:guardian_portal/core/theme/theme_scope.dart';
+import 'package:guardian_portal/features/account/presentation/user_plan_scope.dart';
 import 'package:guardian_portal/features/auth/application/auth_controller.dart';
 import 'package:guardian_portal/features/auth/presentation/widgets/auth_scope.dart';
 import 'package:guardian_portal/features/info/application/privacy_consent_controller.dart';
@@ -25,6 +26,7 @@ class _GuardianPortalAppState extends State<GuardianPortalApp> {
   late final PrivacyConsentController _consent;
   late final NavigationLoadingController _navigationLoading;
   late final ThemeController _theme;
+  late final UserPlanController _userPlan;
   late final GoRouter _router;
 
   @override
@@ -34,6 +36,7 @@ class _GuardianPortalAppState extends State<GuardianPortalApp> {
     _consent = PrivacyConsentController(auth: _auth);
     _navigationLoading = NavigationLoadingController();
     _theme = ThemeController();
+    _userPlan = UserPlanController()..attachAuth(_auth);
     AppColorScope.current = _theme.palette;
     _router = createAppRouter(
       auth: _auth,
@@ -48,6 +51,7 @@ class _GuardianPortalAppState extends State<GuardianPortalApp> {
     _auth.dispose();
     _navigationLoading.dispose();
     _theme.dispose();
+    _userPlan.dispose();
     _router.dispose();
     super.dispose();
   }
@@ -56,32 +60,35 @@ class _GuardianPortalAppState extends State<GuardianPortalApp> {
   Widget build(BuildContext context) {
     return AuthScope(
       controller: _auth,
-      child: PrivacyConsentScope(
-        controller: _consent,
-        child: ThemeScope(
-          controller: _theme,
-          child: NavigationLoadingScope(
-            controller: _navigationLoading,
-            child: ListenableBuilder(
-              listenable: _theme,
-              builder: (context, _) {
-                AppColorScope.current = _theme.palette;
-                return MaterialApp.router(
-                  title: AppConstants.appName,
-                  debugShowCheckedModeBanner: false,
-                  theme: AppTheme.light,
-                  darkTheme: AppTheme.dark,
-                  themeMode: _theme.mode.materialThemeMode,
-                  locale: const Locale('pt', 'BR'),
-                  supportedLocales: const [Locale('pt', 'BR')],
-                  localizationsDelegates: const [
-                    GlobalMaterialLocalizations.delegate,
-                    GlobalWidgetsLocalizations.delegate,
-                    GlobalCupertinoLocalizations.delegate,
-                  ],
-                  routerConfig: _router,
-                );
-              },
+      child: UserPlanScope(
+        controller: _userPlan,
+        child: PrivacyConsentScope(
+          controller: _consent,
+          child: ThemeScope(
+            controller: _theme,
+            child: NavigationLoadingScope(
+              controller: _navigationLoading,
+              child: ListenableBuilder(
+                listenable: _theme,
+                builder: (context, _) {
+                  AppColorScope.current = _theme.palette;
+                  return MaterialApp.router(
+                    title: AppConstants.appName,
+                    debugShowCheckedModeBanner: false,
+                    theme: AppTheme.light,
+                    darkTheme: AppTheme.dark,
+                    themeMode: _theme.mode.materialThemeMode,
+                    locale: const Locale('pt', 'BR'),
+                    supportedLocales: const [Locale('pt', 'BR')],
+                    localizationsDelegates: const [
+                      GlobalMaterialLocalizations.delegate,
+                      GlobalWidgetsLocalizations.delegate,
+                      GlobalCupertinoLocalizations.delegate,
+                    ],
+                    routerConfig: _router,
+                  );
+                },
+              ),
             ),
           ),
         ),

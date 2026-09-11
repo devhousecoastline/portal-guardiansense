@@ -25,7 +25,7 @@ const mpWebhookSecret = defineString("MERCADOPAGO_WEBHOOK_SECRET", {
   default: "",
 });
 
-/** R$ 118,80 — alinhado a docs/subscription_trial_7d.md */
+/** R$ 118,80 — alinhado ao plano anual do portal */
 const ANNUAL_VALUE_BRL = 118.8;
 
 function requireMpAccessToken() {

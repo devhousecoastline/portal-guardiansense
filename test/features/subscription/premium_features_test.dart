@@ -18,10 +18,30 @@ void main() {
     expect(PremiumFeatures.events(plan), isTrue);
   });
 
-  test('Eventos bloqueado no plano free', () {
+  test('Eventos e Localizar liberados no trial válido', () {
     final plan = UserPlan.fromFirestore({
       'plan': 'free',
-      'subscription': {'status': 'trial'},
+      'subscription': {
+        'status': 'trial',
+        'trialEndsAt': Timestamp.fromDate(
+          DateTime.now().add(const Duration(days: 5)),
+        ),
+      },
+    });
+
+    expect(PremiumFeatures.events(plan), isTrue);
+    expect(PremiumFeatures.locate(plan), isTrue);
+  });
+
+  test('Eventos bloqueado com trial vencido', () {
+    final plan = UserPlan.fromFirestore({
+      'plan': 'free',
+      'subscription': {
+        'status': 'trial',
+        'trialEndsAt': Timestamp.fromDate(
+          DateTime.now().subtract(const Duration(hours: 1)),
+        ),
+      },
     });
 
     expect(PremiumFeatures.events(plan), isFalse);

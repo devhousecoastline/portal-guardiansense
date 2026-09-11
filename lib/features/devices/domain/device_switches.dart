@@ -2,7 +2,7 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 
 /// Cota de trocas de aparelho — espelho read-only de `users/{uid}.deviceSwitches`.
 ///
-/// Fonte de verdade: app (`docs/subscription_trial_7d.md`).
+/// Fonte de verdade: app (trial/assinatura anual).
 final class DeviceSwitches {
   const DeviceSwitches({
     required this.periodStart,

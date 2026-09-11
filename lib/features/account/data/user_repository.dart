@@ -1,4 +1,5 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:flutter/foundation.dart';
 import 'package:guardian_portal/features/account/domain/user_plan.dart';
 import 'package:guardian_portal/features/devices/domain/device_switches.dart';
 import 'package:guardian_portal/features/info/domain/portal_privacy_consent.dart';
@@ -22,6 +23,19 @@ class UserRepository {
 
   final FirebaseFirestore _firestore;
 
+  /// Último plano por uid — evita flash de badge Premium sem segurar stream morto.
+  static final Map<String, UserPlan> _lastPlan = {};
+
+  /// 1º frame sem cache: não trava UI Premium.
+  static const _pendingEntitled = UserPlan(
+    plan: 'pending',
+    deviceLimit: 1,
+    isEntitled: true,
+  );
+
+  @visibleForTesting
+  static void clearCaches() => _lastPlan.clear();
+
   DocumentReference<Map<String, dynamic>> _user(String uid) =>
       _firestore.collection('users').doc(uid);
 
@@ -29,15 +43,26 @@ class UserRepository {
     return watchDevicesMeta(uid).map((meta) => meta.plan);
   }
 
+  /// Plano para UI: snap → cache → pending entitled (sem flash de cadeado).
+  static UserPlan planForUi(String uid, UserPlan? snapData) {
+    if (snapData != null) {
+      _lastPlan[uid] = snapData;
+      return snapData;
+    }
+    return _lastPlan[uid] ?? _pendingEntitled;
+  }
+
   Stream<UserDevicesMeta> watchDevicesMeta(String uid) {
     return _user(uid).snapshots().map((doc) {
       final data = doc.data();
       final bound = (data?['boundDeviceId'] as String?)?.trim();
-      return UserDevicesMeta(
+      final meta = UserDevicesMeta(
         plan: UserPlan.fromFirestore(data),
         switches: DeviceSwitches.fromUserDoc(data),
         boundDeviceId: (bound == null || bound.isEmpty) ? null : bound,
       );
+      _lastPlan[uid] = meta.plan;
+      return meta;
     });
   }
 

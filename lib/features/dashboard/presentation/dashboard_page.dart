@@ -16,8 +16,7 @@ import 'package:guardian_portal/features/dashboard/presentation/widgets/protecti
 import 'package:guardian_portal/features/dashboard/presentation/widgets/protection_setup_card.dart';
 import 'package:guardian_portal/features/dashboard/presentation/widgets/protection_status_hero.dart';
 import 'package:guardian_portal/features/devices/domain/guardian_device.dart';
-import 'package:guardian_portal/features/account/data/user_repository.dart';
-import 'package:guardian_portal/features/account/domain/user_plan.dart';
+import 'package:guardian_portal/features/account/presentation/user_plan_scope.dart';
 import 'package:guardian_portal/features/subscription/domain/premium_features.dart';
 
 class DashboardPage extends StatefulWidget {
@@ -178,25 +177,19 @@ class _DashboardBody extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final tone = ProtectionSnapshot.tone(status);
+    final plan = UserPlanScope.of(context);
+    final eventsEnabled = PremiumFeatures.events(plan);
+    final closeOysterEnabled = PremiumFeatures.closeOyster(plan);
 
-    return StreamBuilder<UserPlan>(
-      stream: UserRepository().watchPlan(uid),
-      builder: (context, planSnap) {
-        final plan = planSnap.data ?? UserPlan.free;
-        final eventsEnabled = PremiumFeatures.events(plan);
-        final closeOysterEnabled = PremiumFeatures.closeOyster(plan);
-
-        return _DashboardLayout(
-          uid: uid,
-          device: device,
-          layout: layout,
-          showRefreshTick: showRefreshTick,
-          tone: tone,
-          status: status,
-          eventsEnabled: eventsEnabled,
-          closeOysterEnabled: closeOysterEnabled,
-        );
-      },
+    return _DashboardLayout(
+      uid: uid,
+      device: device,
+      layout: layout,
+      showRefreshTick: showRefreshTick,
+      tone: tone,
+      status: status,
+      eventsEnabled: eventsEnabled,
+      closeOysterEnabled: closeOysterEnabled,
     );
   }
 }

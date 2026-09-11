@@ -10,8 +10,8 @@ import 'package:guardian_portal/core/widgets/drawer_premium_teaser.dart';
 import 'package:guardian_portal/core/widgets/drawer_account_tile.dart';
 import 'package:guardian_portal/core/widgets/guardian_logo.dart';
 import 'package:guardian_portal/core/widgets/premium_badge.dart';
-import 'package:guardian_portal/features/account/data/user_repository.dart';
 import 'package:guardian_portal/features/account/domain/user_plan.dart';
+import 'package:guardian_portal/features/account/presentation/user_plan_scope.dart';
 import 'package:guardian_portal/features/auth/presentation/widgets/auth_scope.dart';
 import 'package:guardian_portal/features/subscription/domain/premium_features.dart';
 
@@ -497,6 +497,8 @@ class _NavList extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final uid = AuthScope.of(context).user?.uid;
+    final plan =
+        uid == null ? UserPlan.free : UserPlanScope.of(context);
 
     Widget buildList(UserPlan plan) {
       Widget tile(_NavItem item) {
@@ -530,14 +532,7 @@ class _NavList extends StatelessWidget {
       );
     }
 
-    if (uid == null) return buildList(UserPlan.free);
-
-    return StreamBuilder<UserPlan>(
-      stream: UserRepository().watchPlan(uid),
-      builder: (context, snap) {
-        return buildList(snap.data ?? UserPlan.free);
-      },
-    );
+    return buildList(plan);
   }
 }
 

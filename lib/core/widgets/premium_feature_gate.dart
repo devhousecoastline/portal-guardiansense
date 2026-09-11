@@ -5,8 +5,8 @@ import 'package:guardian_portal/core/theme/app_colors.dart';
 import 'package:guardian_portal/core/widgets/guardian_scaffold.dart';
 import 'package:guardian_portal/core/widgets/premium_badge.dart';
 import 'package:guardian_portal/core/widgets/section_card.dart';
-import 'package:guardian_portal/features/account/data/user_repository.dart';
 import 'package:guardian_portal/features/account/domain/user_plan.dart';
+import 'package:guardian_portal/features/account/presentation/user_plan_scope.dart';
 import 'package:guardian_portal/features/auth/presentation/widgets/auth_scope.dart';
 
 /// Bloqueia conteúdo quando o plano não inclui o recurso.
@@ -33,36 +33,19 @@ class PremiumFeatureGate extends StatelessWidget {
     final uid = AuthScope.of(context).user?.uid;
     if (uid == null) return const SizedBox.shrink();
 
-    return StreamBuilder<UserPlan>(
-      stream: UserRepository().watchPlan(uid),
-      builder: (context, snap) {
-        if (snap.connectionState == ConnectionState.waiting && !snap.hasData) {
-          if (scaffoldTitle != null) {
-            return GuardianScaffold(
-              title: scaffoldTitle!,
-              subtitle: scaffoldSubtitle,
-              onRefresh: onRefresh,
-              child: const Center(child: CircularProgressIndicator()),
-            );
-          }
-          return const Center(child: CircularProgressIndicator());
-        }
+    final plan = UserPlanScope.of(context);
+    if (hasAccess(plan)) return child;
 
-        final plan = snap.data ?? UserPlan.free;
-        if (hasAccess(plan)) return child;
-
-        final locked = _LockedFeatureCard(featureName: featureName);
-        if (scaffoldTitle != null) {
-          return GuardianScaffold(
-            title: scaffoldTitle!,
-            subtitle: scaffoldSubtitle,
-            onRefresh: onRefresh,
-            child: locked,
-          );
-        }
-        return locked;
-      },
-    );
+    final locked = _LockedFeatureCard(featureName: featureName);
+    if (scaffoldTitle != null) {
+      return GuardianScaffold(
+        title: scaffoldTitle!,
+        subtitle: scaffoldSubtitle,
+        onRefresh: onRefresh,
+        child: locked,
+      );
+    }
+    return locked;
   }
 }
 

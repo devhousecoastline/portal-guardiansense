@@ -110,7 +110,7 @@ Subtítulo: *Sincronizadas com o app — o celular é soberano*.
 
 ## Premium (`/premium`)
 
-Assinatura anual **R$ 118,80** (`annual_12m`, equivalente R$ 9,90/mês). Trial de **7 dias**.
+Assinatura anual **R$ 118,80** (`annual_12m`, equivalente R$ 9,90/mês). Trial de **14 dias**.
 
 1. `ensureTrial` na primeira visita, se ainda não houver entitlement.
 2. `createPixAnnualPayment` gera QR PIX + copia-cola.
