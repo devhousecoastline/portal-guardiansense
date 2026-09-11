@@ -77,6 +77,7 @@ class _LocationInfoCardState extends State<LocationInfoCard> {
   Widget build(BuildContext context) {
     final status = widget.status;
     final location = status.location;
+    final locationReady = status.isLocationReady;
     final stale =
         location != null && LocationFreshness.isStale(location.updatedAt);
     final staleMessage = location == null
@@ -84,10 +85,11 @@ class _LocationInfoCardState extends State<LocationInfoCard> {
         : LocationFreshness.staleMessage(
             location.updatedAt,
             deviceOnline: status.isOnline,
+            locationReady: locationReady,
           );
 
     final color = _toneColor(
-      online: status.isOnline,
+      locationReady: locationReady,
       hasLocation: location != null,
       stale: stale,
     );
@@ -125,7 +127,7 @@ class _LocationInfoCardState extends State<LocationInfoCard> {
                         staleMessage: staleMessage,
                         header: header,
                         wide: wide,
-                        online: status.isOnline,
+                        locationReady: locationReady,
                         color: color,
                       ),
                     ),
@@ -144,7 +146,7 @@ class _LocationInfoCardState extends State<LocationInfoCard> {
     required String? staleMessage,
     required Widget header,
     required bool wide,
-    required bool online,
+    required bool locationReady,
     required Color color,
   }) {
     if (location == null) return header;
@@ -165,7 +167,7 @@ class _LocationInfoCardState extends State<LocationInfoCard> {
         coords: coords,
         stale: stale,
         pill: StatusPill(
-          label: online ? 'ONLINE' : 'OFFLINE',
+          label: locationReady ? 'ONLINE' : 'OFFLINE',
           color: color,
         ),
       );
@@ -189,11 +191,11 @@ class _LocationInfoCardState extends State<LocationInfoCard> {
   static const double _sideBySideWidth = 760;
 
   static Color _toneColor({
-    required bool online,
+    required bool locationReady,
     required bool hasLocation,
     required bool stale,
   }) {
-    if (!online || !hasLocation) return AppColors.textMuted;
+    if (!locationReady || !hasLocation) return AppColors.textMuted;
     return stale ? AppColors.riskElevated : AppColors.trustHigh;
   }
 }
@@ -306,7 +308,7 @@ class _Header extends StatelessWidget {
                 TextSpan(
                   children: [
                     TextSpan(
-                      text: status.isOnline ? 'Online' : 'Offline',
+                      text: status.isLocationReady ? 'GPS on' : 'GPS off',
                       style: muted,
                     ),
                     TextSpan(text: '  ·  ', style: muted),
@@ -348,7 +350,7 @@ class _Header extends StatelessWidget {
         if (showPill) ...[
           const SizedBox(width: 12),
           StatusPill(
-            label: status.isOnline ? 'ONLINE' : 'OFFLINE',
+            label: status.isLocationReady ? 'ONLINE' : 'OFFLINE',
             color: color,
           ),
         ],

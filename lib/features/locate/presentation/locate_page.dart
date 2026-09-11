@@ -98,8 +98,6 @@ class _LocateBody extends StatelessWidget {
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
         info,
-        const SizedBox(height: 8),
-        const _LocationFootnote(),
         const SizedBox(height: 12),
         if (location == null)
           const _LocateEmpty.noLocation()
@@ -157,32 +155,6 @@ class _LocateEmpty extends StatelessWidget {
           ],
         ),
       ),
-    );
-  }
-}
-
-/// Substitui o antigo card de dica — mesma informação em uma linha.
-class _LocationFootnote extends StatelessWidget {
-  const _LocationFootnote();
-
-  @override
-  Widget build(BuildContext context) {
-    return Row(
-      children: [
-        Icon(Icons.info_outline, size: 14, color: AppColors.textMuted),
-        const SizedBox(width: 8),
-        Expanded(
-          child: Text(
-            'A posição é enviada enquanto o app está em uso. O envio contínuo '
-            'em segundo plano chega em uma atualização futura.',
-            maxLines: 2,
-            overflow: TextOverflow.ellipsis,
-            style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                  color: AppColors.textMuted,
-                ),
-          ),
-        ),
-      ],
     );
   }
 }

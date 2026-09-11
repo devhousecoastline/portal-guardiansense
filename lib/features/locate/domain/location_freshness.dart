@@ -8,9 +8,16 @@ abstract final class LocationFreshness {
     return DateTime.now().difference(updatedAt) > staleAfter;
   }
 
-  static String? staleMessage(DateTime? updatedAt, {required bool deviceOnline}) {
+  static String? staleMessage(
+    DateTime? updatedAt, {
+    required bool deviceOnline,
+    bool locationReady = true,
+  }) {
     if (updatedAt == null) return null;
     if (!isStale(updatedAt)) return null;
+    if (!locationReady) {
+      return 'Localização desligada — posição da última sincronização.';
+    }
     if (!deviceOnline) {
       return 'Aparelho offline — posição da última sincronização.';
     }

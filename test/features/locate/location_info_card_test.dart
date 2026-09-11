@@ -3,9 +3,14 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:guardian_portal/core/theme/app_theme.dart';
 import 'package:guardian_portal/features/dashboard/domain/device_location.dart';
 import 'package:guardian_portal/features/dashboard/domain/device_status.dart';
+import 'package:guardian_portal/features/dashboard/domain/protection_setup_item.dart';
 import 'package:guardian_portal/features/locate/presentation/widgets/location_info_card.dart';
 
-DeviceStatus _status({DeviceLocation? location, bool online = true}) {
+DeviceStatus _status({
+  DeviceLocation? location,
+  bool online = true,
+  bool? locationDone,
+}) {
   return DeviceStatus(
     deviceId: 'd1',
     modelLabel: 'Samsung SM-A226BR',
@@ -22,7 +27,15 @@ DeviceStatus _status({DeviceLocation? location, bool online = true}) {
     lastEventSummary: null,
     location: location,
     fingerprint: null,
-    protectionSetupItems: const [],
+    protectionSetupItems: locationDone == null
+        ? const []
+        : [
+            ProtectionSetupItem(
+              id: 'location',
+              label: 'Localização',
+              done: locationDone,
+            ),
+          ],
     protectedLayers: const [],
   );
 }
@@ -134,6 +147,32 @@ void main() {
     expect(find.byIcon(Icons.copy_outlined), findsNothing);
     expect(
       find.textContaining('Aguardando a primeira posição'),
+      findsOneWidget,
+    );
+  });
+
+  testWidgets('GPS off no checklist marca OFFLINE mesmo com lastSeen fresco',
+      (tester) async {
+    tester.view.physicalSize = const Size(1280, 700);
+    tester.view.devicePixelRatio = 1;
+    addTearDown(tester.view.reset);
+
+    await _pump(
+      tester,
+      _status(
+        locationDone: false,
+        location: DeviceLocation(
+          lat: -23.55052,
+          lng: -46.63331,
+          accuracyM: 25,
+          updatedAt: DateTime.now().subtract(const Duration(minutes: 2)),
+        ),
+      ),
+    );
+
+    expect(find.text('OFFLINE'), findsOneWidget);
+    expect(
+      find.textContaining('GPS off', findRichText: true),
       findsOneWidget,
     );
   });

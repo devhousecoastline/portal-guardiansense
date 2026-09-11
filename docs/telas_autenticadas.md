@@ -52,6 +52,8 @@ O portal **não** altera switches de proteção; só dispara contenção.
 Última posição do aparelho primário (`DeviceLocation` no doc do device).
 
 - Card com endereço (geocode) e recência;
+- pill **ONLINE/OFFLINE** reflete `protectionChecklist` → `location.done` (GPS), não só `lastSeen`;
+- rótulo **GPS on/off** no cabeçalho do card;
 - mapa em largura total (`flutter_map`);
 - sem device verificado: pede QR no Centro.
 

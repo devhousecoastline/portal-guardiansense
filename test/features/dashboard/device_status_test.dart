@@ -48,6 +48,25 @@ void main() {
     expect(status.protectionIndex, 0);
   });
 
+  test('isLocationReady segue o item location do checklist', () {
+    final on = _status(
+      lastSeen: DateTime.now(),
+      protectionSetupItems: const [
+        ProtectionSetupItem(id: 'location', label: 'Localização', done: true),
+      ],
+    );
+    final off = _status(
+      lastSeen: DateTime.now(),
+      protectionSetupItems: const [
+        ProtectionSetupItem(id: 'location', label: 'Localização', done: false),
+      ],
+    );
+    expect(on.isOnline, isTrue);
+    expect(on.isLocationReady, isTrue);
+    expect(off.isOnline, isTrue);
+    expect(off.isLocationReady, isFalse);
+  });
+
   test('isOnline é false sem lastSeen', () {
     expect(_status().isOnline, isFalse);
   });

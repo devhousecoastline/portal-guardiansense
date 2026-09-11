@@ -91,8 +91,26 @@ class DeviceStatus {
     return null;
   }
 
+  /// Item `location` do checklist (GPS / serviço de localização do sistema).
+  ProtectionSetupItem? get locationSetupItem {
+    for (final item in protectionSetupItems) {
+      if (item.id == 'location') return item;
+    }
+    return null;
+  }
+
   /// Sem recuperação configurada o portal não deve fechar a ostra remotamente.
   bool get hasRecoveryConfigured => recoverySetupItem?.done == true;
+
+  /// Localização pronta no aparelho (`protectionChecklist` → `location.done`).
+  ///
+  /// O app (FGS) grava `done: false` com GPS off. Sem o item (legado), cai no
+  /// [isOnline] para não marcar GPS off à toa.
+  bool get isLocationReady {
+    final item = locationSetupItem;
+    if (item != null) return item.done;
+    return isOnline;
+  }
 
   /// Online se houve sync recente (recalculado a cada build/tick).
   bool get isOnline {
