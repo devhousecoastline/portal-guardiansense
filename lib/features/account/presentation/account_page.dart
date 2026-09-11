@@ -543,10 +543,15 @@ class _AccountInfoCard extends StatelessWidget {
         label: 'Conta criada em',
         value: _formatDate(user.metadata.creationTime),
       ),
+      // Alinha ao app: sync do aparelho (`lastSeen`), não o lastSignIn do Auth
+      // (só muda no login e fica velho se a sessão do portal persistir).
       _InfoTile(
         icon: Icons.login_outlined,
         label: 'Último acesso',
-        value: _formatDateTime(user.metadata.lastSignInTime),
+        valueWidget: _LastAccessValue(
+          uid: user.uid,
+          fallbackSignIn: user.metadata.lastSignInTime,
+        ),
       ),
     ];
 
@@ -742,6 +747,38 @@ class _LinkedDeviceValue extends StatelessWidget {
         return Text(
           label == null || label.isEmpty ? '—' : label,
           maxLines: 1,
+          overflow: TextOverflow.ellipsis,
+          style: style,
+        );
+      },
+    );
+  }
+}
+
+/// Preferência: `lastSeen` do aparelho (mesmo sinal do app). Fallback: login Auth.
+class _LastAccessValue extends StatelessWidget {
+  const _LastAccessValue({
+    required this.uid,
+    required this.fallbackSignIn,
+  });
+
+  final String uid;
+  final DateTime? fallbackSignIn;
+
+  @override
+  Widget build(BuildContext context) {
+    final style = Theme.of(context).textTheme.bodyMedium?.copyWith(
+          fontWeight: FontWeight.w600,
+        );
+
+    return StreamBuilder<GuardianDevice?>(
+      stream: DeviceRepository().watchPrimaryDevice(uid),
+      builder: (context, snapshot) {
+        final lastSeen = snapshot.data?.status.lastSeen;
+        final value = lastSeen ?? fallbackSignIn;
+        return Text(
+          _formatDateTime(value),
+          maxLines: 2,
           overflow: TextOverflow.ellipsis,
           style: style,
         );

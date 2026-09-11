@@ -3,7 +3,7 @@
 Plano de configurações e alterações para o Google (busca) e sistemas de IA
 (ChatGPT, Perplexity, etc.) encontrarem e citarem o portal com mais precisão.
 
-**Status:** pacote mínimo implementado em 2026-09-10  
+**Status:** pacote mínimo em produção + Search Console (2026-09-10)  
 **Domínio de referência:** `https://guardian-sense.com`  
 **Escopo:** camada `web/` + páginas públicas; **não** inclui rotas autenticadas.
 
@@ -100,7 +100,7 @@ Arquivos sob `web/` (+ headers no `firebase.json`).
 | Landing pública indexável em `/` (mesmo simples) | Melhor que depender só de `/#/login` |
 | Reduzir dependência de hash routes para páginas públicas | SEO e compartilhamento mais limpos |
 | Páginas FAQ / Sobre / Privacidade com texto real | Fonte que IAs citam |
-| Google Search Console | Enviar sitemap, monitorar cobertura e erros |
+| Google Search Console | Feito em 2026-09-10 (verificação, sitemap, solicitar indexação); seguir monitorando cobertura |
 | Bing Webmaster | Idem para Bing / Copilot |
 | `llms.txt` (opcional, experimental) | Alguns agentes leem; não substitui HTML/schema |
 
@@ -138,16 +138,24 @@ Checagem em **2026-09-10**:
 - [x] `robots.txt` e `sitemap.xml` presentes
 - [x] `manifest.json` description atualizada
 
-### Produção (`guardian-sense.com`) — pendente de deploy
+### Produção (`guardian-sense.com`) — OK
 
-- [ ] Home ainda serve o `index.html` **antigo**
-- [ ] `/robots.txt` → 200 mas `Content-Type: text/html` (rewrite para `index.html`)
-- [ ] `/sitemap.xml` → idem
-- [ ] `/og-image.png` → idem
-- [ ] Search Console: enviar sitemap após o deploy
-- [ ] Rich Results Test / LinkedIn Post Inspector (opcional) após o deploy
+- [x] Home serve o `index.html` novo (title, description, canonical, OG, JSON-LD, bloco SEO)
+- [x] `/robots.txt` → 200, `Content-Type: text/plain`
+- [x] `/sitemap.xml` → 200, `Content-Type: application/xml`
+- [x] `/og-image.png` → 200, `Content-Type: image/png`
+- [x] Arquivo de verificação Search Console publicado (`/google9d9059c1a5c988b0.html`)
+- [ ] Rich Results Test / LinkedIn Post Inspector (opcional)
 
-**Conclusão:** pacote correto no repo; **só vale na internet após `flutter build web` + deploy do Hosting**.
+### Google Search Console — OK
+
+- [x] Propriedade verificada (prefixo URL `https://guardian-sense.com`, método arquivo HTML)
+- [x] Sitemap `sitemap.xml` enviado e **processado** (1 página encontrada)
+- [x] Inspeção de URL: teste em tempo real OK (“disponível para o Google”)
+- [x] Indexação da home solicitada (fila prioritária)
+- [ ] Confirmar URL no índice Google (`site:guardian-sense.com` / Inspeção — aguardar dias)
+
+**Conclusão:** pacote mínimo **em produção** e Search Console configurado. Indexação efetiva depende do Google (acompanhar nos próximos dias). Bing e landing/FAQ ficam para a camada seguinte.
 
 ---
 
@@ -156,8 +164,10 @@ Checagem em **2026-09-10**:
 1. [x] `index.html` (meta + OG + body + JSON-LD) + imagem OG  
 2. [x] `manifest.json`  
 3. [x] `robots.txt` + `sitemap.xml` + headers hosting  
-4. [ ] Search Console / Bing (manual, após deploy)  
-5. [ ] Landing/FAQ (futuro)  
+4. [x] Deploy Hosting + validação em produção  
+5. [x] Search Console (verificação + sitemap + solicitar indexação)  
+6. [ ] Bing Webmaster (manual, opcional)  
+7. [ ] Landing/FAQ (futuro)  
 
 ---
 
@@ -166,6 +176,7 @@ Checagem em **2026-09-10**:
 - `web/index.html` — entrada HTML  
 - `web/og-image.png` — preview social  
 - `web/robots.txt` / `web/sitemap.xml`  
+- `web/google9d9059c1a5c988b0.html` — verificação Search Console (manter no ar)  
 - `web/manifest.json`  
 - `firebase.json` — Hosting headers  
 - `lib/app/constants.dart` — tagline, destaques, `playStoreUrl`  
