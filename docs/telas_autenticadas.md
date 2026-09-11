@@ -49,9 +49,17 @@ O portal **não** altera switches de proteção; só dispara contenção.
 
 ## Localizar (`/locate`)
 
-Última posição do aparelho primário (`DeviceLocation` no doc do device).
+Última posição do aparelho primário (`DeviceLocation` no doc do device) e
+**histórico** em `devices/{id}/locations` (gravado pelo app).
 
 - Card com endereço (geocode) e recência;
+- pill **ONLINE/OFFLINE** reflete `protectionChecklist` → `location.done` (GPS), não só `lastSeen`;
+- rótulo **GPS on/off** no cabeçalho do card;
+- toggle **Atual | Histórico** com chips (24 h / 7 dias / 30 dias / Calendário);
+  pontos contíguos a ≤ ~40 m agrupados (`HH:mm–HH:mm · mesmo local · ~X min`);
+  lista com endereço (Nominatim) e coordenadas secundárias; crise sem agrupar;
+  card acompanha o local selecionado (`LOCAL DO HISTÓRICO`); mapa sem pontinho
+  extra quando há só 1 local; consulta limitada a **200** pontos (aviso se atingir);
 - mapa em largura total (`flutter_map`);
 - sem device verificado: pede QR no Centro.
 

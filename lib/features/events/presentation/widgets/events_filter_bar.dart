@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:guardian_portal/core/theme/app_colors.dart';
+import 'package:guardian_portal/core/widgets/guardian_filter_chip.dart';
 import 'package:guardian_portal/features/events/domain/event_filters.dart';
 import 'package:guardian_portal/features/events/domain/security_event.dart';
 import 'package:guardian_portal/features/events/presentation/widgets/event_date_range_picker.dart';
@@ -55,61 +56,76 @@ class _EventsFilterBarState extends State<EventsFilterBar> {
                       _ScrollChips(
                         children: [
                           for (final period in EventPeriod.values)
-                            _FilterChip(
-                              label: _periodLabel(period),
-                              selected: filters.customRange == null &&
-                                  filters.period == period,
-                              onTap: () => widget.onChanged(
-                                filters.copyWith(
-                                  period: period,
-                                  clearCustomRange: true,
+                            Padding(
+                              padding: const EdgeInsets.only(right: 6),
+                              child: GuardianFilterChip(
+                                label: _periodLabel(period),
+                                selected: filters.customRange == null &&
+                                    filters.period == period,
+                                onTap: () => widget.onChanged(
+                                  filters.copyWith(
+                                    period: period,
+                                    clearCustomRange: true,
+                                  ),
                                 ),
                               ),
                             ),
-                          _FilterChip(
-                            label: filters.customRange != null
-                                ? EventFilters.formatCustomRange(
-                                    filters.customRange!,
-                                  )
-                                : 'Calendário',
-                            icon: Icons.calendar_month_rounded,
-                            selected: filters.customRange != null,
-                            onTap: () => _pickCustomRange(context),
+                          Padding(
+                            padding: const EdgeInsets.only(right: 6),
+                            child: GuardianFilterChip(
+                              label: filters.customRange != null
+                                  ? EventFilters.formatCustomRange(
+                                      filters.customRange!,
+                                    )
+                                  : 'Calendário',
+                              icon: Icons.calendar_month_rounded,
+                              selected: filters.customRange != null,
+                              onTap: () => _pickCustomRange(context),
+                            ),
                           ),
                         ],
                       ),
                       const SizedBox(height: 6),
                       _ScrollChips(
                         children: [
-                          _FilterChip(
-                            label: 'Todas sev.',
-                            selected: filters.severity == null,
-                            onTap: () => widget.onChanged(
-                              filters.copyWith(clearSeverity: true),
+                          Padding(
+                            padding: const EdgeInsets.only(right: 6),
+                            child: GuardianFilterChip(
+                              label: 'Todas sev.',
+                              selected: filters.severity == null,
+                              onTap: () => widget.onChanged(
+                                filters.copyWith(clearSeverity: true),
+                              ),
                             ),
                           ),
                           for (final severity in SecurityEventSeverity.values)
-                            _FilterChip(
-                              label: _countedLabel(
-                                _severityLabel(severity),
-                                widget.severityCounts[severity] ?? 0,
-                              ),
-                              selected: filters.severity == severity,
-                              color: _severityColor(severity),
-                              onTap: () => widget.onChanged(
-                                filters.copyWith(severity: severity),
+                            Padding(
+                              padding: const EdgeInsets.only(right: 6),
+                              child: GuardianFilterChip(
+                                label: _countedLabel(
+                                  _severityLabel(severity),
+                                  widget.severityCounts[severity] ?? 0,
+                                ),
+                                selected: filters.severity == severity,
+                                color: _severityColor(severity),
+                                onTap: () => widget.onChanged(
+                                  filters.copyWith(severity: severity),
+                                ),
                               ),
                             ),
                           const _ChipDivider(),
                           for (final category in EventCategoryFilter.values)
-                            _FilterChip(
-                              label: _countedLabel(
-                                _categoryLabel(category),
-                                widget.categoryCounts[category] ?? 0,
-                              ),
-                              selected: filters.category == category,
-                              onTap: () => widget.onChanged(
-                                filters.copyWith(category: category),
+                            Padding(
+                              padding: const EdgeInsets.only(right: 6),
+                              child: GuardianFilterChip(
+                                label: _countedLabel(
+                                  _categoryLabel(category),
+                                  widget.categoryCounts[category] ?? 0,
+                                ),
+                                selected: filters.category == category,
+                                onTap: () => widget.onChanged(
+                                  filters.copyWith(category: category),
+                                ),
                               ),
                             ),
                         ],
@@ -338,66 +354,6 @@ class _ChipDivider extends StatelessWidget {
       height: 22,
       margin: const EdgeInsets.symmetric(horizontal: 6),
       color: AppColors.divider,
-    );
-  }
-}
-
-class _FilterChip extends StatelessWidget {
-  const _FilterChip({
-    required this.label,
-    required this.selected,
-    required this.onTap,
-    this.color,
-    this.icon,
-  });
-
-  final String label;
-  final bool selected;
-  final VoidCallback onTap;
-  final Color? color;
-  final IconData? icon;
-
-  @override
-  Widget build(BuildContext context) {
-    // Severidade mantém cor semântica; período/tipo usam seleção neutra.
-    final accent = color ?? AppColors.textPrimary;
-    final selectedFill = color == null
-        ? AppColors.textMuted.withValues(alpha: 0.12)
-        : accent.withValues(alpha: 0.14);
-    final selectedBorder = color == null
-        ? AppColors.textMuted.withValues(alpha: 0.45)
-        : accent.withValues(alpha: 0.45);
-
-    return Padding(
-      padding: const EdgeInsets.only(right: 6),
-      child: FilterChip(
-        avatar: icon != null
-            ? Icon(
-                icon,
-                size: 15,
-                color: selected ? accent : AppColors.textMuted,
-              )
-            : null,
-        label: Text(label),
-        selected: selected,
-        onSelected: (_) => onTap(),
-        showCheckmark: false,
-        labelStyle: TextStyle(
-          fontSize: 12.5,
-          fontWeight: FontWeight.w600,
-          color: selected ? accent : AppColors.textMuted,
-        ),
-        backgroundColor: AppColors.card,
-        selectedColor: selectedFill,
-        side: BorderSide(
-          color: selected ? selectedBorder : AppColors.divider,
-        ),
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
-        materialTapTargetSize: MaterialTapTargetSize.shrinkWrap,
-        visualDensity: const VisualDensity(horizontal: -2, vertical: -2),
-        padding: const EdgeInsets.symmetric(horizontal: 2),
-        labelPadding: const EdgeInsets.symmetric(horizontal: 6),
-      ),
     );
   }
 }

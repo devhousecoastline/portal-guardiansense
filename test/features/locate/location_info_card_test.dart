@@ -3,9 +3,14 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:guardian_portal/core/theme/app_theme.dart';
 import 'package:guardian_portal/features/dashboard/domain/device_location.dart';
 import 'package:guardian_portal/features/dashboard/domain/device_status.dart';
+import 'package:guardian_portal/features/dashboard/domain/protection_setup_item.dart';
 import 'package:guardian_portal/features/locate/presentation/widgets/location_info_card.dart';
 
-DeviceStatus _status({DeviceLocation? location, bool online = true}) {
+DeviceStatus _status({
+  DeviceLocation? location,
+  bool online = true,
+  bool? locationDone,
+}) {
   return DeviceStatus(
     deviceId: 'd1',
     modelLabel: 'Samsung SM-A226BR',
@@ -22,17 +27,36 @@ DeviceStatus _status({DeviceLocation? location, bool online = true}) {
     lastEventSummary: null,
     location: location,
     fingerprint: null,
-    protectionSetupItems: const [],
+    protectionSetupItems: locationDone == null
+        ? const []
+        : [
+            ProtectionSetupItem(
+              id: 'location',
+              label: 'Localização',
+              done: locationDone,
+            ),
+          ],
     protectedLayers: const [],
   );
 }
 
-Future<void> _pump(WidgetTester tester, DeviceStatus status) async {
+Future<void> _pump(
+  WidgetTester tester,
+  DeviceStatus status, {
+  DeviceLocation? focusLocation,
+  String? focusCaption,
+}) async {
   await tester.pumpWidget(
     MaterialApp(
       theme: AppTheme.light,
       home: Scaffold(
-        body: SingleChildScrollView(child: LocationInfoCard(status: status)),
+        body: SingleChildScrollView(
+          child: LocationInfoCard(
+            status: status,
+            focusLocation: focusLocation,
+            focusCaption: focusCaption,
+          ),
+        ),
       ),
     ),
   );
@@ -136,5 +160,64 @@ void main() {
       find.textContaining('Aguardando a primeira posição'),
       findsOneWidget,
     );
+  });
+
+  testWidgets('GPS off no checklist marca OFFLINE mesmo com lastSeen fresco',
+      (tester) async {
+    tester.view.physicalSize = const Size(1280, 700);
+    tester.view.devicePixelRatio = 1;
+    addTearDown(tester.view.reset);
+
+    await _pump(
+      tester,
+      _status(
+        locationDone: false,
+        location: DeviceLocation(
+          lat: -23.55052,
+          lng: -46.63331,
+          accuracyM: 25,
+          updatedAt: DateTime.now().subtract(const Duration(minutes: 2)),
+        ),
+      ),
+    );
+
+    expect(find.text('OFFLINE'), findsOneWidget);
+    expect(
+      find.textContaining('GPS off', findRichText: true),
+      findsOneWidget,
+    );
+  });
+
+  testWidgets('focusLocation mostra LOCAL DO HISTÓRICO', (tester) async {
+    tester.view.physicalSize = const Size(900, 700);
+    tester.view.devicePixelRatio = 1;
+    addTearDown(tester.view.reset);
+
+    await _pump(
+      tester,
+      _status(
+        location: DeviceLocation(
+          lat: -23.55,
+          lng: -46.63,
+          accuracyM: 20,
+          updatedAt: DateTime.now(),
+        ),
+      ),
+      focusLocation: DeviceLocation(
+        lat: -29.76771,
+        lng: -50.02235,
+        accuracyM: 16,
+        updatedAt: DateTime(2026, 9, 11, 16, 51),
+        source: 'background',
+      ),
+      focusCaption: '16:51–17:29 · mesmo local · ~37 min',
+    );
+
+    expect(
+      find.textContaining('LOCAL DO HISTÓRICO', findRichText: true),
+      findsOneWidget,
+    );
+    expect(find.textContaining('16:51–17:29'), findsOneWidget);
+    expect(find.textContaining('-29.76771, -50.02235'), findsOneWidget);
   });
 }
