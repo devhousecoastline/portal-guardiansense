@@ -74,7 +74,7 @@ class _ComingSoonContent extends StatelessWidget {
     return Column(
       mainAxisSize: MainAxisSize.min,
       children: [
-        GuardianLogo(size: logoSize, breathe: true),
+        GuardianLogo(size: logoSize),
         Transform.translate(
           offset: const Offset(0, -8),
           child: Text(

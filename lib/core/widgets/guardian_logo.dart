@@ -1,7 +1,15 @@
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 
-/// Proporção de [shield_transparent.png] (630×834).
+/// Proporção / resolução nativa de [shield_transparent.png] (igual ao app).
 const _shieldAspectRatio = 630 / 834;
+const _nativeWidth = 630;
+const _nativeHeight = 834;
+
+/// Respiração lenta: escala suave + fade igual à splash do app (0.75→1.0).
+const _breatheMinScale = 0.97;
+const _breatheMaxScale = 1.03;
+const _breatheDuration = Duration(milliseconds: 3200);
 
 class GuardianLogo extends StatelessWidget {
   const GuardianLogo({
@@ -10,41 +18,49 @@ class GuardianLogo extends StatelessWidget {
     this.breathe = false,
   });
 
+  /// Altura lógica do escudo (largura segue a proporção do PNG).
   final double size;
 
-  /// Respiração suave (login / hero). Desligado por padrão.
+  /// Respiração lenta no login / marca. Desligado por padrão.
   final bool breathe;
 
   @override
   Widget build(BuildContext context) {
-    final dpr = MediaQuery.devicePixelRatioOf(context);
-    final renderH = size;
-    final renderW = size * _shieldAspectRatio;
-
-    final logo = RepaintBoundary(
-      child: SizedBox(
-        width: renderW,
-        height: renderH,
-        child: Image.asset(
-          'assets/images/shield_transparent.png',
-          fit: BoxFit.contain,
-          alignment: Alignment.center,
-          filterQuality: FilterQuality.high,
-          cacheWidth: (renderW * dpr).round().clamp(1, 4096),
-          cacheHeight: (renderH * dpr).round().clamp(1, 4096),
-          gaplessPlayback: true,
-        ),
-      ),
+    final image = Image.asset(
+      'assets/images/shield_transparent.png',
+      fit: BoxFit.contain,
+      alignment: Alignment.center,
+      filterQuality: kIsWeb ? FilterQuality.medium : FilterQuality.high,
+      isAntiAlias: true,
+      gaplessPlayback: true,
+      cacheWidth: _nativeWidth,
+      cacheHeight: _nativeHeight,
     );
 
-    if (!breathe) return logo;
-    return _BreathingLogo(child: logo);
+    final logoW = size * _shieldAspectRatio;
+    final logoH = size;
+
+    if (!breathe) {
+      return SizedBox(width: logoW, height: logoH, child: image);
+    }
+
+    return _BreathingLogo(
+      logoWidth: logoW,
+      logoHeight: logoH,
+      child: image,
+    );
   }
 }
 
 class _BreathingLogo extends StatefulWidget {
-  const _BreathingLogo({required this.child});
+  const _BreathingLogo({
+    required this.logoWidth,
+    required this.logoHeight,
+    required this.child,
+  });
 
+  final double logoWidth;
+  final double logoHeight;
   final Widget child;
 
   @override
@@ -53,20 +69,20 @@ class _BreathingLogo extends StatefulWidget {
 
 class _BreathingLogoState extends State<_BreathingLogo>
     with SingleTickerProviderStateMixin {
-  late final AnimationController _controller;
-  late final Animation<double> _scale;
+  late final AnimationController _controller = AnimationController(
+    vsync: this,
+    duration: _breatheDuration,
+  )..repeat(reverse: true);
 
-  @override
-  void initState() {
-    super.initState();
-    _controller = AnimationController(
-      vsync: this,
-      duration: const Duration(milliseconds: 3200),
-    )..repeat(reverse: true);
-    _scale = Tween<double>(begin: 1.0, end: 1.04).animate(
-      CurvedAnimation(parent: _controller, curve: Curves.easeInOut),
-    );
-  }
+  late final Animation<double> _scale = Tween<double>(
+    begin: _breatheMinScale,
+    end: _breatheMaxScale,
+  ).animate(CurvedAnimation(parent: _controller, curve: Curves.easeInOut));
+
+  late final Animation<double> _opacity = Tween<double>(
+    begin: 0.75,
+    end: 1.0,
+  ).animate(CurvedAnimation(parent: _controller, curve: Curves.easeInOut));
 
   @override
   void dispose() {
@@ -76,13 +92,26 @@ class _BreathingLogoState extends State<_BreathingLogo>
 
   @override
   Widget build(BuildContext context) {
-    return AnimatedBuilder(
-      animation: _scale,
-      builder: (context, child) => Transform.scale(
-        scale: _scale.value,
-        child: child,
+    // Reserva o pico da escala: textos abaixo não se movem.
+    final maxW = widget.logoWidth * _breatheMaxScale;
+    final maxH = widget.logoHeight * _breatheMaxScale;
+
+    return SizedBox(
+      width: maxW,
+      height: maxH,
+      child: Center(
+        child: FadeTransition(
+          opacity: _opacity,
+          child: ScaleTransition(
+            scale: _scale,
+            child: SizedBox(
+              width: widget.logoWidth,
+              height: widget.logoHeight,
+              child: widget.child,
+            ),
+          ),
+        ),
       ),
-      child: widget.child,
     );
   }
 }
