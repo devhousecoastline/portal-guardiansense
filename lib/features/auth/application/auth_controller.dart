@@ -2,6 +2,7 @@ import 'dart:async';
 
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/foundation.dart';
+import 'package:guardian_portal/features/auth/application/centered_auth_popup.dart';
 
 class AuthController extends ChangeNotifier {
   AuthController({FirebaseAuth? auth}) : _auth = auth ?? FirebaseAuth.instance {
@@ -39,12 +40,14 @@ class AuthController extends ChangeNotifier {
   Future<void> signInWithGoogle() async {
     final provider = GoogleAuthProvider();
     if (kIsWeb) {
-      await _auth.signInWithPopup(provider).timeout(
-        const Duration(seconds: 90),
-        onTimeout: () => throw FirebaseAuthException(
-          code: 'popup-closed-by-user',
-          message: 'Login com Google cancelado.',
-        ),
+      await withCenteredAuthPopup(
+        () => _auth.signInWithPopup(provider).timeout(
+              const Duration(seconds: 90),
+              onTimeout: () => throw FirebaseAuthException(
+                code: 'popup-closed-by-user',
+                message: 'Login com Google cancelado.',
+              ),
+            ),
       );
       return;
     }
