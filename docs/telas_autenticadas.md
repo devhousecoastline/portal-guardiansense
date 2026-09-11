@@ -96,7 +96,7 @@ Subtítulo: *Sincronizadas com o app — o celular é soberano*.
 
 - identidade (e-mail / Google);
 - **Plano:** trial, ativo ou expirado; **início** e **vence em** (data e hora, alinhado ao app);
-- dados da conta;
+- dados da conta (aparelho, e-mail, criação, **último acesso** = `lastSeen` do aparelho primário, alinhado ao app; fallback `lastSignInTime` do Auth se não houver device);
 - **Sair da conta**;
 - em debug: reset de verificação e de trial (não vão para produção).
 
