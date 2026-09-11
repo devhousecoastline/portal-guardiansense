@@ -247,7 +247,8 @@ class _DesktopLoginBodyState extends State<_DesktopLoginBody> {
 
     return LayoutBuilder(
       builder: (context, constraints) {
-        final logoSize = (constraints.maxHeight * 0.14).clamp(96.0, 128.0);
+        // Cabe na altura sincronizada com o form (logo + breathe + textos).
+        final logoSize = (constraints.maxHeight * 0.16).clamp(120.0, 152.0);
 
         return Center(
           child: SingleChildScrollView(

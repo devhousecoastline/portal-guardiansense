@@ -8,7 +8,7 @@ import 'package:guardian_portal/features/auth/presentation/widgets/auth_surface_
 class LoginBrandPanel extends StatelessWidget {
   const LoginBrandPanel({
     super.key,
-    this.logoSize = 220,
+    this.logoSize = 152,
     this.centered = false,
     this.showHighlights = true,
     this.fillHeight = false,
@@ -61,7 +61,7 @@ class LoginBrandPanel extends StatelessWidget {
             ),
           ),
         ),
-        const SizedBox(height: 14),
+        const SizedBox(height: 10),
         SizedBox(
           width: double.infinity,
           child: Text(
@@ -75,9 +75,9 @@ class LoginBrandPanel extends StatelessWidget {
           ),
         ),
         if (showHighlights) ...[
-          SizedBox(height: centered ? 18 : 22),
+          SizedBox(height: centered ? 16 : 18),
           for (var i = 0; i < AppConstants.loginHighlights.length; i++) ...[
-            if (i > 0) const SizedBox(height: 14),
+            if (i > 0) const SizedBox(height: 12),
             _HighlightRow(
               icon: _highlightIcons[i],
               label: AppConstants.loginHighlights[i],
@@ -88,7 +88,21 @@ class LoginBrandPanel extends StatelessWidget {
       ],
     );
 
-    final child = fillHeight ? SizedBox.expand(child: body) : body;
+    // Em desktop a altura é sincronizada com o form; se apertar, rola sem
+    // overflow amarelo (mantém o escudo e a respiração).
+    final child = fillHeight
+        ? LayoutBuilder(
+            builder: (context, constraints) {
+              return SingleChildScrollView(
+                physics: const ClampingScrollPhysics(),
+                child: ConstrainedBox(
+                  constraints: BoxConstraints(minWidth: constraints.maxWidth),
+                  child: body,
+                ),
+              );
+            },
+          )
+        : body;
     if (embedded) return child;
     return AuthSurfaceCard(child: child);
   }

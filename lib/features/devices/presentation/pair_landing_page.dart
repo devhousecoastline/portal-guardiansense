@@ -29,7 +29,7 @@ class PairLandingPage extends StatelessWidget {
             constraints: const BoxConstraints(maxWidth: 480),
             child: Column(
               children: [
-                const GuardianLogo(size: 96, breathe: true),
+                const GuardianLogo(size: 96),
                 const SizedBox(height: 8),
                 Text(
                   AppConstants.appName,
