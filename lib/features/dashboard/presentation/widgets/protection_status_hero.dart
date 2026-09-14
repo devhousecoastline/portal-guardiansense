@@ -5,6 +5,8 @@ import 'package:guardian_portal/core/widgets/section_card.dart';
 import 'package:guardian_portal/core/widgets/status_badge.dart';
 import 'package:guardian_portal/features/dashboard/domain/device_status.dart';
 import 'package:guardian_portal/features/dashboard/domain/protection_snapshot.dart';
+import 'package:guardian_portal/features/dashboard/presentation/widgets/situation_context_badge.dart';
+
 
 class ProtectionStatusHero extends StatelessWidget {
   const ProtectionStatusHero({
@@ -146,6 +148,10 @@ class _IndexPanel extends StatelessWidget {
           label: status.protectionLabel.toUpperCase(),
           tone: tone,
         ),
+        if (status.hasSituation) ...[
+          SizedBox(height: compact ? 8 : 10),
+          SituationContextBadge(status: status, compact: compact),
+        ],
         SizedBox(height: compact ? 10 : 14),
         _IndexBlock(
           status: status,
