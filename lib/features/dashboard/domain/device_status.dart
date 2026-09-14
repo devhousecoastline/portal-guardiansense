@@ -1,6 +1,7 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:guardian_portal/app/constants.dart';
 import 'package:guardian_portal/features/dashboard/domain/device_location.dart';
+import 'package:guardian_portal/features/dashboard/domain/device_situation.dart';
 import 'package:guardian_portal/features/dashboard/domain/protected_layer_summary.dart';
 import 'package:guardian_portal/features/dashboard/domain/protection_setup_item.dart';
 
@@ -35,6 +36,10 @@ class DeviceStatus {
     this.verified,
     this.verifiedAt,
     this.verifiedVia,
+    this.situation,
+    this.situationConfidence,
+    this.situationReasons = const [],
+    this.situationUpdatedAt,
   });
 
   final String deviceId;
@@ -65,6 +70,15 @@ class DeviceStatus {
   final bool? verified;
   final DateTime? verifiedAt;
   final String? verifiedVia;
+
+  /// Contexto situacional do app (`situation*`). Ausente = app ainda não publica.
+  final DeviceSituation? situation;
+  final double? situationConfidence;
+  final List<String> situationReasons;
+  final DateTime? situationUpdatedAt;
+
+  /// Há snapshot de situação para exibir no portal (badge).
+  bool get hasSituation => situation != null;
 
   bool get isReleased => bindingStatus == DeviceBindingStatus.released;
 
@@ -177,6 +191,10 @@ class DeviceStatus {
       verified: data['verified'] as bool?,
       verifiedAt: _timestamp(data['verifiedAt']),
       verifiedVia: data['verifiedVia'] as String?,
+      situation: DeviceSituation.tryParse(data['situation']),
+      situationConfidence: _confidence(data['situationConfidence']),
+      situationReasons: _stringList(data['situationReasons']),
+      situationUpdatedAt: _timestamp(data['situationUpdatedAt']),
     );
   }
 
@@ -228,5 +246,18 @@ class DeviceStatus {
     if (value == null) return '';
     if (value is String) return value.trim();
     return value.toString().trim();
+  }
+
+  static double? _confidence(Object? value) {
+    if (value is num) return value.toDouble().clamp(0.0, 1.0);
+    return null;
+  }
+
+  static List<String> _stringList(Object? value) {
+    if (value is! List) return const [];
+    return value
+        .map((e) => e?.toString().trim() ?? '')
+        .where((s) => s.isNotEmpty)
+        .toList(growable: false);
   }
 }
