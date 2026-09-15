@@ -15,6 +15,7 @@ import 'package:guardian_portal/features/dashboard/presentation/widgets/empty_de
 import 'package:guardian_portal/features/dashboard/presentation/widgets/protection_checklist_card.dart';
 import 'package:guardian_portal/features/dashboard/presentation/widgets/protection_setup_card.dart';
 import 'package:guardian_portal/features/dashboard/presentation/widgets/protection_status_hero.dart';
+import 'package:guardian_portal/features/dashboard/presentation/widgets/situation_context_badge.dart';
 import 'package:guardian_portal/features/devices/domain/guardian_device.dart';
 import 'package:guardian_portal/features/account/presentation/user_plan_scope.dart';
 import 'package:guardian_portal/features/subscription/domain/premium_features.dart';
@@ -58,9 +59,7 @@ class _DashboardPageState extends State<DashboardPage> {
               title: 'Proteção',
               subtitleTrailing: device != null
                   ? _HeaderStatusChips(
-                      isOnline: device.status.isOnline,
-                      lastSeen: device.status.lastSeen,
-                      verified: device.status.isVerified,
+                      status: device.status,
                       stackOnMobile: layout.isMobile,
                     )
                   : null,
@@ -116,22 +115,24 @@ class _DashboardPageState extends State<DashboardPage> {
 
 class _HeaderStatusChips extends StatelessWidget {
   const _HeaderStatusChips({
-    required this.isOnline,
-    required this.lastSeen,
-    required this.verified,
+    required this.status,
     required this.stackOnMobile,
   });
 
-  final bool isOnline;
-  final DateTime? lastSeen;
-  final bool verified;
+  final DeviceStatus status;
   final bool stackOnMobile;
 
   @override
   Widget build(BuildContext context) {
-    final online = DeviceOnlineChip(isOnline: isOnline, lastSeen: lastSeen);
+    final online = DeviceOnlineChip(
+      isOnline: status.isOnline,
+      lastSeen: status.lastSeen,
+    );
+    final situation = status.hasSituation
+        ? SituationContextBadge(status: status, compact: stackOnMobile)
+        : null;
     final verifiedChip =
-        verified ? const DeviceVerifiedChip(compact: true) : null;
+        status.isVerified ? const DeviceVerifiedChip(compact: true) : null;
 
     if (stackOnMobile) {
       return Column(
@@ -139,6 +140,10 @@ class _HeaderStatusChips extends StatelessWidget {
         crossAxisAlignment: CrossAxisAlignment.center,
         children: [
           online,
+          if (situation != null) ...[
+            const SizedBox(height: 6),
+            situation,
+          ],
           if (verifiedChip != null) ...[
             const SizedBox(height: 6),
             verifiedChip,
@@ -153,6 +158,7 @@ class _HeaderStatusChips extends StatelessWidget {
       alignment: WrapAlignment.end,
       children: [
         online,
+        ?situation,
         ?verifiedChip,
       ],
     );
