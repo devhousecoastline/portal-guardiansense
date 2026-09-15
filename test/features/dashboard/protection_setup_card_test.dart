@@ -105,13 +105,13 @@ void main() {
   testWidgets('mostra Wi‑Fi ligado quando wifiEnabled=true', (tester) async {
     await _pump(tester, wifiEnabled: true);
     expect(find.text('Wi‑Fi ligado'), findsOneWidget);
-    expect(find.byIcon(Icons.wifi_rounded), findsOneWidget);
+    expect(find.byIcon(Icons.wifi), findsOneWidget);
   });
 
   testWidgets('mostra Wi‑Fi desligado quando wifiEnabled=false', (tester) async {
     await _pump(tester, wifiEnabled: false);
     expect(find.text('Wi‑Fi desligado'), findsOneWidget);
-    expect(find.byIcon(Icons.wifi_off_rounded), findsOneWidget);
+    expect(find.byIcon(Icons.wifi_off), findsOneWidget);
   });
 
   testWidgets('mostra Dados ligados quando mobileDataEnabled=true', (
@@ -119,7 +119,7 @@ void main() {
   ) async {
     await _pump(tester, mobileDataEnabled: true);
     expect(find.text('Dados ligados'), findsOneWidget);
-    expect(find.byIcon(Icons.signal_cellular_alt_rounded), findsOneWidget);
+    expect(find.byIcon(Icons.signal_cellular_alt), findsOneWidget);
   });
 
   testWidgets('mostra Dados desligados quando mobileDataEnabled=false', (
@@ -127,7 +127,7 @@ void main() {
   ) async {
     await _pump(tester, mobileDataEnabled: false);
     expect(find.text('Dados desligados'), findsOneWidget);
-    expect(find.byIcon(Icons.signal_cellular_nodata_rounded), findsOneWidget);
+    expect(find.byIcon(Icons.signal_cellular_off), findsOneWidget);
   });
 
   testWidgets('sem wifiEnabled não mostra telemetria de rádio', (tester) async {

@@ -226,8 +226,8 @@ class _NetworkRadioChips extends StatelessWidget {
               compact: compact,
               onLabel: 'Wi‑Fi ligado',
               offLabel: 'Wi‑Fi desligado',
-              onIcon: Icons.wifi_rounded,
-              offIcon: Icons.wifi_off_rounded,
+              onIcon: Icons.wifi,
+              offIcon: Icons.wifi_off,
             ),
           if (wifiEnabled != null && mobileDataEnabled != null)
             const SizedBox(width: 8),
@@ -238,8 +238,9 @@ class _NetworkRadioChips extends StatelessWidget {
               compact: compact,
               onLabel: 'Dados ligados',
               offLabel: 'Dados desligados',
-              onIcon: Icons.signal_cellular_alt_rounded,
-              offIcon: Icons.signal_cellular_nodata_rounded,
+              // Evitar *_rounded / nodata — glifo vazio no build web.
+              onIcon: Icons.signal_cellular_alt,
+              offIcon: Icons.signal_cellular_off,
             ),
         ],
       ),
