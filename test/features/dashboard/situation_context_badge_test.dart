@@ -40,17 +40,28 @@ void main() {
     expect(find.textContaining('Casa'), findsNothing);
   });
 
-  testWidgets('mostra label e hint na mesma linha', (tester) async {
-    tester.view.physicalSize = const Size(1400, 900);
-    tester.view.devicePixelRatio = 1;
-    addTearDown(tester.view.resetPhysicalSize);
-
+  testWidgets('no cabeçalho compacto mostra só o label', (tester) async {
     await tester.pumpWidget(
       MaterialApp(
         home: Scaffold(
           body: SituationContextBadge(
             status: _status(situation: DeviceSituation.home),
             compact: true,
+          ),
+        ),
+      ),
+    );
+    expect(find.text('Casa'), findsOneWidget);
+    expect(find.textContaining('Ambiente confiável'), findsNothing);
+    expect(find.textContaining('87%'), findsNothing);
+  });
+
+  testWidgets('no desktop mostra label e hint na mesma linha', (tester) async {
+    await tester.pumpWidget(
+      MaterialApp(
+        home: Scaffold(
+          body: SituationContextBadge(
+            status: _status(situation: DeviceSituation.home),
           ),
         ),
       ),
