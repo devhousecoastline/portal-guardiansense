@@ -48,63 +48,139 @@ class ProtectionSetupCard extends StatelessWidget {
           20,
           compact ? 10 : 14,
         ),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.stretch,
-          children: [
-            Text(
-              'Configurações do aparelho',
-              style: DashboardTypography.cardTitle(context, compact: compact),
-            ),
-            const SizedBox(height: 4),
-            Text(
-              ProtectionSnapshot.setupCardSubtitle(status),
-              style: DashboardTypography.cardSubtitle(context),
-            ),
-            SizedBox(height: compact ? 10 : 14),
-            if (!status.hasSetupChecklist)
-              Text(
-                status.isOnline
-                    ? 'Abra o Guardian Sense no celular com esta conta para '
-                        'sincronizar o checklist.'
-                    : 'Abra o app no celular para sincronizar quando voltar online.',
-                style: DashboardTypography.cardSubtitle(context),
-              )
-            else ...[
-              Text(
-                _summaryLabel(status, complete: complete, muted: muted),
-                style: DashboardTypography.highlightCaption(
-                  context,
-                  color: muted
-                      ? AppColors.textMuted
-                      : (complete
-                          ? AppColors.trustHigh
-                          : AppColors.trustMedium),
-                ),
-              ),
-              SizedBox(height: compact ? 10 : 14),
-              // Divide a folga entre topo e base para centrar a timeline no card.
-              if (fillHeight) const Spacer(),
-              _SetupTimeline(
-                items: status.protectionSetupItems,
+        child: expands
+            ? _buildExpandingBody(
+                context,
                 muted: muted,
-                compact: compact,
+                complete: complete,
+              )
+            : _buildBody(
+                context,
+                muted: muted,
+                complete: complete,
+                fillHeight: false,
               ),
-              if (fillHeight) const Spacer(),
-              if (!complete && status.pendingSetupItems.isNotEmpty) ...[
-                SizedBox(height: compact ? 10 : 14),
-                _PendingCallout(
-                  items: status.pendingSetupItems,
-                  compact: compact,
+      ),
+    );
+  }
+
+  Widget _buildExpandingBody(
+    BuildContext context, {
+    required bool muted,
+    required bool complete,
+  }) {
+    return LayoutBuilder(
+      builder: (context, constraints) {
+        return FittedBox(
+          fit: BoxFit.scaleDown,
+          alignment: Alignment.topCenter,
+          child: SizedBox(
+            width: constraints.maxWidth,
+            child: _buildBody(
+              context,
+              muted: muted,
+              complete: complete,
+              fillHeight: true,
+            ),
+          ),
+        );
+      },
+    );
+  }
+
+  Widget _buildBody(
+    BuildContext context, {
+    required bool muted,
+    required bool complete,
+    required bool fillHeight,
+  }) {
+    final gap = fillHeight || compact ? 8.0 : 14.0;
+    final gapSm = fillHeight || compact ? 8.0 : 10.0;
+
+    return Column(
+      mainAxisSize: fillHeight ? MainAxisSize.min : MainAxisSize.max,
+      crossAxisAlignment: CrossAxisAlignment.stretch,
+      children: [
+        Text(
+          'Configurações do aparelho',
+          style: DashboardTypography.cardTitle(context, compact: compact),
+        ),
+        const SizedBox(height: 4),
+        Text(
+          ProtectionSnapshot.setupCardSubtitle(status),
+          style: DashboardTypography.cardSubtitle(context),
+        ),
+        SizedBox(height: gap),
+        if (!status.hasSetupChecklist)
+          Text(
+            status.isOnline
+                ? 'Abra o Guardian Sense no celular com esta conta para '
+                    'sincronizar o checklist.'
+                : 'Abra o app no celular para sincronizar quando voltar online.',
+            style: DashboardTypography.cardSubtitle(context),
+          )
+        else ...[
+          Row(
+            crossAxisAlignment: CrossAxisAlignment.center,
+            children: [
+              Expanded(
+                child: Text(
+                  _summaryLabel(status, complete: complete, muted: muted),
+                  style: DashboardTypography.highlightCaption(
+                    context,
+                    color: muted
+                        ? AppColors.textMuted
+                        : (complete
+                            ? AppColors.trustHigh
+                            : AppColors.trustMedium),
+                  ),
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
                 ),
-              ],
-              if (complete) ...[
-                SizedBox(height: compact ? 10 : 14),
-                _CompleteBanner(muted: muted, compact: compact),
+              ),
+              if (status.hasWifiRadioStatus ||
+                  status.hasMobileDataStatus) ...[
+                const SizedBox(width: 8),
+                Flexible(
+                  child: _NetworkRadioChips(
+                    wifiEnabled: status.wifiEnabled,
+                    mobileDataEnabled: status.mobileDataEnabled,
+                    muted: muted,
+                    compact: compact || fillHeight,
+                  ),
+                ),
               ],
             ],
+          ),
+          SizedBox(height: gap),
+          _SetupTimeline(
+            items: status.protectionSetupItems,
+            muted: muted,
+            compact: compact || fillHeight,
+          ),
+          if (!complete && status.pendingSetupItems.isNotEmpty) ...[
+            SizedBox(height: gapSm),
+            _PendingCallout(
+              items: status.pendingSetupItems,
+              compact: compact || fillHeight,
+            ),
           ],
-        ),
-      ),
+          if (complete) ...[
+            SizedBox(height: gapSm),
+            _CompleteBanner(muted: muted, compact: compact || fillHeight),
+          ],
+        ],
+        if (!status.hasSetupChecklist &&
+            (status.hasWifiRadioStatus || status.hasMobileDataStatus)) ...[
+          SizedBox(height: gapSm),
+          _NetworkRadioChips(
+            wifiEnabled: status.wifiEnabled,
+            mobileDataEnabled: status.mobileDataEnabled,
+            muted: muted,
+            compact: compact || fillHeight,
+          ),
+        ],
+      ],
     );
   }
 
@@ -118,6 +194,116 @@ class ProtectionSetupCard extends StatelessWidget {
     if (muted) return 'Última sync: $done de $total requisitos';
     if (complete) return '$done de $total requisitos configurados';
     return '$done de $total requisitos';
+  }
+}
+
+/// Telemetria Wi‑Fi + dados móveis — não conta no checklist de requisitos.
+class _NetworkRadioChips extends StatelessWidget {
+  const _NetworkRadioChips({
+    required this.wifiEnabled,
+    required this.mobileDataEnabled,
+    required this.muted,
+    required this.compact,
+  });
+
+  final bool? wifiEnabled;
+  final bool? mobileDataEnabled;
+  final bool muted;
+  final bool compact;
+
+  @override
+  Widget build(BuildContext context) {
+    return FittedBox(
+      fit: BoxFit.scaleDown,
+      alignment: Alignment.centerRight,
+      child: Row(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          if (wifiEnabled != null)
+            _RadioStatusChip(
+              enabled: wifiEnabled!,
+              muted: muted,
+              compact: compact,
+              onLabel: 'Wi‑Fi ligado',
+              offLabel: 'Wi‑Fi desligado',
+              onIcon: Icons.wifi_rounded,
+              offIcon: Icons.wifi_off_rounded,
+            ),
+          if (wifiEnabled != null && mobileDataEnabled != null)
+            const SizedBox(width: 8),
+          if (mobileDataEnabled != null)
+            _RadioStatusChip(
+              enabled: mobileDataEnabled!,
+              muted: muted,
+              compact: compact,
+              onLabel: 'Dados ligados',
+              offLabel: 'Dados desligados',
+              onIcon: Icons.signal_cellular_alt_rounded,
+              offIcon: Icons.signal_cellular_nodata_rounded,
+            ),
+        ],
+      ),
+    );
+  }
+}
+
+class _RadioStatusChip extends StatelessWidget {
+  const _RadioStatusChip({
+    required this.enabled,
+    required this.muted,
+    required this.compact,
+    required this.onLabel,
+    required this.offLabel,
+    required this.onIcon,
+    required this.offIcon,
+  });
+
+  final bool enabled;
+  final bool muted;
+  final bool compact;
+  final String onLabel;
+  final String offLabel;
+  final IconData onIcon;
+  final IconData offIcon;
+
+  @override
+  Widget build(BuildContext context) {
+    final accent = muted
+        ? AppColors.textMuted
+        : enabled
+            ? AppColors.trustHigh
+            : AppColors.trustMedium;
+    final label = enabled ? onLabel : offLabel;
+
+    return Container(
+      padding: EdgeInsets.symmetric(
+        horizontal: compact ? 10 : 12,
+        vertical: compact ? 5 : 6,
+      ),
+      decoration: BoxDecoration(
+        color: accent.withValues(alpha: 0.10),
+        borderRadius: BorderRadius.circular(10),
+        border: Border.all(color: accent.withValues(alpha: 0.28)),
+      ),
+      child: Row(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Icon(
+            enabled ? onIcon : offIcon,
+            size: compact ? 15 : 16,
+            color: accent,
+          ),
+          const SizedBox(width: 8),
+          Text(
+            label,
+            style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                  color: accent,
+                  fontWeight: FontWeight.w600,
+                ),
+          ),
+        ],
+      ),
+    );
   }
 }
 

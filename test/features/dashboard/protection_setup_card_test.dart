@@ -13,7 +13,11 @@ const _items = [
   ProtectionSetupItem(id: 'recovery', label: 'Recuperação', done: true),
 ];
 
-DeviceStatus _status({bool online = true}) {
+DeviceStatus _status({
+  bool online = true,
+  bool? wifiEnabled,
+  bool? mobileDataEnabled,
+}) {
   return DeviceStatus(
     deviceId: 'd1',
     modelLabel: 'Samsung SM-A226BR',
@@ -32,16 +36,29 @@ DeviceStatus _status({bool online = true}) {
     fingerprint: null,
     protectionSetupItems: _items,
     protectedLayers: const [],
+    wifiEnabled: wifiEnabled,
+    mobileDataEnabled: mobileDataEnabled,
   );
 }
 
-Future<void> _pump(WidgetTester tester, {bool online = true}) async {
+Future<void> _pump(
+  WidgetTester tester, {
+  bool online = true,
+  bool? wifiEnabled,
+  bool? mobileDataEnabled,
+}) async {
   await tester.pumpWidget(
     MaterialApp(
       theme: AppTheme.light,
       home: Scaffold(
         body: SingleChildScrollView(
-          child: ProtectionSetupCard(status: _status(online: online)),
+          child: ProtectionSetupCard(
+            status: _status(
+              online: online,
+              wifiEnabled: wifiEnabled,
+              mobileDataEnabled: mobileDataEnabled,
+            ),
+          ),
         ),
       ),
     ),
@@ -83,5 +100,39 @@ void main() {
 
     expect(colors, hasLength(_items.length));
     expect(colors.toSet(), hasLength(1));
+  });
+
+  testWidgets('mostra Wi‑Fi ligado quando wifiEnabled=true', (tester) async {
+    await _pump(tester, wifiEnabled: true);
+    expect(find.text('Wi‑Fi ligado'), findsOneWidget);
+    expect(find.byIcon(Icons.wifi_rounded), findsOneWidget);
+  });
+
+  testWidgets('mostra Wi‑Fi desligado quando wifiEnabled=false', (tester) async {
+    await _pump(tester, wifiEnabled: false);
+    expect(find.text('Wi‑Fi desligado'), findsOneWidget);
+    expect(find.byIcon(Icons.wifi_off_rounded), findsOneWidget);
+  });
+
+  testWidgets('mostra Dados ligados quando mobileDataEnabled=true', (
+    tester,
+  ) async {
+    await _pump(tester, mobileDataEnabled: true);
+    expect(find.text('Dados ligados'), findsOneWidget);
+    expect(find.byIcon(Icons.signal_cellular_alt_rounded), findsOneWidget);
+  });
+
+  testWidgets('mostra Dados desligados quando mobileDataEnabled=false', (
+    tester,
+  ) async {
+    await _pump(tester, mobileDataEnabled: false);
+    expect(find.text('Dados desligados'), findsOneWidget);
+    expect(find.byIcon(Icons.signal_cellular_nodata_rounded), findsOneWidget);
+  });
+
+  testWidgets('sem wifiEnabled não mostra telemetria de rádio', (tester) async {
+    await _pump(tester);
+    expect(find.textContaining('Wi‑Fi'), findsNothing);
+    expect(find.textContaining('Dados'), findsNothing);
   });
 }

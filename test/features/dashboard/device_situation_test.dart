@@ -55,4 +55,46 @@ void main() {
       expect(status.situationReasons, isEmpty);
     });
   });
+
+  group('DeviceStatus wifiEnabled', () {
+    test('fromFirestore lê wifiEnabled', () {
+      final on = DeviceStatus.fromFirestore('dev-1', {
+        'lastSeen': DateTime.now(),
+        'wifiEnabled': true,
+      });
+      final off = DeviceStatus.fromFirestore('dev-1', {
+        'lastSeen': DateTime.now(),
+        'wifiEnabled': false,
+      });
+      expect(on.wifiEnabled, isTrue);
+      expect(on.hasWifiRadioStatus, isTrue);
+      expect(off.wifiEnabled, isFalse);
+      expect(off.hasWifiRadioStatus, isTrue);
+    });
+
+    test('legado sem wifiEnabled não mostra telemetria', () {
+      final status = DeviceStatus.fromFirestore('dev-1', {
+        'lastSeen': DateTime.now(),
+      });
+      expect(status.wifiEnabled, isNull);
+      expect(status.hasWifiRadioStatus, isFalse);
+      expect(status.mobileDataEnabled, isNull);
+      expect(status.hasMobileDataStatus, isFalse);
+    });
+
+    test('fromFirestore lê mobileDataEnabled', () {
+      final on = DeviceStatus.fromFirestore('dev-1', {
+        'mobileDataEnabled': true,
+        'lastSeen': DateTime.now(),
+      });
+      final off = DeviceStatus.fromFirestore('dev-1', {
+        'mobileDataEnabled': false,
+        'lastSeen': DateTime.now(),
+      });
+      expect(on.mobileDataEnabled, isTrue);
+      expect(on.hasMobileDataStatus, isTrue);
+      expect(off.mobileDataEnabled, isFalse);
+      expect(off.hasMobileDataStatus, isTrue);
+    });
+  });
 }
