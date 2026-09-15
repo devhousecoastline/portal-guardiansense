@@ -1,3 +1,5 @@
+import 'dart:math' as math;
+
 import 'package:flutter/material.dart';
 import 'package:guardian_portal/core/theme/app_colors.dart';
 import 'package:guardian_portal/core/theme/dashboard_typography.dart';
@@ -213,40 +215,36 @@ class _NetworkRadioChips extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return FittedBox(
-      fit: BoxFit.scaleDown,
-      alignment: Alignment.centerRight,
-      child: Row(
-        mainAxisSize: MainAxisSize.min,
-        children: [
-          if (wifiEnabled != null)
-            _RadioStatusChip(
-              enabled: wifiEnabled!,
-              muted: muted,
-              compact: compact,
-              onLabel: 'Wi‑Fi ligado',
-              offLabel: 'Wi‑Fi desligado',
-              onIcon: Icons.wifi,
-              offIcon: Icons.wifi_off,
-            ),
-          if (wifiEnabled != null && mobileDataEnabled != null)
-            const SizedBox(width: 8),
-          if (mobileDataEnabled != null)
-            _RadioStatusChip(
-              enabled: mobileDataEnabled!,
-              muted: muted,
-              compact: compact,
-              onLabel: 'Dados ligados',
-              offLabel: 'Dados desligados',
-              // Evitar *_rounded / nodata — glifo vazio no build web.
-              onIcon: Icons.signal_cellular_alt,
-              offIcon: Icons.signal_cellular_off,
-            ),
-        ],
-      ),
+    // Sem FittedBox: no notebook ele encolhia o Row e os glifos sumiam.
+    return Row(
+      mainAxisSize: MainAxisSize.min,
+      children: [
+        if (wifiEnabled != null)
+          _RadioStatusChip(
+            enabled: wifiEnabled!,
+            muted: muted,
+            compact: compact,
+            onLabel: 'Wi‑Fi ligado',
+            offLabel: 'Wi‑Fi desligado',
+            glyph: _RadioGlyph.wifi,
+          ),
+        if (wifiEnabled != null && mobileDataEnabled != null)
+          const SizedBox(width: 8),
+        if (mobileDataEnabled != null)
+          _RadioStatusChip(
+            enabled: mobileDataEnabled!,
+            muted: muted,
+            compact: compact,
+            onLabel: 'Dados ligados',
+            offLabel: 'Dados desligados',
+            glyph: _RadioGlyph.mobileData,
+          ),
+      ],
     );
   }
 }
+
+enum _RadioGlyph { wifi, mobileData }
 
 class _RadioStatusChip extends StatelessWidget {
   const _RadioStatusChip({
@@ -255,8 +253,7 @@ class _RadioStatusChip extends StatelessWidget {
     required this.compact,
     required this.onLabel,
     required this.offLabel,
-    required this.onIcon,
-    required this.offIcon,
+    required this.glyph,
   });
 
   final bool enabled;
@@ -264,8 +261,7 @@ class _RadioStatusChip extends StatelessWidget {
   final bool compact;
   final String onLabel;
   final String offLabel;
-  final IconData onIcon;
-  final IconData offIcon;
+  final _RadioGlyph glyph;
 
   @override
   Widget build(BuildContext context) {
@@ -275,6 +271,7 @@ class _RadioStatusChip extends StatelessWidget {
             ? AppColors.trustHigh
             : AppColors.trustMedium;
     final label = enabled ? onLabel : offLabel;
+    final size = compact ? 15.0 : 16.0;
 
     return Container(
       padding: EdgeInsets.symmetric(
@@ -289,10 +286,21 @@ class _RadioStatusChip extends StatelessWidget {
       child: Row(
         mainAxisSize: MainAxisSize.min,
         children: [
-          Icon(
-            enabled ? onIcon : offIcon,
-            size: compact ? 15 : 16,
-            color: accent,
+          SizedBox(
+            width: size,
+            height: size,
+            child: CustomPaint(
+              painter: switch (glyph) {
+                _RadioGlyph.wifi => _WifiGlyphPainter(
+                    color: accent,
+                    enabled: enabled,
+                  ),
+                _RadioGlyph.mobileData => _MobileDataGlyphPainter(
+                    color: accent,
+                    enabled: enabled,
+                  ),
+              },
+            ),
           ),
           const SizedBox(width: 8),
           Text(
@@ -306,6 +314,118 @@ class _RadioStatusChip extends StatelessWidget {
       ),
     );
   }
+}
+
+/// Glifo Wi‑Fi desenhado — não depende do subset MaterialIcons no web.
+class _WifiGlyphPainter extends CustomPainter {
+  _WifiGlyphPainter({required this.color, required this.enabled});
+
+  final Color color;
+  final bool enabled;
+
+  @override
+  void paint(Canvas canvas, Size size) {
+    final paint = Paint()
+      ..color = color
+      ..style = PaintingStyle.stroke
+      ..strokeWidth = size.shortestSide * 0.12
+      ..strokeCap = StrokeCap.round;
+
+    final c = Offset(size.width / 2, size.height * 0.72);
+    final maxR = size.shortestSide * 0.55;
+
+    if (enabled) {
+      for (final t in [0.38, 0.68, 1.0]) {
+        canvas.drawArc(
+          Rect.fromCircle(center: c, radius: maxR * t),
+          -math.pi * 0.75,
+          math.pi * 0.5,
+          false,
+          paint,
+        );
+      }
+    } else {
+      canvas.drawArc(
+        Rect.fromCircle(center: c, radius: maxR),
+        -math.pi * 0.75,
+        math.pi * 0.5,
+        false,
+        paint..color = color.withValues(alpha: 0.45),
+      );
+      final slash = Paint()
+        ..color = color
+        ..style = PaintingStyle.stroke
+        ..strokeWidth = size.shortestSide * 0.12
+        ..strokeCap = StrokeCap.round;
+      canvas.drawLine(
+        Offset(size.width * 0.22, size.height * 0.22),
+        Offset(size.width * 0.78, size.height * 0.78),
+        slash,
+      );
+    }
+
+    canvas.drawCircle(
+      c,
+      size.shortestSide * 0.08,
+      Paint()..color = color,
+    );
+  }
+
+  @override
+  bool shouldRepaint(covariant _WifiGlyphPainter oldDelegate) =>
+      oldDelegate.color != color || oldDelegate.enabled != enabled;
+}
+
+/// Glifo de barras de sinal — não depende do subset MaterialIcons no web.
+class _MobileDataGlyphPainter extends CustomPainter {
+  _MobileDataGlyphPainter({required this.color, required this.enabled});
+
+  final Color color;
+  final bool enabled;
+
+  @override
+  void paint(Canvas canvas, Size size) {
+    final paint = Paint()
+      ..color = color
+      ..style = PaintingStyle.fill;
+
+    const bars = 4;
+    final gap = size.width * 0.08;
+    final barW = (size.width - gap * (bars - 1)) / bars;
+    final maxH = size.height * 0.9;
+    final base = size.height;
+
+    for (var i = 0; i < bars; i++) {
+      final h = maxH * ((i + 1) / bars);
+      final left = i * (barW + gap);
+      final active = enabled || i == 0;
+      paint.color = active ? color : color.withValues(alpha: 0.35);
+      canvas.drawRRect(
+        RRect.fromRectAndRadius(
+          Rect.fromLTWH(left, base - h, barW, h),
+          Radius.circular(barW * 0.35),
+        ),
+        paint,
+      );
+    }
+
+    if (!enabled) {
+      final slash = Paint()
+        ..color = color
+        ..style = PaintingStyle.stroke
+        ..strokeWidth = size.shortestSide * 0.12
+        ..strokeCap = StrokeCap.round;
+      canvas.drawLine(
+        Offset(size.width * 0.15, size.height * 0.2),
+        Offset(size.width * 0.9, size.height * 0.85),
+        slash,
+      );
+    }
+  }
+
+  @override
+  bool shouldRepaint(covariant _MobileDataGlyphPainter oldDelegate) =>
+      oldDelegate.color != color || oldDelegate.enabled != enabled;
 }
 
 /// Timeline horizontal: ponto → haste vertical → ícone (tooltip).
