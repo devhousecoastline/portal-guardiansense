@@ -70,6 +70,17 @@ Quando o app publicar a fase Observe, o snapshot deve incluir:
 | `situationReasons` | lista de codes estáveis | Breakdown / diagnóstico (não texto livre de UI) |
 | `situationUpdatedAt` | timestamp | “Atualizado há …” |
 
+### Telemetria Wi‑Fi (rádio)
+
+Campo separado do contexto situacional — lido no card **Configurações do aparelho**:
+
+| Campo | Tipo | Uso no portal |
+|-------|------|----------------|
+| `wifiEnabled` | bool \| ausente | `true` = rádio ligado; `false` = desligado; ausente = app legado (não mostrar) |
+| `mobileDataEnabled` | bool \| ausente | `true` = dados móveis ligados; `false` = desligados; ausente = app legado |
+
+Não confundir com Online (`lastSeen`) nem com Casa/Trabalho/Rua (`situation`). Sem SSID no payload.
+
 Dashboard e Localizar (quando houver UI): ler **primariamente o snapshot**. Não derivar situação a partir de `events` nem da trilha `locations`.
 
 ### Codes de `situationReasons` (estáveis)

@@ -40,6 +40,8 @@ class DeviceStatus {
     this.situationConfidence,
     this.situationReasons = const [],
     this.situationUpdatedAt,
+    this.wifiEnabled,
+    this.mobileDataEnabled,
   });
 
   final String deviceId;
@@ -77,8 +79,21 @@ class DeviceStatus {
   final List<String> situationReasons;
   final DateTime? situationUpdatedAt;
 
+  /// Rádio Wi‑Fi ligado/desligado (`WifiManager.isWifiEnabled`). `null` = legado.
+  /// Distinto de `situation` (lugar) e de Online (`lastSeen`).
+  final bool? wifiEnabled;
+
+  /// Dados móveis ligados/desligados. `null` = legado.
+  final bool? mobileDataEnabled;
+
   /// Há snapshot de situação para exibir no portal (badge).
   bool get hasSituation => situation != null;
+
+  /// App publicou telemetria do interruptor Wi‑Fi.
+  bool get hasWifiRadioStatus => wifiEnabled != null;
+
+  /// App publicou telemetria de dados móveis.
+  bool get hasMobileDataStatus => mobileDataEnabled != null;
 
   bool get isReleased => bindingStatus == DeviceBindingStatus.released;
 
@@ -195,6 +210,8 @@ class DeviceStatus {
       situationConfidence: _confidence(data['situationConfidence']),
       situationReasons: _stringList(data['situationReasons']),
       situationUpdatedAt: _timestamp(data['situationUpdatedAt']),
+      wifiEnabled: data['wifiEnabled'] as bool?,
+      mobileDataEnabled: data['mobileDataEnabled'] as bool?,
     );
   }
 
