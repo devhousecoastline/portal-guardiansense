@@ -60,33 +60,126 @@ class ProtectionSetupCard extends StatelessWidget {
                 context,
                 muted: muted,
                 complete: complete,
-                fillHeight: false,
               ),
       ),
     );
   }
 
+  /// Notebook/grade: cabeçalho + timeline no topo; banner/callout colado na base
+  /// (evita o verde “subir” quando 6/6 deixa o bloco mais baixo que o pendente).
   Widget _buildExpandingBody(
     BuildContext context, {
     required bool muted,
     required bool complete,
   }) {
-    return LayoutBuilder(
-      builder: (context, constraints) {
-        return FittedBox(
-          fit: BoxFit.scaleDown,
-          alignment: Alignment.topCenter,
-          child: SizedBox(
-            width: constraints.maxWidth,
-            child: _buildBody(
-              context,
-              muted: muted,
-              complete: complete,
-              fillHeight: true,
+    const gap = 8.0;
+    const gapSm = 8.0;
+    final dense = compact;
+
+    final footer = !status.hasSetupChecklist
+        ? null
+        : complete
+            ? _CompleteBanner(muted: muted, compact: dense)
+            : (status.pendingSetupItems.isNotEmpty
+                ? _PendingCallout(
+                    items: status.pendingSetupItems,
+                    compact: dense,
+                  )
+                : null);
+
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.stretch,
+      children: [
+        Text(
+          'Configurações do aparelho',
+          style: DashboardTypography.cardTitle(context, compact: compact),
+        ),
+        const SizedBox(height: 4),
+        Text(
+          ProtectionSnapshot.setupCardSubtitle(status),
+          style: DashboardTypography.cardSubtitle(context),
+        ),
+        const SizedBox(height: gap),
+        if (!status.hasSetupChecklist)
+          Text(
+            status.isOnline
+                ? 'Abra o Guardian Sense no celular com esta conta para '
+                    'sincronizar o checklist.'
+                : 'Abra o app no celular para sincronizar quando voltar online.',
+            style: DashboardTypography.cardSubtitle(context),
+          )
+        else ...[
+          Row(
+            crossAxisAlignment: CrossAxisAlignment.center,
+            children: [
+              Expanded(
+                child: Text(
+                  _summaryLabel(status, complete: complete, muted: muted),
+                  style: DashboardTypography.highlightCaption(
+                    context,
+                    color: muted
+                        ? AppColors.textMuted
+                        : (complete
+                            ? AppColors.trustHigh
+                            : AppColors.trustMedium),
+                  ),
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                ),
+              ),
+              if (status.hasWifiRadioStatus ||
+                  status.hasMobileDataStatus) ...[
+                const SizedBox(width: 8),
+                Flexible(
+                  child: _NetworkRadioChips(
+                    wifiEnabled: status.wifiEnabled,
+                    mobileDataEnabled: status.mobileDataEnabled,
+                    muted: muted,
+                    compact: dense,
+                  ),
+                ),
+              ],
+            ],
+          ),
+          const SizedBox(height: gap),
+          Expanded(
+            child: Align(
+              alignment: Alignment.topCenter,
+              child: LayoutBuilder(
+                builder: (context, constraints) {
+                  return FittedBox(
+                    fit: BoxFit.scaleDown,
+                    alignment: Alignment.topCenter,
+                    child: SizedBox(
+                      width: constraints.maxWidth,
+                      child: _SetupTimeline(
+                        items: status.protectionSetupItems,
+                        muted: muted,
+                        compact: dense,
+                      ),
+                    ),
+                  );
+                },
+              ),
             ),
           ),
-        );
-      },
+        ],
+        if (!status.hasSetupChecklist &&
+            (status.hasWifiRadioStatus || status.hasMobileDataStatus)) ...[
+          const SizedBox(height: gapSm),
+          _NetworkRadioChips(
+            wifiEnabled: status.wifiEnabled,
+            mobileDataEnabled: status.mobileDataEnabled,
+            muted: muted,
+            compact: dense,
+          ),
+          const Spacer(),
+        ],
+        if (footer != null) ...[
+          const SizedBox(height: gapSm),
+          footer,
+        ],
+      ],
     );
   }
 
@@ -94,13 +187,11 @@ class ProtectionSetupCard extends StatelessWidget {
     BuildContext context, {
     required bool muted,
     required bool complete,
-    required bool fillHeight,
   }) {
-    final gap = fillHeight || compact ? 8.0 : 14.0;
-    final gapSm = fillHeight || compact ? 8.0 : 10.0;
+    final gap = compact ? 8.0 : 14.0;
+    final gapSm = compact ? 8.0 : 10.0;
 
     return Column(
-      mainAxisSize: fillHeight ? MainAxisSize.min : MainAxisSize.max,
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
         Text(
@@ -148,7 +239,7 @@ class ProtectionSetupCard extends StatelessWidget {
                     wifiEnabled: status.wifiEnabled,
                     mobileDataEnabled: status.mobileDataEnabled,
                     muted: muted,
-                    compact: compact || fillHeight,
+                    compact: compact,
                   ),
                 ),
               ],
@@ -158,18 +249,18 @@ class ProtectionSetupCard extends StatelessWidget {
           _SetupTimeline(
             items: status.protectionSetupItems,
             muted: muted,
-            compact: compact || fillHeight,
+            compact: compact,
           ),
           if (!complete && status.pendingSetupItems.isNotEmpty) ...[
             SizedBox(height: gapSm),
             _PendingCallout(
               items: status.pendingSetupItems,
-              compact: compact || fillHeight,
+              compact: compact,
             ),
           ],
           if (complete) ...[
             SizedBox(height: gapSm),
-            _CompleteBanner(muted: muted, compact: compact || fillHeight),
+            _CompleteBanner(muted: muted, compact: compact),
           ],
         ],
         if (!status.hasSetupChecklist &&
@@ -179,7 +270,7 @@ class ProtectionSetupCard extends StatelessWidget {
             wifiEnabled: status.wifiEnabled,
             mobileDataEnabled: status.mobileDataEnabled,
             muted: muted,
-            compact: compact || fillHeight,
+            compact: compact,
           ),
         ],
       ],
@@ -726,6 +817,9 @@ class _PendingCallout extends StatelessWidget {
         SizedBox(height: compact ? 6 : 8),
         Container(
           width: double.infinity,
+          constraints: BoxConstraints(
+            minHeight: CelularSeguroCallout.minHeight(compact: compact),
+          ),
           padding: EdgeInsets.all(compact ? 10 : 12),
           decoration: BoxDecoration(
             color: AppColors.trustMedium.withValues(alpha: 0.08),
@@ -734,8 +828,9 @@ class _PendingCallout extends StatelessWidget {
               color: AppColors.trustMedium.withValues(alpha: 0.28),
             ),
           ),
+          alignment: Alignment.centerLeft,
           child: Row(
-            crossAxisAlignment: CrossAxisAlignment.start,
+            crossAxisAlignment: CrossAxisAlignment.center,
             children: [
               Icon(
                 Icons.error_outline_rounded,
@@ -746,6 +841,7 @@ class _PendingCallout extends StatelessWidget {
               Expanded(
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
+                  mainAxisSize: MainAxisSize.min,
                   children: [
                     Text(
                       label,
@@ -801,6 +897,7 @@ class _CompleteBanner extends StatelessWidget {
         borderRadius: BorderRadius.circular(10),
         border: Border.all(color: accent.withValues(alpha: 0.22)),
       ),
+      alignment: Alignment.centerLeft,
       child: Row(
         crossAxisAlignment: CrossAxisAlignment.center,
         children: [
