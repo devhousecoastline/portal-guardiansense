@@ -11,6 +11,12 @@ enum ProtectionLevel { protected, partial, alert, offline, unknown }
 /// Vínculo do doc em `users/{uid}/devices/{deviceId}.status`.
 enum DeviceBindingStatus { active, released, unknown }
 
+/// Presença pelo `lastSeen` relativo à cadência do app (`presenceIntervalSec`).
+///
+/// [stale]: passou do limiar online, mas ainda não é offline — o portal mostra
+/// "última comunicação há N min".
+enum DevicePresence { online, stale, offline }
+
 class DeviceStatus {
   const DeviceStatus({
     required this.deviceId,
@@ -19,6 +25,7 @@ class DeviceStatus {
     required this.appVersion,
     this.appBuild = '',
     required this.lastSeen,
+    this.presenceIntervalSec,
     required this.storedProtectionIndex,
     required this.runtimeActive,
     required this.oysterClosed,
@@ -52,6 +59,10 @@ class DeviceStatus {
   /// Build number do app (`PackageInfo.buildNumber`), ex. `"2"`.
   final String appBuild;
   final DateTime? lastSeen;
+
+  /// Cadência de `lastSeen` do app: 600 (ostra aberta) ou 180 (fechada).
+  /// `null` = APK sem presença adaptativa.
+  final int? presenceIntervalSec;
   final int storedProtectionIndex;
   final bool? runtimeActive;
   final bool? oysterClosed;
@@ -141,12 +152,53 @@ class DeviceStatus {
     return isOnline;
   }
 
-  /// Online se houve sync recente (recalculado a cada build/tick).
-  bool get isOnline {
-    if (isReleased) return false;
+  Duration get presenceInterval {
+    final sec = presenceIntervalSec;
+    if (sec == null || sec <= 0) return AppConstants.presenceIntervalFallback;
+    return Duration(seconds: sec);
+  }
+
+  /// Abaixo disso desde o `lastSeen`, o aparelho está online.
+  Duration get onlineThreshold =>
+      presenceInterval * AppConstants.presenceOnlineFactor;
+
+  /// A partir disso desde o `lastSeen`, o aparelho está offline.
+  Duration get offlineThreshold {
+    final scaled = presenceInterval * AppConstants.presenceOfflineFactor;
+    return scaled > AppConstants.presenceOfflineMin
+        ? scaled
+        : AppConstants.presenceOfflineMin;
+  }
+
+  /// Presença pelo relógio (recalculada a cada build/tick).
+  DevicePresence presenceAt(DateTime now) {
+    if (isReleased) return DevicePresence.offline;
     final seen = lastSeen;
-    if (seen == null) return false;
-    return DateTime.now().difference(seen) < AppConstants.deviceOnlineThreshold;
+    if (seen == null) return DevicePresence.offline;
+    final elapsed = now.difference(seen);
+    if (elapsed < onlineThreshold) return DevicePresence.online;
+    if (elapsed <= offlineThreshold) return DevicePresence.stale;
+    return DevicePresence.offline;
+  }
+
+  DevicePresence get presence => presenceAt(DateTime.now());
+
+  /// Online se houve sync recente. [DevicePresence.stale] não conta.
+  bool get isOnline => presence == DevicePresence.online;
+
+  /// Rótulo curto: `Online`, `Última comunicação há N min` ou `Offline`.
+  String get presenceLabel => switch (presence) {
+        DevicePresence.online => 'Online',
+        DevicePresence.stale => lastContactLabel,
+        DevicePresence.offline => 'Offline',
+      };
+
+  /// `Última comunicação há N min` pelo `lastSeen`.
+  String get lastContactLabel {
+    final seen = lastSeen;
+    if (seen == null) return 'Sem comunicação';
+    final minutes = DateTime.now().difference(seen).inMinutes;
+    return 'Última comunicação há ${minutes < 1 ? 1 : minutes} min';
   }
 
   int get protectionIndex => isOnline ? storedProtectionIndex : 0;
@@ -158,7 +210,8 @@ class DeviceStatus {
         ProtectionLevel.protected => 'Protegido',
         ProtectionLevel.partial => 'Parcial',
         ProtectionLevel.alert => 'Alerta',
-        ProtectionLevel.offline => 'Offline',
+        ProtectionLevel.offline =>
+          presence == DevicePresence.stale ? 'Sem sinal' : 'Offline',
         ProtectionLevel.unknown => 'Aguardando sync',
       };
 
@@ -187,6 +240,7 @@ class DeviceStatus {
       appVersion: data['appVersion'] as String? ?? '—',
       appBuild: _stringField(data['appBuild']),
       lastSeen: lastSeen,
+      presenceIntervalSec: (data['presenceIntervalSec'] as num?)?.toInt(),
       storedProtectionIndex: protectionIndex,
       runtimeActive: runtimeActive,
       oysterClosed: oysterClosed,

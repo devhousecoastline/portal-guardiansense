@@ -124,10 +124,7 @@ class _HeaderStatusChips extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final online = DeviceOnlineChip(
-      isOnline: status.isOnline,
-      lastSeen: status.lastSeen,
-    );
+    final online = DeviceOnlineChip(status: status);
     final situation = status.hasSituation
         ? SituationContextBadge(status: status, compact: stackOnMobile)
         : null;

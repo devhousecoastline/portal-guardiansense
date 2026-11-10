@@ -19,8 +19,8 @@ abstract final class AppConstants {
   /// - cada deploy sobe o patch (`1.0.0` → `1.0.1`) e o build (`+1` → `+2`);
   /// - minor/major só em mudança grande de produto.
   /// Manter igual ao `version:` do pubspec.yaml (`x.y.z+build`).
-  static const String portalVersion = '1.0.42';
-  static const int portalBuild = 43;
+  static const String portalVersion = '1.0.43';
+  static const int portalBuild = 44;
 
   /// Landing "Em desenvolvimento" na `/`.
   ///
@@ -38,12 +38,22 @@ abstract final class AppConstants {
   /// Largura máxima do layout desktop da login.
   static const double loginMaxWidth = 1180;
 
-  /// Dispositivo online se `lastSeen` for mais recente que isso.
+  /// Cadência de presença quando o doc não traz `presenceIntervalSec`.
   ///
-  /// Alinhado à presença do FGS no app (`ProtectionStateFirestoreSync` ~180s):
-  /// limiar ≈ 2× o ciclo. Após desinstalar o app, o portal só marca offline
-  /// quando este prazo passa (não há sinal de “aparelho sumiu”).
-  static const Duration deviceOnlineThreshold = Duration(minutes: 4);
+  /// APK sem presença adaptativa grava `lastSeen` a cada ~180s.
+  static const Duration presenceIntervalFallback = Duration(seconds: 180);
+
+  /// Online se `agora - lastSeen < presenceOnlineFactor × intervalo`.
+  ///
+  /// Ostra aberta (600s): 25 min · ostra fechada (180s): 7,5 min. Após
+  /// desinstalar o app, o portal só marca offline quando o prazo passa.
+  static const double presenceOnlineFactor = 2.5;
+
+  /// Entre o limiar online e este, mostra "última comunicação há N min";
+  /// depois, offline. Prazo = `max(presenceOfflineMin, fator × intervalo)`:
+  /// ostra aberta (600s): 60 min · ostra fechada (180s): 20 min.
+  static const int presenceOfflineFactor = 6;
+  static const Duration presenceOfflineMin = Duration(minutes: 20);
 
   /// Programa Nacional Celular Seguro (MJSP) — bloqueio de IMEI/linha na operadora.
   static const String celularSeguroUrl = 'https://celularseguro.mj.gov.br/';

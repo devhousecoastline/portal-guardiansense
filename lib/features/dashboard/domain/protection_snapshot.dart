@@ -39,7 +39,9 @@ abstract final class ProtectionSnapshot {
         ProtectionLevel.protected => 'Seu celular está protegido.',
         ProtectionLevel.partial => 'Proteção parcial — revise os itens abaixo.',
         ProtectionLevel.alert => 'Atenção — proteção comprometida.',
-        ProtectionLevel.offline => 'Dispositivo offline no momento.',
+        ProtectionLevel.offline => status.presence == DevicePresence.stale
+            ? '${status.lastContactLabel}.'
+            : 'Dispositivo offline no momento.',
         ProtectionLevel.unknown => 'Aguardando dados do aparelho.',
       };
 
@@ -172,7 +174,7 @@ abstract final class ProtectionSnapshot {
         ProtectionLevel.protected => 'Sim — ${status.protectionLabel}',
         ProtectionLevel.partial => 'Parcialmente',
         ProtectionLevel.alert => 'Não — verifique o aparelho',
-        ProtectionLevel.offline => 'Offline',
+        ProtectionLevel.offline => status.protectionLabel,
         ProtectionLevel.unknown => 'Aguardando sync',
       };
 

@@ -18,11 +18,14 @@ class DeviceTile extends StatelessWidget {
     final released = status.isReleased;
     final color = _toneColor(status);
     final theme = Theme.of(context);
+    final presence = status.presence;
     final statusLine = released
         ? 'Desvinculado'
-        : status.isOnline
-            ? status.protectionLabel
-            : 'Offline';
+        : switch (presence) {
+            DevicePresence.online => status.protectionLabel,
+            DevicePresence.stale => 'Sem sinal',
+            DevicePresence.offline => 'Offline',
+          };
     final syncLabel = released
         ? _releasedLabel(status.releasedAt)
         : _syncLabel(status.lastSeen);
@@ -31,11 +34,7 @@ class DeviceTile extends StatelessWidget {
         ? null
         : 'v$versionLabel';
     final narrow = MediaQuery.sizeOf(context).width < 560;
-    final presenceLabel = released
-        ? 'Anterior'
-        : status.isOnline
-            ? 'Online'
-            : 'Offline';
+    final presenceLabel = released ? 'Anterior' : status.presenceLabel;
 
     return SectionCard(
       padding: EdgeInsets.zero,
@@ -191,6 +190,9 @@ class DeviceTile extends StatelessWidget {
     required bool released,
   }) {
     if (released) return Icons.link_off_rounded;
+    if (status.presence == DevicePresence.stale) {
+      return Icons.cloud_queue_outlined;
+    }
     if (!status.isOnline) return Icons.cloud_off_outlined;
     return switch (status.level) {
       ProtectionLevel.protected => Icons.shield_outlined,
@@ -203,6 +205,7 @@ class DeviceTile extends StatelessWidget {
 
   static Color _toneColor(DeviceStatus status) {
     if (status.isReleased) return AppColors.textMuted;
+    if (status.presence == DevicePresence.stale) return AppColors.trustMedium;
     if (!status.isOnline) return AppColors.textMuted;
     return switch (status.level) {
       ProtectionLevel.protected => AppColors.trustHigh,
