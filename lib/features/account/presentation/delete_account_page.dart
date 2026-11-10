@@ -9,6 +9,7 @@ import 'package:guardian_portal/core/theme/app_colors.dart';
 import 'package:guardian_portal/core/widgets/guardian_confirm_dialog.dart';
 import 'package:guardian_portal/core/widgets/guardian_logo.dart';
 import 'package:guardian_portal/core/widgets/guardian_pill_button.dart';
+import 'package:guardian_portal/core/widgets/guardian_scaffold.dart';
 import 'package:guardian_portal/core/widgets/section_card.dart';
 import 'package:guardian_portal/features/account/data/account_deletion_service.dart';
 import 'package:guardian_portal/features/auth/application/auth_controller.dart';
@@ -20,9 +21,10 @@ import 'package:guardian_portal/features/auth/presentation/widgets/login_form_ca
 
 /// Pública: exclusão da conta pelo site (link exigido pela Play).
 ///
-/// Login → o que é apagado e o que fica → confirmar → `deleteAccount` →
-/// `signOut` → confirmação. Login antigo (`failed-precondition`) pede para
-/// entrar de novo.
+/// Com sessão abre no layout do portal (menu lateral); sem sessão e após
+/// excluir, tela pública como o login. Fluxo: login → o que é apagado e o que
+/// fica → confirmar → `deleteAccount` → `signOut` → confirmação. Login antigo
+/// (`failed-precondition`) pede para entrar de novo.
 class DeleteAccountPage extends StatefulWidget {
   const DeleteAccountPage({super.key, this.service});
 
@@ -189,118 +191,116 @@ class _DeleteAccountPageState extends State<DeleteAccountPage> {
     await auth.signOut();
   }
 
-  Future<void> _useAnotherAccount(AuthController auth) async {
-    setState(() {
-      _error = null;
-      _notice = null;
-    });
-    await auth.signOut();
-  }
-
   @override
   Widget build(BuildContext context) {
     final auth = AuthScope.of(context);
 
-    return AuthPageShell(
-      stickyFooter: false,
-      body: ListenableBuilder(
-        listenable: auth,
-        builder: (context, _) {
-          final user = auth.user;
-          final Widget content;
-          if (_deleted) {
-            content = const _DeletedCard();
-          } else if (!auth.isReady) {
-            content = const Padding(
-              padding: EdgeInsets.symmetric(vertical: 64),
-              child: Center(child: CircularProgressIndicator()),
-            );
-          } else if (user == null) {
-            content = _SignInStep(
-              notice: _notice,
-              form: LoginFormCard(
-                formKey: _formKey,
-                email: _email,
-                password: _password,
-                creating: false,
-                busy: _busy,
-                error: _error,
-                title: 'Entre para excluir',
-                subtitle: 'Use a mesma conta do app (Google ou e-mail e senha).',
-                onSubmit: () => _signInWithEmail(auth),
-                onGoogleSignIn: () => _signInWithGoogle(auth),
-                onToggleMode: null,
-                onForgotPassword: () => _forgotPassword(auth),
-              ),
-            );
-          } else {
-            content = _ExplanationStep(
+    return ListenableBuilder(
+      listenable: auth,
+      builder: (context, _) {
+        final user = auth.user;
+
+        if (!_deleted && auth.isReady && user != null) {
+          return GuardianScaffold(
+            title: 'Excluir conta',
+            subtitle: 'O que é apagado, o que fica guardado e como confirmar',
+            child: DeleteAccountSummary(
               email: user.email,
               busy: _busy,
               error: _error,
               onDelete: () => _confirmAndDelete(auth),
-              onCancel: () => context.go(AppRoutes.dashboard),
-              onUseAnotherAccount: () => _useAnotherAccount(auth),
-            );
-          }
-
-          return Center(
-            child: SingleChildScrollView(
-              padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 28),
-              child: ConstrainedBox(
-                constraints: const BoxConstraints(maxWidth: 560),
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.stretch,
-                  children: [
-                    const _Header(),
-                    const SizedBox(height: 24),
-                    content,
-                    const SizedBox(height: 20),
-                    Center(
-                      child: TextButton(
-                        onPressed: () => context.go(AppRoutes.privacyPublic),
-                        style: TextButton.styleFrom(
-                          foregroundColor: AppColors.textMuted,
-                        ),
-                        child: const Text('Política de Privacidade'),
-                      ),
-                    ),
-                    const AuthFooter(includeHorizontalPadding: false),
-                  ],
-                ),
-              ),
+              onCancel: () => context.go(AppRoutes.account),
             ),
           );
-        },
-      ),
+        }
+
+        final Widget content;
+        if (_deleted) {
+          content = const DeleteAccountDoneCard();
+        } else if (!auth.isReady) {
+          content = const Padding(
+            padding: EdgeInsets.symmetric(vertical: 64),
+            child: Center(child: CircularProgressIndicator()),
+          );
+        } else {
+          content = _SignInStep(
+            notice: _notice,
+            form: LoginFormCard(
+              formKey: _formKey,
+              email: _email,
+              password: _password,
+              creating: false,
+              busy: _busy,
+              error: _error,
+              title: 'Entre para excluir',
+              subtitle: 'Use a mesma conta do app (Google ou e-mail e senha).',
+              onSubmit: () => _signInWithEmail(auth),
+              onGoogleSignIn: () => _signInWithGoogle(auth),
+              onToggleMode: null,
+              onForgotPassword: () => _forgotPassword(auth),
+            ),
+          );
+        }
+
+        return _PublicShell(child: content);
+      },
     );
   }
 }
 
-class _Header extends StatelessWidget {
-  const _Header();
+/// Sem sessão: mesmo idioma das telas públicas (login, QR de vínculo).
+class _PublicShell extends StatelessWidget {
+  const _PublicShell({required this.child});
+
+  final Widget child;
 
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
-    return Column(
-      children: [
-        const GuardianLogo(size: 80),
-        const SizedBox(height: 8),
-        Text(
-          AppConstants.appName,
-          style: theme.textTheme.titleLarge,
-          textAlign: TextAlign.center,
-        ),
-        const SizedBox(height: 12),
-        Text(
-          'Excluir conta',
-          style: theme.textTheme.headlineSmall?.copyWith(
-            fontWeight: FontWeight.w700,
+
+    return AuthPageShell(
+      stickyFooter: false,
+      body: Center(
+        child: SingleChildScrollView(
+          padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 28),
+          child: ConstrainedBox(
+            constraints: const BoxConstraints(maxWidth: 480),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.stretch,
+              children: [
+                const GuardianLogo(size: 80),
+                const SizedBox(height: 8),
+                Text(
+                  AppConstants.appName,
+                  style: theme.textTheme.titleLarge,
+                  textAlign: TextAlign.center,
+                ),
+                const SizedBox(height: 12),
+                Text(
+                  'Excluir conta',
+                  style: theme.textTheme.headlineSmall?.copyWith(
+                    fontWeight: FontWeight.w700,
+                  ),
+                  textAlign: TextAlign.center,
+                ),
+                const SizedBox(height: 20),
+                child,
+                const SizedBox(height: 16),
+                Center(
+                  child: TextButton(
+                    onPressed: () => context.go(AppRoutes.privacyPublic),
+                    style: TextButton.styleFrom(
+                      foregroundColor: AppColors.textMuted,
+                    ),
+                    child: const Text('Política de Privacidade'),
+                  ),
+                ),
+                const AuthFooter(includeHorizontalPadding: false),
+              ],
+            ),
           ),
-          textAlign: TextAlign.center,
         ),
-      ],
+      ),
     );
   }
 }
@@ -341,14 +341,15 @@ class _SignInStep extends StatelessWidget {
   }
 }
 
-class _ExplanationStep extends StatelessWidget {
-  const _ExplanationStep({
+/// Com sessão: cards no padrão de Minha conta, lado a lado em tela larga.
+class DeleteAccountSummary extends StatelessWidget {
+  const DeleteAccountSummary({
+    super.key,
     required this.email,
     required this.busy,
     required this.error,
     required this.onDelete,
     required this.onCancel,
-    required this.onUseAnotherAccount,
   });
 
   final String? email;
@@ -356,180 +357,119 @@ class _ExplanationStep extends StatelessWidget {
   final String? error;
   final VoidCallback onDelete;
   final VoidCallback onCancel;
-  final VoidCallback onUseAnotherAccount;
+
+  static const _deleted = [
+    'A conta de acesso (login Google ou e-mail e senha)',
+    'Aparelhos vinculados e o estado da proteção na nuvem',
+    'Trilha de localização e eventos de proteção',
+    'Comandos remotos enviados pelo portal',
+    'Plano e assinatura vinculados à conta',
+  ];
+
+  static const _kept = [
+    'Um código irreversível (hash) do e-mail, sem o e-mail em si, para o '
+        'período de teste não recomeçar se você criar outra conta',
+    'Registros de pagamento PIX, sem vínculo com a conta, por obrigação '
+        'fiscal',
+    'Os dados no próprio celular: a proteção local do Guardian Sense '
+        'continua funcionando sem conta',
+  ];
 
   @override
   Widget build(BuildContext context) {
-    final theme = Theme.of(context);
-    final mail = email?.trim();
+    const deletedCard = _ListCard(
+      icon: Icons.delete_outline_rounded,
+      title: 'O que é apagado',
+      color: _ListColor.critical,
+      mark: '✕',
+      items: _deleted,
+    );
+    const keptCard = _ListCard(
+      icon: Icons.inventory_2_outlined,
+      title: 'O que fica guardado',
+      color: _ListColor.kept,
+      mark: '✓',
+      items: _kept,
+    );
 
     return Column(
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
-        Text(
-          mail == null || mail.isEmpty
-              ? 'Você está na conta conectada a este portal.'
-              : 'Conta: $mail',
-          textAlign: TextAlign.center,
-          style: theme.textTheme.titleSmall?.copyWith(
-            fontWeight: FontWeight.w600,
-          ),
+        LayoutBuilder(
+          builder: (context, constraints) {
+            if (constraints.maxWidth < 720) {
+              return const Column(
+                crossAxisAlignment: CrossAxisAlignment.stretch,
+                children: [deletedCard, SizedBox(height: 16), keptCard],
+              );
+            }
+            return const IntrinsicHeight(
+              child: Row(
+                crossAxisAlignment: CrossAxisAlignment.stretch,
+                children: [
+                  Expanded(child: deletedCard),
+                  SizedBox(width: 16),
+                  Expanded(child: keptCard),
+                ],
+              ),
+            );
+          },
         ),
         const SizedBox(height: 16),
-        const _ListCard(
-          icon: Icons.delete_outline_rounded,
-          title: 'O que é apagado',
-          accent: _ListAccent.critical,
-          items: [
-            'A conta de acesso (login Google ou e-mail e senha)',
-            'Aparelhos vinculados e o estado da proteção na nuvem',
-            'Trilha de localização e eventos de proteção',
-            'Comandos remotos enviados pelo portal',
-            'Plano e assinatura vinculados à conta',
-          ],
-        ),
-        const SizedBox(height: 12),
-        const _ListCard(
-          icon: Icons.inventory_2_outlined,
-          title: 'O que fica',
-          accent: _ListAccent.neutral,
-          items: [
-            'Um código irreversível (hash) do e-mail, sem o e-mail em si, '
-                'para o período de teste não recomeçar se você criar outra '
-                'conta',
-            'Registros de pagamento PIX, sem vínculo com a conta, por '
-                'obrigação fiscal',
-            'Os dados no próprio celular: a proteção local do Guardian Sense '
-                'continua funcionando sem conta',
-          ],
-        ),
-        const SizedBox(height: 16),
-        SectionCard(
-          accentColor: AppColors.riskCritical,
-          padding: const EdgeInsets.fromLTRB(16, 12, 16, 12),
-          child: Row(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Icon(
-                Icons.warning_amber_rounded,
-                size: 20,
-                color: AppColors.riskCritical,
-              ),
-              const SizedBox(width: 10),
-              Expanded(
-                child: Text(
-                  'A exclusão é imediata e não dá para desfazer.',
-                  style: theme.textTheme.bodyMedium?.copyWith(
-                    fontWeight: FontWeight.w600,
-                  ),
-                ),
-              ),
-            ],
-          ),
-        ),
-        if (error != null) ...[
-          const SizedBox(height: 12),
-          Text(
-            error!,
-            textAlign: TextAlign.center,
-            style: TextStyle(color: AppColors.riskCritical),
-          ),
-        ],
-        const SizedBox(height: 20),
-        FilledButton.icon(
-          onPressed: busy ? null : onDelete,
-          style: FilledButton.styleFrom(
-            backgroundColor: AppColors.riskCritical,
-            foregroundColor: Colors.white,
-            padding: const EdgeInsets.symmetric(vertical: 14),
-            shape: const StadiumBorder(),
-          ),
-          icon: busy
-              ? const SizedBox(
-                  width: 16,
-                  height: 16,
-                  child: CircularProgressIndicator(
-                    strokeWidth: 2,
-                    color: Colors.white,
-                  ),
-                )
-              : const Icon(Icons.delete_forever_outlined),
-          label: const Text(
-            'Excluir minha conta',
-            style: TextStyle(fontWeight: FontWeight.w700),
-          ),
-        ),
-        const SizedBox(height: 10),
-        GuardianPillButton(
-          label: 'Cancelar',
-          icon: Icons.arrow_back_rounded,
-          iconLeading: true,
-          neutral: true,
-          fullWidth: true,
-          onPressed: busy ? null : onCancel,
-        ),
-        const SizedBox(height: 6),
-        TextButton(
-          onPressed: busy ? null : onUseAnotherAccount,
-          style: TextButton.styleFrom(foregroundColor: AppColors.textMuted),
-          child: const Text('Usar outra conta'),
+        _ConfirmCard(
+          email: email,
+          busy: busy,
+          error: error,
+          onDelete: onDelete,
+          onCancel: onCancel,
         ),
       ],
     );
   }
 }
 
-enum _ListAccent { critical, neutral }
+enum _ListColor { critical, kept }
 
 class _ListCard extends StatelessWidget {
   const _ListCard({
     required this.icon,
     required this.title,
-    required this.accent,
+    required this.color,
+    required this.mark,
     required this.items,
   });
 
   final IconData icon;
   final String title;
-  final _ListAccent accent;
+  final _ListColor color;
+  final String mark;
   final List<String> items;
 
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
-    final color = switch (accent) {
-      _ListAccent.critical => AppColors.riskCritical,
-      _ListAccent.neutral => AppColors.textMuted,
+    final accent = switch (color) {
+      _ListColor.critical => AppColors.riskCritical,
+      _ListColor.kept => AppColors.trustHigh,
     };
 
     return SectionCard(
-      accentColor: color,
+      accentColor: accent,
       child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
+        crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
-          Row(
-            children: [
-              Icon(icon, size: 22, color: color),
-              const SizedBox(width: 10),
-              Text(
-                title,
-                style: theme.textTheme.titleMedium?.copyWith(
-                  fontWeight: FontWeight.w600,
-                ),
-              ),
-            ],
-          ),
+          _CardTitle(icon: icon, label: title),
           const SizedBox(height: 12),
           for (final item in items)
             Padding(
-              padding: const EdgeInsets.only(bottom: 8),
+              padding: const EdgeInsets.only(bottom: 10),
               child: Row(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   Text(
-                    '• ',
+                    '$mark ',
                     style: theme.textTheme.bodyMedium?.copyWith(
-                      color: color,
+                      color: accent,
                       fontWeight: FontWeight.w700,
                     ),
                   ),
@@ -548,8 +488,104 @@ class _ListCard extends StatelessWidget {
   }
 }
 
-class _DeletedCard extends StatelessWidget {
-  const _DeletedCard();
+class _ConfirmCard extends StatelessWidget {
+  const _ConfirmCard({
+    required this.email,
+    required this.busy,
+    required this.error,
+    required this.onDelete,
+    required this.onCancel,
+  });
+
+  final String? email;
+  final bool busy;
+  final String? error;
+  final VoidCallback onDelete;
+  final VoidCallback onCancel;
+
+  @override
+  Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    final mail = email?.trim();
+
+    return SectionCard(
+      accentColor: AppColors.riskCritical,
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        children: [
+          const _CardTitle(
+            icon: Icons.warning_amber_rounded,
+            label: 'Confirmar exclusão',
+          ),
+          const SizedBox(height: 12),
+          Text(
+            mail == null || mail.isEmpty
+                ? 'A exclusão vale para a conta conectada a este portal. '
+                    'É imediata e não dá para desfazer.'
+                : 'A exclusão vale para a conta $mail. '
+                    'É imediata e não dá para desfazer.',
+            style: theme.textTheme.bodyMedium?.copyWith(height: 1.45),
+          ),
+          if (error != null) ...[
+            const SizedBox(height: 12),
+            Text(error!, style: TextStyle(color: AppColors.riskCritical)),
+          ],
+          const SizedBox(height: 16),
+          Wrap(
+            spacing: 10,
+            runSpacing: 10,
+            children: [
+              GuardianPillButton(
+                label: 'Excluir minha conta',
+                icon: Icons.delete_forever_outlined,
+                iconLeading: true,
+                danger: true,
+                busy: busy,
+                onPressed: busy ? null : onDelete,
+              ),
+              GuardianPillButton(
+                label: 'Cancelar',
+                icon: Icons.arrow_back_rounded,
+                iconLeading: true,
+                neutral: true,
+                onPressed: busy ? null : onCancel,
+              ),
+            ],
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+/// Mesmo título de card de Minha conta.
+class _CardTitle extends StatelessWidget {
+  const _CardTitle({required this.icon, required this.label});
+
+  final IconData icon;
+  final String label;
+
+  @override
+  Widget build(BuildContext context) {
+    return Row(
+      children: [
+        Icon(icon, color: AppColors.textMuted, size: 22),
+        const SizedBox(width: 10),
+        Expanded(
+          child: Text(
+            label,
+            style: Theme.of(context).textTheme.titleMedium?.copyWith(
+                  fontWeight: FontWeight.w600,
+                ),
+          ),
+        ),
+      ],
+    );
+  }
+}
+
+class DeleteAccountDoneCard extends StatelessWidget {
+  const DeleteAccountDoneCard({super.key});
 
   @override
   Widget build(BuildContext context) {
@@ -559,12 +595,14 @@ class _DeletedCard extends StatelessWidget {
       accentColor: AppColors.trustHigh,
       child: Column(
         children: [
-          Icon(
-            Icons.check_circle_outline_rounded,
-            size: 40,
-            color: AppColors.trustHigh,
+          Text(
+            '✓',
+            style: theme.textTheme.displaySmall?.copyWith(
+              color: AppColors.trustHigh,
+              fontWeight: FontWeight.w700,
+            ),
           ),
-          const SizedBox(height: 12),
+          const SizedBox(height: 8),
           Text(
             'Conta excluída',
             textAlign: TextAlign.center,
