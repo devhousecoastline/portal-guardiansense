@@ -82,6 +82,17 @@ class _ProfileView extends StatelessWidget {
             ),
           ),
         ),
+        const SizedBox(height: 4),
+        Center(
+          child: TextButton.icon(
+            onPressed: () => context.go(AppRoutes.deleteAccount),
+            icon: const Icon(Icons.delete_outline_rounded, size: 18),
+            label: const Text('Excluir minha conta'),
+            style: TextButton.styleFrom(
+              foregroundColor: AppColors.textMuted,
+            ),
+          ),
+        ),
       ],
     );
   }

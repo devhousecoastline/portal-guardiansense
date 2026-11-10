@@ -14,6 +14,15 @@ abstract final class AppRoutes {
   static const account = '/account';
   static const premium = '/premium';
 
+  /// Política pública (link da Play e do site), sem login nem drawer.
+  static const privacyPublic = '/privacidade';
+
+  /// Exclusão de conta pelo site — link exigido pela Play.
+  static const deleteAccount = '/excluir-conta';
+
+  /// Abrem com ou sem sessão, sem passar pelo aceite da política.
+  static const publicPaths = {pair, privacyPublic, deleteAccount};
+
   /// `/events-details/yyyy-MM-dd`
   static String eventsDetailsFor(DateTime day) {
     final local = day.toLocal();

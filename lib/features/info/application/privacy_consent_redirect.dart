@@ -15,8 +15,12 @@ String? resolveAuthRedirect({
     return null;
   }
 
+  if (AppRoutes.publicPaths.contains(path)) {
+    return null;
+  }
+
   if (!signedIn) {
-    if (path == AppRoutes.login || path == AppRoutes.pair) {
+    if (path == AppRoutes.login) {
       return null;
     }
     if (showComingSoonLanding && path == AppRoutes.home) {
@@ -33,12 +37,7 @@ String? resolveAuthRedirect({
   }
 
   if (!hasAcceptedCurrentPolicy) {
-    if (path == AppRoutes.pair) return null;
     return path == AppRoutes.privacyConsent ? null : AppRoutes.privacyConsent;
-  }
-
-  if (path == AppRoutes.pair) {
-    return null;
   }
 
   if (path == AppRoutes.home ||

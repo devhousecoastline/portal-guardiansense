@@ -125,8 +125,8 @@ class _ConsentCard extends StatelessWidget {
               const SizedBox(height: 8),
               Text(
                 'Antes de continuar, precisamos do seu aceite. O Guardian Sense '
-                'processa sensores no aparelho e, com conta, pode sincronizar '
-                'eventos e localização de emergência com o portal.',
+                'processa sensores no aparelho e, com conta, sincroniza '
+                'eventos, estado do aparelho e localização com o portal.',
                 textAlign: TextAlign.center,
                 style: theme.textTheme.bodyMedium?.copyWith(
                   color: AppColors.textMuted,
@@ -135,8 +135,9 @@ class _ConsentCard extends StatelessWidget {
               ),
               const SizedBox(height: 16),
               const _Bullet('Sensores e tela ficam no aparelho'),
-              const _Bullet('Portal só com conta (eventos / emergência)'),
+              const _Bullet('Nuvem só com conta: trilha e eventos por até 90 dias'),
               const _Bullet('Sem áudio e sem ler mensagens'),
+              const _Bullet('Excluir a conta apaga os dados na nuvem'),
               const _Bullet(
                 'Não cobre engenharia reversa ou ataques fora do app',
               ),

@@ -21,6 +21,8 @@ class LoginFormCard extends StatelessWidget {
     required this.onForgotPassword,
     this.fillHeight = false,
     this.embedded = false,
+    this.title,
+    this.subtitle,
   });
 
   final GlobalKey<FormState> formKey;
@@ -31,8 +33,13 @@ class LoginFormCard extends StatelessWidget {
   final String? error;
   final VoidCallback onSubmit;
   final VoidCallback onGoogleSignIn;
-  final VoidCallback onToggleMode;
+  /// `null` esconde o "Criar conta" (ex.: login só para excluir a conta).
+  final VoidCallback? onToggleMode;
   final VoidCallback onForgotPassword;
+
+  /// Substituem o título e o subtítulo padrão do modo "Entrar".
+  final String? title;
+  final String? subtitle;
 
   /// Desktop: preenche a altura igualada ao painel da marca.
   final bool fillHeight;
@@ -49,7 +56,7 @@ class LoginFormCard extends StatelessWidget {
       mainAxisSize: fillHeight ? MainAxisSize.max : MainAxisSize.min,
       children: [
         Text(
-          creating ? 'Nova conta' : AppConstants.loginCardTitle,
+          creating ? 'Nova conta' : title ?? AppConstants.loginCardTitle,
           textAlign: narrow ? TextAlign.center : TextAlign.start,
           style: Theme.of(context).textTheme.headlineMedium?.copyWith(
                 fontWeight: FontWeight.w700,
@@ -59,7 +66,7 @@ class LoginFormCard extends StatelessWidget {
         if (!creating) ...[
           const SizedBox(height: 8),
           Text(
-            AppConstants.loginCardSubtitle,
+            subtitle ?? AppConstants.loginCardSubtitle,
             textAlign: narrow ? TextAlign.center : TextAlign.start,
             style: Theme.of(context).textTheme.bodyMedium,
           ),
@@ -136,18 +143,20 @@ class LoginFormCard extends StatelessWidget {
           busy: busy,
           onPressed: busy ? null : onGoogleSignIn,
         ),
-        const SizedBox(height: 8),
-        TextButton(
-          onPressed: busy ? null : onToggleMode,
-          style: TextButton.styleFrom(
-            foregroundColor: AppColors.textMuted,
+        if (onToggleMode != null) ...[
+          const SizedBox(height: 8),
+          TextButton(
+            onPressed: busy ? null : onToggleMode,
+            style: TextButton.styleFrom(
+              foregroundColor: AppColors.textMuted,
+            ),
+            child: Text(
+              creating
+                  ? 'Já possui conta? Entrar'
+                  : 'Ainda não possui conta? Criar conta',
+            ),
           ),
-          child: Text(
-            creating
-                ? 'Já possui conta? Entrar'
-                : 'Ainda não possui conta? Criar conta',
-          ),
-        ),
+        ],
       ],
     );
 
