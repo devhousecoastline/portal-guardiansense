@@ -66,7 +66,7 @@ class ProtectionStatusHero extends StatelessWidget {
             // No layout em grade o badge OFFLINE no painel basta;
             // o banner ocupava altura e empurrava o índice.
             if (offline && !fillHeight) ...[
-              _OfflineBanner(compact: compact),
+              _OfflineBanner(status: status, compact: compact),
               SizedBox(height: compact ? 8 : 10),
             ],
             if (fillHeight)
@@ -251,12 +251,14 @@ class _IndexBlock extends StatelessWidget {
 }
 
 class _OfflineBanner extends StatelessWidget {
-  const _OfflineBanner({this.compact = false});
+  const _OfflineBanner({required this.status, this.compact = false});
 
+  final DeviceStatus status;
   final bool compact;
 
   @override
   Widget build(BuildContext context) {
+    final stale = status.presence == DevicePresence.stale;
     return Container(
       width: double.infinity,
       padding: EdgeInsets.symmetric(
@@ -271,14 +273,14 @@ class _OfflineBanner extends StatelessWidget {
       child: Row(
         children: [
           Icon(
-            Icons.cloud_off_outlined,
+            stale ? Icons.cloud_queue_outlined : Icons.cloud_off_outlined,
             size: 18,
             color: AppColors.textMuted,
           ),
           const SizedBox(width: 10),
           Expanded(
             child: Text(
-              'Aparelho offline no momento',
+              stale ? status.lastContactLabel : 'Aparelho offline no momento',
               style: DashboardTypography.mutedLabel(context),
             ),
           ),

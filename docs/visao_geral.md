@@ -37,7 +37,7 @@ Código organizado por feature em `lib/features/` (auth, dashboard, devices, eve
 2. **`verified` só via Admin SDK.** O cliente não marca o aparelho como verificado; a Function `confirmDevicePairing` faz isso depois do QR no app.
 3. **Assinatura paga só via backend.** Webhook PIX / Admin SDK. O cliente pode criar trial (`ensureTrial`), mas não pode gravar `status: active` nem `store: pix`.
 4. **Comandos remotos** (`close_oyster`, `protect_app`, `protect_apps`) nascem `pending` pelo dono; o app atualiza para `applied` ou `failed`.
-5. **Aparelho online** se `lastSeen` for mais recente que 4 minutos (`AppConstants.deviceOnlineThreshold`), alinhado ao heartbeat do app.
+5. **Aparelho online** se `agora - lastSeen < 2,5 × presenceIntervalSec` (fallback 180s para APK sem o campo). Ostra aberta (600s): online < 25 min, "última comunicação há N min" até 60 min, depois offline. Ostra fechada (180s): online < 7,5 min, "última comunicação" até 20 min, depois offline. Ver `DeviceStatus.presenceAt` e `AppConstants.presence*`.
 
 ## Firestore (visão)
 
