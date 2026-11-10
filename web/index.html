@@ -74,6 +74,17 @@
     }
   </style>
 
+  <!-- Links públicos sem hash (Play / política): /excluir-conta → /#/excluir-conta. -->
+  <script>
+    (function () {
+      var publicPaths = ['/excluir-conta', '/privacidade'];
+      var path = window.location.pathname.replace(/\/+$/, '');
+      if (!window.location.hash && publicPaths.indexOf(path) !== -1) {
+        window.history.replaceState(null, '', '/#' + path + window.location.search);
+      }
+    })();
+  </script>
+
   <!-- Portal atualiza com frequência: remove SW antigo do Flutter (cache teimoso). -->
   <script>
     if ('serviceWorker' in navigator) {
@@ -108,7 +119,9 @@
     <p>
       <a href="https://play.google.com/store/apps/details?id=com.guardiansense.app">Baixar na Play Store</a>
       ·
-      <a href="/#/privacy">Privacidade</a>
+      <a href="/privacidade">Privacidade</a>
+      ·
+      <a href="/excluir-conta">Excluir conta</a>
       ·
       <a href="/#/about">Sobre</a>
       ·

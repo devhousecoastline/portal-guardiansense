@@ -179,6 +179,24 @@ void main() {
       );
     });
 
+    test('páginas públicas abrem com ou sem sessão e sem aceite', () {
+      for (final path in [AppRoutes.deleteAccount, AppRoutes.privacyPublic]) {
+        for (final signedIn in [false, true]) {
+          expect(
+            resolveAuthRedirect(
+              authReady: true,
+              signedIn: signedIn,
+              consentReady: true,
+              hasAcceptedCurrentPolicy: false,
+              path: path,
+            ),
+            isNull,
+            reason: '$path signedIn=$signedIn',
+          );
+        }
+      }
+    });
+
     test('logado permanece na landing do QR', () {
       expect(
         resolveAuthRedirect(

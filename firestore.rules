@@ -271,5 +271,10 @@ service cloud.firestore {
     match /welcomeEmails/{userId} {
       allow read, write: if false;
     }
+
+    // Hash do e-mail de contas excluídas (trial) — só Admin SDK (Functions).
+    match /deletedAccounts/{emailHash} {
+      allow read, write: if false;
+    }
   }
 }

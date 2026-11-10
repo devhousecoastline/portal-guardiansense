@@ -3,9 +3,9 @@ import 'package:guardian_portal/features/info/domain/privacy_policy.dart';
 
 void main() {
   test('política replica o conteúdo e a versão do app', () {
-    expect(PrivacyPolicy.version, '1.1');
+    expect(PrivacyPolicy.version, '1.2');
     expect(PrivacyPolicy.title, 'Privacidade');
-    expect(PrivacyPolicy.sections, hasLength(7));
+    expect(PrivacyPolicy.sections, hasLength(9));
 
     final intro = PrivacyPolicy.sections.first;
     expect(intro.title, isNull);
@@ -21,15 +21,22 @@ void main() {
         null,
         'No aparelho',
         'Com conta e portal',
-        'Acessibilidade e contenção',
+        'Acessibilidade, VPN e contenção',
+        'Serviços que usamos',
+        'Por quanto tempo guardamos',
         'Seus controles',
         'Limites da proteção e responsabilidade',
         'Versão',
       ],
     );
+    expect(PrivacyPolicy.sections[2].bullets, hasLength(4));
+    expect(
+      PrivacyPolicy.sections[6].body,
+      contains('guardian-sense.com/excluir-conta'),
+    );
     expect(
       PrivacyPolicy.sections.last.body,
-      contains('Política versão 1.1'),
+      contains('Política versão 1.2'),
     );
   });
 }

@@ -6,6 +6,7 @@ import 'package:go_router/go_router.dart';
 import 'package:guardian_portal/core/routing/app_routes.dart';
 import 'package:guardian_portal/core/theme/app_colors.dart';
 import 'package:guardian_portal/features/auth/application/auth_controller.dart';
+import 'package:guardian_portal/features/auth/application/auth_error_messages.dart';
 import 'package:guardian_portal/features/auth/presentation/widgets/auth_footer.dart';
 import 'package:guardian_portal/features/auth/presentation/widgets/auth_page_shell.dart';
 import 'package:guardian_portal/features/auth/presentation/widgets/auth_scope.dart';
@@ -59,33 +60,10 @@ class _LoginPageState extends State<LoginPage> {
         await auth.signInWithEmail(_email.text, _password.text);
       }
     } on FirebaseAuthException catch (e) {
-      setState(() => _error = _mapAuthError(e));
+      setState(() => _error = authErrorMessage(e));
     } finally {
       if (mounted) setState(() => _busy = false);
     }
-  }
-
-  String _mapAuthError(FirebaseAuthException e) => switch (e.code) {
-        'user-not-found' || 'wrong-password' || 'invalid-credential' =>
-          'E-mail ou senha incorretos. Se você entrou pelo Google no app, '
-          'use «Continuar com Google».',
-        'email-already-in-use' =>
-          'Este e-mail já está cadastrado. Se você usa o app com Google, '
-          'clique em «Continuar com Google».',
-        'weak-password' => 'Senha muito fraca (mínimo 6 caracteres).',
-        'invalid-email' => 'E-mail inválido.',
-        'popup-closed-by-user' || 'cancelled-popup-request' =>
-          'Login com Google cancelado.',
-        'timeout' => 'Tempo esgotado. Tente novamente.',
-        _ => e.message ?? 'Não foi possível entrar.',
-      };
-
-  bool _isPopupCancelled(Object e) {
-    final text = e.toString().toLowerCase();
-    return text.contains('popup-closed-by-user') ||
-        text.contains('cancelled-popup-request') ||
-        text.contains('user cancelled') ||
-        text.contains('user canceled');
   }
 
   Future<void> _signInWithGoogle(AuthController auth) async {
@@ -97,7 +75,7 @@ class _LoginPageState extends State<LoginPage> {
     try {
       await auth.signInWithGoogle();
     } on FirebaseAuthException catch (e) {
-      if (mounted) setState(() => _error = _mapAuthError(e));
+      if (mounted) setState(() => _error = authErrorMessage(e));
     } on TimeoutException {
       if (mounted) {
         setState(() => _error = 'Login com Google cancelado ou expirou.');
@@ -105,7 +83,7 @@ class _LoginPageState extends State<LoginPage> {
     } catch (e) {
       if (!mounted) return;
       setState(() {
-        _error = _isPopupCancelled(e)
+        _error = isAuthPopupCancelled(e)
             ? 'Login com Google cancelado.'
             : 'Não foi possível entrar com Google.';
       });
@@ -138,7 +116,7 @@ class _LoginPageState extends State<LoginPage> {
         ),
       );
     } on FirebaseAuthException catch (e) {
-      setState(() => _error = _mapAuthError(e));
+      setState(() => _error = authErrorMessage(e));
     } finally {
       if (mounted) setState(() => _busy = false);
     }

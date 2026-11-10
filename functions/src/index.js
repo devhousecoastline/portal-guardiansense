@@ -10,6 +10,7 @@ const mp = require("./mercadopago");
 const sub = require("./subscription");
 const pairing = require("./device_pairing");
 const welcome = require("./welcome_email");
+const accountDeletion = require("./account_deletion");
 
 admin.initializeApp();
 
@@ -351,7 +352,41 @@ exports.confirmDevicePairing = onCall(
 );
 
 /**
+ * App e portal (`/excluir-conta`): exclui a conta logada e os dados na nuvem.
+ * Contrato: guardianSense/docs/account_deletion.md.
+ */
+exports.deleteAccount = onCall(
+  {
+    invoker: "public",
+    timeoutSeconds: 300,
+  },
+  async (request) => {
+    if (!request.auth?.uid) {
+      throw new HttpsError("unauthenticated", "Faça login para excluir a conta.");
+    }
+    if (!accountDeletion.isRecentLogin(request.auth.token.auth_time)) {
+      throw new HttpsError("failed-precondition", "requires-recent-login");
+    }
+
+    try {
+      await accountDeletion.deleteAccount({
+        uid: request.auth.uid,
+        email: request.auth.token.email || null,
+      });
+      return { ok: true };
+    } catch (e) {
+      console.error("deleteAccount", e);
+      throw new HttpsError(
+        "internal",
+        "Não foi possível excluir a conta. Tente de novo.",
+      );
+    }
+  },
+);
+
+/**
  * Auth onCreate (1ª gen): boas-vindas no cadastro, app ou portal.
+ * Também encerra o trial se o e-mail for de uma conta já excluída.
  * v2 identity não tem onCreate; Auth 1ª gen só em us-central1.
  */
 exports.sendWelcomeEmail = functionsV1
@@ -364,6 +399,11 @@ exports.sendWelcomeEmail = functionsV1
   })
   .auth.user()
   .onCreate(async (user) => {
+    try {
+      await accountDeletion.applyDeletedAccountTrial(user);
+    } catch (e) {
+      console.error("applyDeletedAccountTrial", e);
+    }
     await welcome.handleUserCreated(user, {
       apiKey: sendgridApiKey.value(),
     });

@@ -4,6 +4,7 @@ import 'package:guardian_portal/app/constants.dart';
 import 'package:guardian_portal/core/navigation/navigation_shell.dart';
 import 'package:guardian_portal/core/routing/app_routes.dart';
 import 'package:guardian_portal/features/account/presentation/account_page.dart';
+import 'package:guardian_portal/features/account/presentation/delete_account_page.dart';
 import 'package:guardian_portal/features/auth/application/auth_controller.dart';
 import 'package:guardian_portal/features/auth/presentation/login_page.dart';
 import 'package:guardian_portal/features/dashboard/presentation/dashboard_page.dart';
@@ -63,6 +64,14 @@ GoRouter createAppRouter({
       GoRoute(
         path: AppRoutes.privacyConsent,
         builder: (context, state) => const PrivacyConsentPage(),
+      ),
+      GoRoute(
+        path: AppRoutes.privacyPublic,
+        builder: (context, state) => const PrivacyPage(standalone: true),
+      ),
+      GoRoute(
+        path: AppRoutes.deleteAccount,
+        builder: (context, state) => const DeleteAccountPage(),
       ),
       ShellRoute(
         builder: (context, state, child) => NavigationShell(child: child),
