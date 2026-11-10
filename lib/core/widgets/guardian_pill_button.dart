@@ -12,6 +12,7 @@ class GuardianPillButton extends StatefulWidget {
     this.busy = false,
     this.iconLeading = false,
     this.neutral = false,
+    this.danger = false,
     this.fullWidth = false,
     this.compact = false,
   }) : assert(icon != null || leading != null);
@@ -26,6 +27,9 @@ class GuardianPillButton extends StatefulWidget {
   final bool busy;
   final bool iconLeading;
   final bool neutral;
+
+  /// Ação destrutiva (ex.: excluir conta) — mesmo pill, em vermelho.
+  final bool danger;
   final bool fullWidth;
   final bool compact;
 
@@ -40,7 +44,9 @@ class _GuardianPillButtonState extends State<GuardianPillButton> {
   Widget build(BuildContext context) {
     final enabled = widget.onPressed != null && !widget.busy;
     final isLight = Theme.of(context).brightness == Brightness.light;
-    final base = widget.neutral ? AppColors.textMuted : AppColors.trustHigh;
+    final base = widget.neutral
+        ? AppColors.textMuted
+        : (widget.danger ? AppColors.riskCritical : AppColors.trustHigh);
     final fg = enabled
         ? (widget.neutral
             ? AppColors.textMuted.withValues(alpha: isLight ? 1 : 0.92)
@@ -124,8 +130,7 @@ class _GuardianPillButtonState extends State<GuardianPillButton> {
           boxShadow: _hovered
               ? [
                   BoxShadow(
-                    color: AppColors.trustHigh
-                        .withValues(alpha: isLight ? 0.28 : 0.22),
+                    color: base.withValues(alpha: isLight ? 0.28 : 0.22),
                     blurRadius: 18,
                     offset: const Offset(0, 6),
                   ),
