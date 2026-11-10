@@ -516,6 +516,7 @@ class _ConfirmCard extends StatelessWidget {
           const _CardTitle(
             icon: Icons.warning_amber_rounded,
             label: 'Confirmar exclusão',
+            centered: true,
           ),
           const SizedBox(height: 12),
           Text(
@@ -524,14 +525,20 @@ class _ConfirmCard extends StatelessWidget {
                     'É imediata e não dá para desfazer.'
                 : 'A exclusão vale para a conta $mail. '
                     'É imediata e não dá para desfazer.',
+            textAlign: TextAlign.center,
             style: theme.textTheme.bodyMedium?.copyWith(height: 1.45),
           ),
           if (error != null) ...[
             const SizedBox(height: 12),
-            Text(error!, style: TextStyle(color: AppColors.riskCritical)),
+            Text(
+              error!,
+              textAlign: TextAlign.center,
+              style: TextStyle(color: AppColors.riskCritical),
+            ),
           ],
           const SizedBox(height: 16),
           Wrap(
+            alignment: WrapAlignment.center,
             spacing: 10,
             runSpacing: 10,
             children: [
@@ -560,25 +567,32 @@ class _ConfirmCard extends StatelessWidget {
 
 /// Mesmo título de card de Minha conta.
 class _CardTitle extends StatelessWidget {
-  const _CardTitle({required this.icon, required this.label});
+  const _CardTitle({
+    required this.icon,
+    required this.label,
+    this.centered = false,
+  });
 
   final IconData icon;
   final String label;
+  final bool centered;
 
   @override
   Widget build(BuildContext context) {
+    final text = Text(
+      label,
+      style: Theme.of(context).textTheme.titleMedium?.copyWith(
+            fontWeight: FontWeight.w600,
+          ),
+    );
+
     return Row(
+      mainAxisAlignment:
+          centered ? MainAxisAlignment.center : MainAxisAlignment.start,
       children: [
         Icon(icon, color: AppColors.textMuted, size: 22),
         const SizedBox(width: 10),
-        Expanded(
-          child: Text(
-            label,
-            style: Theme.of(context).textTheme.titleMedium?.copyWith(
-                  fontWeight: FontWeight.w600,
-                ),
-          ),
-        ),
+        if (centered) Flexible(child: text) else Expanded(child: text),
       ],
     );
   }
